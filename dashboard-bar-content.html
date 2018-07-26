@@ -1,0 +1,229 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<style type="text/css">
+    .dashboardBtn {
+        background: #AD1625;
+        border: none;
+        color: #eee !important;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('bar-content', {
+        category: 'S4CDashboard',
+        color: '#00a2d3',
+        defaults: {
+            selectedDashboard: {
+                value: "",
+            },
+            createNewClicked: {
+                value: "",
+            },
+            flowName: {
+                value: ""
+            },
+            username: {
+                value: ""
+            },
+            name: {
+                value: "",
+                required: true
+            },
+            dashboardTitle: {
+                value: "",
+                required: true
+            },
+            metricType: {
+                value: "Percentuale"
+            },
+            startValue: {
+                value: 0
+            },
+            metricShortDesc: {
+                value: ""
+            },
+            metricFullDesc: {
+                value: ""
+            }
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "barcontent.png",
+        label: function () {
+            return this.name || "Bar content";
+        },
+        paletteLabel: function () {
+            return this.name || "Bar content";
+        },
+        align: 'right',
+        oneditprepare: function () {
+            $("#node-input-dashboardTitle").val("");
+            $('#node-input-username').val($('#usermenu-item-username span b').text());
+            $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
+            $('#node-dashboard-edit').click(function () {
+                if ($('#node-input-dashboardTitle').val() != null && $('#node-input-dashboardTitle')
+                    .val() != "") {
+                    window.open($('#node-input-dashboardManagerBaseUrl').val() +
+                        "/controllers/openNRDashboardEditor.php?username=" + $(
+                            '#usermenu-item-username span b').html() + "&dashboardTitle=" +
+                        encodeURIComponent($('#node-input-dashboardTitle').val()), '_blank');
+                } else {
+                    alert("Select a dashboard or enter the name of a new one");
+                }
+            });
+
+            $('#node-dashboard-view').click(function () {
+                if ($('#node-input-dashboardTitle').val() != null && $('#node-input-dashboardTitle')
+                    .val() != "") {
+                    window.open($('#node-input-dashboardManagerBaseUrl').val() +
+                        "/controllers/openNRDashboardViewer.php?username=" + $(
+                            '#usermenu-item-username span b').html() + "&dashboardTitle=" +
+                        encodeURIComponent($('#node-input-dashboardTitle').val()), '_blank');
+                } else {
+                    alert("Select a dashboard or enter the name of a new one");
+                }
+            });
+
+            $("#createNewDashboardTitle").click(function () {
+                $("#node-input-dashboardTitleNew").show();
+                $("#node-input-dashboardTitle").hide();
+                $("#createNewDashboardTitle").hide();
+                $("#backDashboardTitle").show();
+                $("#node-input-dashboardTitle").attr("id", "node-input-dashboardTitleOld");
+                $("#node-input-dashboardTitleNew").attr("id", "node-input-dashboardTitle");
+                $("#node-dashboard-view").hide();
+                $("#node-dashboard-edit").hide();
+                $("#node-input-tip").show();
+                $("#node-input-createNewClicked").val("true");
+            });
+
+            $("#backDashboardTitle").click(function () {
+                $("#node-input-dashboardTitle").attr("id", "node-input-dashboardTitleNew");
+                $("#node-input-dashboardTitleOld").attr("id", "node-input-dashboardTitle");
+                $("#node-input-dashboardTitleNew").val("");
+                $("#node-input-dashboardTitleNew").hide();
+                $("#node-input-dashboardTitle").show();
+                $("#createNewDashboardTitle").show();
+                $("#backDashboardTitle").hide();
+                $("#node-dashboard-view").show();
+                $("#node-dashboard-edit").show();
+                $("#node-input-tip").hide();
+                $("#node-input-createNewClicked").val("false");
+            });
+
+            $("#node-input-dashboardTitle").empty();
+
+            $.ajax({
+                url: $('#node-input-dashboardManagerBaseUrl').val() +
+                    "/api/nodeRedDashboardsApi.php?secret=45awwprty_zzq34&username=" + $(
+                        '#node-input-username').val(),
+                type: "GET",
+                async: true,
+                dataType: "json",
+                success: function (data) {
+                    if (data.length != 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            $("<option value=\"" + data[i] + "\">" + decodeURI(data[i].replace(
+                                /\+/g, " ")) + "</option>").appendTo($(
+                                "#node-input-dashboardTitle"));
+                            if (decodeURI(data[i].replace(/\+/g, " ")) == $(
+                                    "#node-input-selectedDashboard").val()) {
+                                $("#node-input-createNewClicked").val("false");
+                            }
+                        }
+
+                        if ($("#node-input-createNewClicked").val() != null && $("#node-input-createNewClicked").val() ==
+                            "true") {
+                                $("#createNewDashboardTitle").click();
+                        }
+                        $("#node-input-dashboardTitle").val($("#node-input-selectedDashboard").val());
+                    } else {
+                        $("#createNewDashboardTitle").click();
+                        $("#node-input-dashboardTitle").val($("#node-input-selectedDashboard").val());
+                    }
+                },
+                error: function (err) {
+                    $("#createNewDashboardTitle").click();
+                    $("#node-input-dashboardTitle").val($("#node-input-selectedDashboard").val());
+                    console.log(err);
+                }
+            });
+        },
+        oneditsave: function () {
+            $("#node-input-selectedDashboard").val($("#node-input-dashboardTitle").val());
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="bar-content">
+    <input type="hidden" id="node-input-username">
+    <input type="hidden" id="node-input-flowName">
+    <input type="hidden" id="node-input-createNewClicked">
+    <input type="hidden" id="node-input-selectedDashboard">
+    <input type="hidden" id="node-input-dashboardManagerBaseUrl" value="https://main.snap4city.org">
+    <div class="form-row">
+        <label for="node-input-dashboardTitle">
+            <i class="fa fa-dashboard"></i>Dashboard Name</label>
+        <input type="text" autocomplete="off" id="node-input-dashboardTitleNew" placeholder="Dashboard Name" style="display:none; width: 55%;">
+        <select id="node-input-dashboardTitle" style="width: 55%;">
+        </select>
+        <button id="createNewDashboardTitle">Create New</button>
+        <button id="backDashboardTitle" style="display:none">Show list</button>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">
+            <i class="icon-tag"></i> Widget Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Widget Name">
+    </div>
+    <div class="form-row">
+        <button class="dashboardBtn" click="openDashboardEditor" role="button" aria-disabled="false" id="node-dashboard-edit">
+            Edit Dashboard
+        </button>
+        <button class="dashboardBtn" click="openDashboardViewer" role="button" aria-disabled="false" id="node-dashboard-view">
+            View Dashboard
+        </button>
+    </div>
+    <div id="node-input-tip" class="form-tips" style="display:none">The new dashboard is created entering the title and saving the node (with "Done" button) and deploying the flow (with
+        "Deploy" button)
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="bar-content">
+    <p>With this node you can add a bar graph to an existing dashboard or a new one created by the node to show numbers.
+    </p>
+
+    <h3>Configurations</h3>
+
+    <dl class="message-properties">
+        <dt>dashboard
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Dashboard title to which the bar graph will be added</dd>
+        <dt>widget
+            <span class="property-type">string</span>
+        </dt>
+        <dd> Title that will have the widget containing the bar graph.</dd>
+    </dl>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dd> Number to show in the bar graph</dd>
+    </dl>
+</script>
