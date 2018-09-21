@@ -36,7 +36,7 @@ module.exports = function (RED) {
         node.dashboardId = "";
         try {
             var dashboardTitleJson = JSON.parse(node.dashboardTitle);
-            node.dashboardTitle = dashboardTitleJson.title;
+            node.dashboardTitle =  decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
             node.dashboardId = dashboardTitleJson.id
         } catch (e) {
             //NOTHING TO DO         
