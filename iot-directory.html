@@ -272,17 +272,19 @@
 }*/
 </style>
 
-<script type="text/javascript" src="s4c/js/leaflet.js"></script>
-<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script>
-<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script>
+<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
 <!--<script type="text/javascript" src="s4c/js/require.js"></script>-->
 <script type="text/javascript" src="s4c/js/jquery-simulate-ext-master/libs/jquery.simulate.js"></script>
 <script type="text/javascript" src="s4c/js/jquery-simulate-ext-master/libs/bililiteRange.js"></script>
 
 
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// IOT DIRECTORY IN //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// IOT DIRECTORY IN ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 <!--
 <script type="text/javascript">
@@ -329,6 +331,10 @@ RED.nodes.registerType('label',{
             name: {
                 value: ""
             },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
             modcom: {
                 required: true
             },
@@ -371,11 +377,60 @@ RED.nodes.registerType('label',{
         paletteLabel: "iot directory",
 
 
-
-
         /******* ON EDIT PREPARE  START ********/
 
         oneditprepare: function () {
+
+            var accessToken = "";
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                        $.ajax({
+                            url: "retrieveAccessTokenLocal",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    //VEDERE COSA FARE IN QUESTO CASO
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: "setChangedUser/",
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                "changedUser": "false"
+                            }
+                        });
+                        $.ajax({
+                            url: "retrieveAccessTokenAuthentication",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    $("#deviceTabButton").parent().hide();
+                                    $("#Device-based-search").hide();
+                                    $("#Value-based-search").hide();
+                                    $('#tipAuthenticationWrong').show();
+                                    $('#tipAuthentication').hide();
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    }
+                }
+            });
 
 
             $(".editor-tray").css("width", "700px");
@@ -397,7 +452,7 @@ RED.nodes.registerType('label',{
 
 
             //serverURL = "https://www.snap4city.org/iotdirectorytest/api/device.php?"; //for testing
-            serverURL= "https://iotdirectory.snap4city.org/api/device.php?"; //official
+            serverURL = "https://iotdirectory.snap4city.org/api/device.php?"; //official
 
             openedTab = "Device-based-search";
             $("#deviceTabButton").simulate("click");
@@ -410,6 +465,17 @@ RED.nodes.registerType('label',{
             if (window.node_input_map_2) {
                 window.node_input_map_2.invalidateSize(true);
             };
+
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
 
             map = L.map('node-input-map').setView([43.78, 11.23], 10);
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -2006,172 +2072,178 @@ RED.nodes.registerType('label',{
 
 
 
-            var accesstoken = "";
-            try {
-                console.log("in retrieving access token");
-                console.log("this.id " + this.id);
-                //var accesstoken= "";
-                $.ajax({
-                    url: "deviceregistration/" + this.id,
-                    type: "GET",
-                    async: false,
-                    success: function (resp) {
-                        console.log(resp);
-                        //accesstoken = resp.refreshToken;
-                        accesstoken = resp.accessToken;
+            if (accessToken != "") {
+                console.log("ACCESS TOKEN: " + accessToken);
+                var accesstoken = accessToken;
+                try {
+                    console.log("in retrieving access token");
+                    console.log("this.id " + this.id);
+                    //var accesstoken= "";
+                    /*                 $.ajax({
+                                        url: "deviceregistration/" + this.id,
+                                        type: "GET",
+                                        async: false,
+                                        success: function (resp) {
+                                            console.log(resp);
+                                            //accesstoken = resp.refreshToken;
+                                            accesstoken = resp.accessToken; */
 
-                        var url = serverURL + "action=get_config_data";
+                    var url = serverURL + "action=get_config_data";
 
-                        if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                            accesstoken != "undefined")
-                            url += "&nodered=yes&token=" + accesstoken;
+                    if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                        accesstoken != "undefined")
+                        url += "&nodered=yes&token=" + accesstoken;
 
-                        console.log("url");
-                        console.log(url);
-                        console.log("accesstoken: ");
-                        console.log(accesstoken);
-                        console.log("accesstoken: " + resp.accessToken);
-                        console.log("refreshtoken: " + resp.refreshToken);
+                    console.log("url");
+                    console.log(url);
+                    console.log("accesstoken: ");
+                    console.log(accesstoken);
+                    //console.log("accesstoken: " + resp.accessToken);
+                    //console.log("refreshtoken: " + resp.refreshToken);
 
-                        var jqxhr = $.getJSON(url, function (data) {
+                    var jqxhr = $.getJSON(url, function (data) {
+                            console.log("success");
+                            console.log(data);
+                        })
+                        .done(function (data) {
+
+                            if (data.status == "ok") {
+                                console.log("second success");
+
+                                data = data.content;
+                                allDataIn = data;
+
+                                // crea lista entiti principale
+                                node.configData = data;
+                                createNodeList();
+                                //crea dati per le select
+                                createRetrievePanel();
+                                // crea map
+                                drawMap();
+
+                                var marker_array = [];
+
+                                for (var k in data) {
+
+                                    lat = Number(data[k]["latitude"]); //45.4858914;
+                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    lng = Number(data[k]["longitude"]); //9.202094;
+                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    popup = "<b>" + data[k]['name'] + "</b><br>" + data[
+                                        k]['entityType'] + "<br>" + data[k]['kind'];
+                                    if (data[k]["visibility"] == "public") {
+
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: blueIcon
+                                        }).bindPopup(popup);
+                                    } else {
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: redIcon
+                                        }).bindPopup(popup);
+                                    }
+
+                                    marker_array.push(m);
+                                }
+
+                                var markersGroup = L.layerGroup(marker_array);
+                                markersGroup.addTo(map);
+
+                            } else {
+                                console.log(data.status);
+                            }
+
+
+                        })
+                        .fail(function () {
+                            console.log("error");
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
+
+
+
+                    var url_values = serverURL + "action=get_config_data_values";
+                    if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                        accesstoken != "undefined")
+                        url_values += "&nodered=yes&token=" + accesstoken;
+                    console.log("url_values");
+                    console.log(url_values);
+                    var jqxhrValues = $.getJSON(url_values,
+                            function (data) {
                                 console.log("success");
                                 console.log(data);
                             })
-                            .done(function (data) {
+                        .done(function (data) {
+                            if (data.status == "ok") {
+                                console.log("second success");
+                                data = data.content;
 
-                                if (data.status == "ok") {
-                                    console.log("second success");
+                                allDataIn2 = data;
 
-                                    data = data.content;
-                                    allDataIn = data;
+                                // crea lista entiti principale
+                                node2.configData = data;
+                                createNodeList2();
+                                //crea dati per le select
+                                createRetrievePanel2();
+                                // crea map
+                                drawMap2();
 
-                                    // crea lista entiti principale
-                                    node.configData = data;
-                                    createNodeList();
-                                    //crea dati per le select
-                                    createRetrievePanel();
-                                    // crea map
-                                    drawMap();
+                                var marker_array = [];
+                                for (var k in data) {
 
-                                    var marker_array = [];
+                                    lat = Number(data[k]["latitude"]); //45.4858914;
+                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    lng = Number(data[k]["longitude"]); //9.202094;
+                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    popup = "<b>" + data[k]['device'] + "</b><br>" +
+                                        data[k]['value_type'];
+                                    if (data[k]["visibility"] == "private") {
 
-                                    for (var k in data) {
-
-                                        lat = Number(data[k]["latitude"]); //45.4858914;
-                                        est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        lng = Number(data[k]["longitude"]); //9.202094;
-                                        est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        popup = "<b>" + data[k]['name'] + "</b><br>" + data[
-                                            k]['entityType'] + "<br>" + data[k]['kind'];
-                                        if (data[k]["visibility"] == "public") {
-
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: blueIcon
-                                            }).bindPopup(popup);
-                                        } else {
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: redIcon
-                                            }).bindPopup(popup);
-                                        }
-
-                                        marker_array.push(m);
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: redIcon
+                                        }).bindPopup(popup);
+                                    } else {
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: blueIcon
+                                        }).bindPopup(popup);
                                     }
 
-                                    var markersGroup = L.layerGroup(marker_array);
-                                    markersGroup.addTo(map);
-
-                                } else {
-                                    console.log(data.status);
+                                    marker_array.push(m);
                                 }
 
+                                var markersGroup = L.layerGroup(marker_array);
+                                markersGroup.addTo(map2);
 
-                            })
-                            .fail(function () {
-                                console.log("error");
-                            })
-                            .always(function () {
-                                console.log("complete");
-                            });
-
-
-
-                        var url_values = serverURL + "action=get_config_data_values";
-                        if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                            accesstoken != "undefined")
-                            url_values += "&nodered=yes&token=" + accesstoken;
-                        console.log("url_values");
-                        console.log(url_values);
-                        var jqxhrValues = $.getJSON(url_values,
-                                function (data) {
-                                    console.log("success");
-                                    console.log(data);
-                                })
-                            .done(function (data) {
-                                if (data.status == "ok") {
-                                    console.log("second success");
-                                    data = data.content;
-
-                                    allDataIn2 = data;
-
-                                    // crea lista entiti principale
-                                    node2.configData = data;
-                                    createNodeList2();
-                                    //crea dati per le select
-                                    createRetrievePanel2();
-                                    // crea map
-                                    drawMap2();
-
-                                    var marker_array = [];
-                                    for (var k in data) {
-
-                                        lat = Number(data[k]["latitude"]); //45.4858914;
-                                        est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        lng = Number(data[k]["longitude"]); //9.202094;
-                                        est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        popup = "<b>" + data[k]['device'] + "</b><br>" +
-                                            data[k]['value_type'];
-                                        if (data[k]["visibility"] == "private") {
-
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: redIcon
-                                            }).bindPopup(popup);
-                                        } else {
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: blueIcon
-                                            }).bindPopup(popup);
-                                        }
-
-                                        marker_array.push(m);
-                                    }
-
-                                    var markersGroup = L.layerGroup(marker_array);
-                                    markersGroup.addTo(map2);
-
-                                } else {
-                                    console.log(data.status);
-                                }
-                            })
-                            .fail(function () {
-                                console.log("error");
-                            })
-                            .always(function () {
-                                console.log("complete");
-                            });
+                            } else {
+                                console.log(data.status);
+                            }
+                        })
+                        .fail(function () {
+                            console.log("error");
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
 
 
-                    },
+                    /* },
                     error: function (jqXHR, textStatus, errorThrown) {
                         console.log("ERROR");
                     }
-                });
+                }); */
 
 
 
-            } catch (err) {
-                console.log("error creating the token " + err);
-                accesstoken = "";
+                } catch (err) {
+                    console.log("error creating the token " + err);
+                    accesstoken = "";
+                }
+            } else {
+                $("#deviceTabButton").parent().hide();
+                $("#Device-based-search").hide();
+                $("#Value-based-search").hide();
             }
-
 
             /******* ON EDIT PREPARE  END********/
 
@@ -2184,6 +2256,45 @@ RED.nodes.registerType('label',{
             if (window.node_input_map) {
                 window.node_input_map.invalidateSize(true);
             }
+
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (!resp.result) {
+                        if ($("#node-input-authentication").children().length > 1) {
+                            $("#node-input-authentication option[value='_ADD_']").remove();
+                        }
+                        $.ajax({
+                            url: "getChangedUser/",
+                            type: "GET",
+                            async: false,
+                            success: function (resp) {
+                                if (resp.changedUser == "true") {
+                                    $("#tipAuthentication").hide();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").show();
+                                    $("#deviceTabButton").parent().hide();
+                                    $("#Device-based-search").hide();
+                                    $("#Value-based-search").hide();
+                                }
+                            },
+                            error: function (err) {
+                                if (err.status == 404) {
+                                    $("#tipAuthentication").show();
+                                    $("#tipAuthenticationDeployFirstTime").show();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").hide();
+                                    $("#deviceTabButton").parent().hide();
+                                    $("#Device-based-search").hide();
+                                    $("#Value-based-search").hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
         },
 
 
@@ -2208,6 +2319,18 @@ RED.nodes.registerType('label',{
                         sensors.push($(this).data('node-id'));
                     }
                 });
+
+                var changedUser = false;
+                $.ajax({
+                    url: "getChangedUser/",
+                    type: "GET",
+                    async: false,
+                    success: function (resp) {
+                        if (resp.changedUser == "true") {
+                            changedUser = true;
+                        }
+                    }
+                });   
 
                 console.log("sensors are:")
                 console.log(sensors);
@@ -2354,7 +2477,7 @@ RED.nodes.registerType('label',{
 
             function createFlow(sensors, configData) {
                 configData = allDataIn;
-                if (!sensors.length) return;
+                if (!sensors.length || changedUser) return;
 
                 //numero id dei nodi che  devono essere generati
                 var idAmount = sensors.length * 4 + 7;
@@ -2431,7 +2554,7 @@ RED.nodes.registerType('label',{
                                 "z": flow_id,
                                 "name": "flow out",
                                 "links": [link_in_id],
-                                "x": 1200,
+                                "x": 1000,
                                 "y": middleY,
                                 "wires": []
                             }),
@@ -2515,7 +2638,7 @@ RED.nodes.registerType('label',{
                                         "z": "",
                                         "name": configData[sensors[i]]["ip"] + ":" + configData[
                                             sensors[i]]["port"],
-                                        "url": configData[sensors[i]]["ip"],
+                                        "url": configData[sensors[i]]["ip"].replace("https://", "").replace("http://", ""),
                                         "port": configData[sensors[i]]["port"]
                                     })
 
@@ -2527,6 +2650,7 @@ RED.nodes.registerType('label',{
                                         "z": flow_id,
                                         "name": "",
                                         "service": conf_id,
+                                        "tls": "",
                                         "throttle": "PT5S",
                                         "entype": configData[sensors[i]]["entityType"],
                                         "enid": sensors[i],
@@ -2716,7 +2840,7 @@ RED.nodes.registerType('label',{
             function createFlow_agg_device(sensors, configData) {
 
                 configData = allDataIn;
-                if (!sensors.length) return;
+                if (!sensors.length || changedUser) return;
 
                 //console.log( "Big, I am here, for Ssensors ", Ssensors );
 
@@ -2861,7 +2985,7 @@ RED.nodes.registerType('label',{
                                 "z": flow_id,
                                 "name": linkFunctionDTable[i].link_out_type,
                                 "links": [linkFunctionDTable[i].correspondingLinkIn],
-                                "x": 1200,
+                                "x": 1000,
                                 "y": middleY - linkFunctionDTable.length * offsetYstep / 2 + i *
                                     offsetYstep,
                                 "wires": []
@@ -2982,7 +3106,7 @@ RED.nodes.registerType('label',{
                                         "z": "",
                                         "name": configData[sensors[i]]["ip"] + ":" + configData[
                                             sensors[i]]["port"],
-                                        "url": configData[sensors[i]]["ip"],
+                                        "url": configData[sensors[i]]["ip"].replace("https://", "").replace("http://", ""),
                                         "port": configData[sensors[i]]["port"]
                                     })
 
@@ -3016,6 +3140,7 @@ RED.nodes.registerType('label',{
                                         "z": flow_id,
                                         "name": "",
                                         "service": conf_id,
+                                        "tls": "",
                                         "throttle": "PT5S",
                                         "entype": configData[sensors[i]]["entityType"],
                                         "enid": sensors[i],
@@ -3251,7 +3376,7 @@ RED.nodes.registerType('label',{
             function createFlow_agg_value(sensors, configData) {
 
                 configData = allDataIn;
-                if (!sensors.length) return;
+                if (!sensors.length || changedUser) return;
 
 
                 var idAmount = sensors.length * 4 + 2 + value_types.length * 4;
@@ -3398,7 +3523,7 @@ RED.nodes.registerType('label',{
                                 "z": flow_id,
                                 "name": linkFunctionVTable[i].link_out_type,
                                 "links": [linkFunctionVTable[i].correspondingLinkIn],
-                                "x": 1200,
+                                "x": 1000,
                                 "y": middleY - linkFunctionVTable.length * offsetYstep / 2 + i *
                                     offsetYstep,
                                 "wires": []
@@ -3482,7 +3607,7 @@ RED.nodes.registerType('label',{
                                         "z": "",
                                         "name": configData[sensors[i]]["ip"] + ":" + configData[
                                             sensors[i]]["port"],
-                                        "url": configData[sensors[i]]["ip"],
+                                        "url": configData[sensors[i]]["ip"].replace(/https:\/\//g, "").replace(/http:\/\//g, ""),
                                         "port": configData[sensors[i]]["port"]
                                     })
 
@@ -3495,6 +3620,7 @@ RED.nodes.registerType('label',{
                                         "z": flow_id,
                                         "name": "",
                                         "service": conf_id,
+                                        "tls": "",
                                         "throttle": "PT5S",
                                         "entype": configData[sensors[i]]["entityType"],
                                         "enid": sensors[i],
@@ -3698,8 +3824,10 @@ RED.nodes.registerType('label',{
 
 
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// IOT DIRECTORY OUT //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// IOT DIRECTORY OUT ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 <script type="text/javascript">
     RED.nodes.registerType('iot-directory-out', {
@@ -3708,6 +3836,10 @@ RED.nodes.registerType('label',{
         defaults: {
             name: {
                 value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
             },
             modcom: {
                 required: true
@@ -3760,6 +3892,57 @@ RED.nodes.registerType('label',{
 
         oneditprepare: function () {
 
+            var accessToken = "";
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                        $.ajax({
+                            url: "retrieveAccessTokenLocal",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    //VEDERE COSA FARE IN QUESTO CASO
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: "setChangedUser/",
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                "changedUser": "false"
+                            }
+                        });
+                        $.ajax({
+                            url: "retrieveAccessTokenAuthentication",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    $("#deviceTabButton").parent().hide();
+                                    $("#Device-based-search").hide();
+                                    $("#Value-based-search").hide();
+                                    $('#tipAuthenticationWrong').show();
+                                    $('#tipAuthentication').hide();
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    }
+                }
+            });
+
             $(".editor-tray").css("width", "700px");
             maxCanvasHeight = 0;
 
@@ -3789,6 +3972,17 @@ RED.nodes.registerType('label',{
             if (window.node_input_map_2) {
                 window.node_input_map_2.invalidateSize(true);
             };
+
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
 
 
             map = L.map('node-input-map').setView([43.78, 11.23], 10);
@@ -5306,162 +5500,169 @@ RED.nodes.registerType('label',{
             //var jqxhr = $.getJSON( "http://159.149.129.184:3001/api/get-config-data", function(data) {
             //var jqxhr = $.getJSON( "https://iotdirectory.snap4city.org/management/get_data.php?action=get-config-data", function(data) {
 
-            var accesstokenOut = "";
-            try {
-                console.log("in retrieving access token");
-                console.log("this.id " + this.id);
+            //var accesstokenOut = "";
+            if (accessToken != "") {
+                console.log("ACCESS TOKEN: " + accessToken);
+                var accesstokenOut = accessToken;
+                try {
+                    console.log("in retrieving access token");
+                    console.log("this.id " + this.id);
 
-                var accesstokenOut = "";
-                $.ajax({
-                    url: "deviceregistration/" + this.id,
-                    type: "GET",
-                    async: false,
-                    success: function (resp) {
-                        console.log(resp);
-                        //accesstokenOut = resp.accessToken;
-                        //accesstokenOut = resp.refreshToken;
-                        accesstokenOut = resp.accessToken;
+                    //var accesstokenOut = "";
+                    /* $.ajax({
+                        url: "deviceregistration/" + this.id,
+                        type: "GET",
+                        async: false,
+                        success: function (resp) {
+                            console.log(resp);
+                            //accesstokenOut = resp.accessToken;
+                            //accesstokenOut = resp.refreshToken;
+                            accesstokenOut = resp.accessToken; */
 
-                        var url = serverURL + "action=get_config_data";
+                    var url = serverURL + "action=get_config_data";
 
-                        if (typeof accesstokenOut != "undefined" && accesstokenOut != "" &&
-                            accesstokenOut != "undefined")
-                            url += "&nodered=yes&token=" + accesstokenOut;
+                    if (typeof accesstokenOut != "undefined" && accesstokenOut != "" &&
+                        accesstokenOut != "undefined")
+                        url += "&nodered=yes&token=" + accesstokenOut;
 
-                        console.log("url");
-                        console.log(url);
-                        console.log("accesstokenOut: ");
-                        console.log(accesstokenOut);
-                        console.log("accesstokenOut: " + resp.accessToken);
-                        console.log("refreshtokenOut: " + resp.refreshToken);
+                    console.log("url");
+                    console.log(url);
+                    console.log("accesstokenOut: ");
+                    console.log(accesstokenOut);
+                    /* console.log("accesstokenOut: " + resp.accessToken);
+                    console.log("refreshtokenOut: " + resp.refreshToken); */
 
-                        var jqxhr = $.getJSON(url, function (data) {
+                    var jqxhr = $.getJSON(url, function (data) {
+                            console.log("success");
+                            console.log(data);
+                        })
+                        .done(function (data) {
+                            console.log("second success");
+                            if (data.status == "ok") {
+
+                                data = data.content;
+                                allDataOut = data;
+                                // crea lista entiti principale
+                                node.configData = data;
+                                createNodeList();
+                                //crea dati per le select
+                                createRetrievePanel();
+                                // crea map
+                                drawMap();
+
+                                var marker_array = [];
+                                for (var k in data) {
+
+                                    lat = Number(data[k]["latitude"]); //45.4858914;
+                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    lng = Number(data[k]["longitude"]); //9.202094;
+                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    popup = "<b>" + data[k]['name'] + "</b><br>" + data[
+                                        k]['entityType'] + "<br>" + data[k]['kind'];
+                                    if (data[k]["visibility"] == "public") {
+
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: blueIcon
+                                        }).bindPopup(popup);
+                                    } else {
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: redIcon
+                                        }).bindPopup(popup);
+                                    }
+                                    marker_array.push(m);
+                                }
+
+                                var markersGroup = L.layerGroup(marker_array);
+                                markersGroup.addTo(map);
+
+                            } else {
+                                console.log(data.status);
+                            }
+
+                        })
+                        .fail(function () {
+                            console.log("error");
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
+
+
+                    var url_values = serverURL + "action=get_config_data_values";
+                    if (typeof accesstokenOut != "undefined" && accesstokenOut != "" &&
+                        accesstokenOut != "undefined")
+                        url_values += "&nodered=yes&token=" + accesstokenOut;
+
+                    console.log(url_values);
+                    var jqxhrValues = $.getJSON(url_values,
+                            function (data) {
                                 console.log("success");
                                 console.log(data);
                             })
-                            .done(function (data) {
+                        .done(function (data) {
+                            if (data.status == "ok") {
                                 console.log("second success");
-                                if (data.status == "ok") {
 
-                                    data = data.content;
-                                    allDataOut = data;
-                                    // crea lista entiti principale
-                                    node.configData = data;
-                                    createNodeList();
-                                    //crea dati per le select
-                                    createRetrievePanel();
-                                    // crea map
-                                    drawMap();
 
-                                    var marker_array = [];
-                                    for (var k in data) {
+                                data = data.content;
+                                allDataOut2 = data;
 
-                                        lat = Number(data[k]["latitude"]); //45.4858914;
-                                        est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        lng = Number(data[k]["longitude"]); //9.202094;
-                                        est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        popup = "<b>" + data[k]['name'] + "</b><br>" + data[
-                                            k]['entityType'] + "<br>" + data[k]['kind'];
-                                        if (data[k]["visibility"] == "public") {
+                                // crea lista entiti principale
+                                node2.configData = data;
+                                createNodeList2();
+                                //crea dati per le select
+                                createRetrievePanel2();
+                                // crea map
+                                drawMap2();
 
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: blueIcon
-                                            }).bindPopup(popup);
-                                        } else {
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: redIcon
-                                            }).bindPopup(popup);
-                                        }
-                                        marker_array.push(m);
+                                var marker_array = [];
+                                for (var k in data) {
+
+                                    lat = Number(data[k]["latitude"]); //45.4858914;
+                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    lng = Number(data[k]["longitude"]); //9.202094;
+                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                    popup = "<b>" + data[k]['device'] + "</b><br>" +
+                                        data[k]['value_type'];
+                                    if (data[k]["visibility"] == "private") {
+
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: redIcon
+                                        }).bindPopup(popup);
+                                    } else {
+                                        m = L.marker([est_lat, est_lng], {
+                                            icon: blueIcon
+                                        }).bindPopup(popup);
                                     }
 
-                                    var markersGroup = L.layerGroup(marker_array);
-                                    markersGroup.addTo(map);
-
-                                } else {
-                                    console.log(data.status);
+                                    marker_array.push(m);
                                 }
 
-                            })
-                            .fail(function () {
-                                console.log("error");
-                            })
-                            .always(function () {
-                                console.log("complete");
-                            });
+                                var markersGroup = L.layerGroup(marker_array);
+                                markersGroup.addTo(map2);
+
+                            }
 
 
-                        var url_values = serverURL + "action=get_config_data_values";
-                        if (typeof accesstokenOut != "undefined" && accesstokenOut != "" &&
-                            accesstokenOut != "undefined")
-                            url_values += "&nodered=yes&token=" + accesstokenOut;
+                        })
+                        .fail(function () {
+                            console.log("error");
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
+                    /* } 
+                 }); */
 
-                        console.log(url_values);
-                        var jqxhrValues = $.getJSON(url_values,
-                                function (data) {
-                                    console.log("success");
-                                    console.log(data);
-                                })
-                            .done(function (data) {
-                                if (data.status == "ok") {
-                                    console.log("second success");
+                } catch (err) {
+                    console.log("error creating the token " + err);
+                    accesstokenOut = "";
+                }
 
-
-                                    data = data.content;
-                                    allDataOut2 = data;
-
-                                    // crea lista entiti principale
-                                    node2.configData = data;
-                                    createNodeList2();
-                                    //crea dati per le select
-                                    createRetrievePanel2();
-                                    // crea map
-                                    drawMap2();
-
-                                    var marker_array = [];
-                                    for (var k in data) {
-
-                                        lat = Number(data[k]["latitude"]); //45.4858914;
-                                        est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        lng = Number(data[k]["longitude"]); //9.202094;
-                                        est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                        popup = "<b>" + data[k]['device'] + "</b><br>" +
-                                            data[k]['value_type'];
-                                        if (data[k]["visibility"] == "private") {
-
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: redIcon
-                                            }).bindPopup(popup);
-                                        } else {
-                                            m = L.marker([est_lat, est_lng], {
-                                                icon: blueIcon
-                                            }).bindPopup(popup);
-                                        }
-
-                                        marker_array.push(m);
-                                    }
-
-                                    var markersGroup = L.layerGroup(marker_array);
-                                    markersGroup.addTo(map2);
-
-                                }
-
-
-                            })
-                            .fail(function () {
-                                console.log("error");
-                            })
-                            .always(function () {
-                                console.log("complete");
-                            });
-                    }
-                });
-
-            } catch (err) {
-                console.log("error creating the token " + err);
-                accesstokenOut = "";
+            } else {
+                $("#Device-based-search").hide();
+                $("#Value-based-search").hide();
             }
-
 
 
 
@@ -5479,6 +5680,45 @@ RED.nodes.registerType('label',{
             if (window.node_input_map) {
                 window.node_input_map.invalidateSize(true);
             }
+
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (!resp.result) {
+                        if ($("#node-input-authentication").children().length > 1) {
+                            $("#node-input-authentication option[value='_ADD_']").remove();
+                        }
+                        $.ajax({
+                            url: "getChangedUser/",
+                            type: "GET",
+                            async: false,
+                            success: function (resp) {
+                                if (resp.changedUser == "true") {
+                                    $("#tipAuthentication").hide();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").show();
+                                    $("#deviceTabButton").parent().hide();
+                                    $("#Device-based-search").hide();
+                                    $("#Value-based-search").hide();
+                                }
+                            },
+                            error: function (err) {
+                                if (err.status == 404) {
+                                    $("#tipAuthentication").show();
+                                    $("#tipAuthenticationDeployFirstTime").show();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").hide();
+                                    $("#deviceTabButton").parent().hide();
+                                    $("#Device-based-search").hide();
+                                    $("#Value-based-search").hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
         },
 
         oneditsave: function () {
@@ -5621,10 +5861,17 @@ RED.nodes.registerType('label',{
 
             //console.log("configData is ");
             //console.log(configData);
-
-
-
-
+            var changedUser = false;
+            $.ajax({
+                url: "getChangedUser/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.changedUser == "true") {
+                        changedUser = true;
+                    }
+                }
+            });        
 
             /*** array di sensori  selezionati da pannello di configurazione  ***/
 
@@ -5637,7 +5884,7 @@ RED.nodes.registerType('label',{
                 /*** controllo iniziale se sono stati selzionati sensori  ***/
 
                 configData = allDataOut;
-                if (!sensors.length) return;
+                if (!sensors.length || changedUser) return;
 
 
 
@@ -5676,10 +5923,6 @@ RED.nodes.registerType('label',{
                         //curr flow
                         var link_in_id = data.ids[counter_id++] //5
                         var curr_flow_id = data.ids[counter_id++]; //6
-
-
-
-
 
                         console.log("counterid=" + counter_id);
 
@@ -5810,13 +6053,43 @@ RED.nodes.registerType('label',{
    	                        */
 
                                     newflow.push({
+                                        "id": conf_id,
+                                        "type": "orion-service",
+                                        "z": "",
+                                        "name": configData[sensors[i]]["ip"] + ":" + configData[
+                                            sensors[i]]["port"],
+                                        "url": configData[sensors[i]]["ip"].replace("https://", "").replace("http://", ""),
+                                        "port": configData[sensors[i]]["port"]
+                                    })
+
+                                    newflow.push({
+                                        "id": node_id,
+                                        "type": "fiware-orion-out",
+                                        "z": flow_id,
+                                        "name": "",
+                                        "service": conf_id,
+                                        "tls": "",
+                                        "entype": configData[sensors[i]]["entityType"],
+                                        "enid": sensors[i],
+                                        "userk1": configData[sensors[i]]["k1"],
+                                        "passk2": configData[sensors[i]]["k2"],
+                                        "x": 800,
+                                        "y": offsetY,
+                                        "wires": [
+                                            [
+                                                
+                                            ]
+                                        ]
+                                    })
+
+                                    /* newflow.push({
                                         "id": node_id,
                                         "type": "http request",
                                         "z": flow_id,
                                         "name": sensors[i],
                                         "method": "POST",
                                         "ret": "txt",
-                                        "url": "http://" + configData[sensors[i]]["ip"] + ":" +
+                                        "url": configData[sensors[i]]["ip"] + ":" +
                                             configData[sensors[i]]["port"] + "/v2/entities/" +
                                             sensors[i] + "/attrs/",
                                         "tls": "",
@@ -5828,7 +6101,7 @@ RED.nodes.registerType('label',{
                                             ]
                                         ]
 
-                                    })
+                                    }) */
 
 
                                     break;
@@ -6101,20 +6374,6 @@ RED.nodes.registerType('label',{
 
                         }, 250);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                         console.log("newflow is");
                         console.log(JSON.stringify(newflow));
 
@@ -6135,7 +6394,7 @@ RED.nodes.registerType('label',{
                 /*** controllo iniziale se sono stati selzionati sensori  ***/
 
                 configData = allDataOut;
-                if (!sensors.length) return;
+                if (!sensors.length || changedUser) return;
 
 
 
@@ -6292,8 +6551,36 @@ RED.nodes.registerType('label',{
                                     orion_ids.push(node_id);
 
 
+                                    newflow.push({
+                                        "id": conf_id,
+                                        "type": "orion-service",
+                                        "z": "",
+                                        "name": configData[sensors[i]]["ip"] + ":" + configData[
+                                            sensors[i]]["port"],
+                                        "url": configData[sensors[i]]["ip"].replace("https://", "").replace("http://", ""),
+                                        "port": configData[sensors[i]]["port"]
+                                    })
 
                                     newflow.push({
+                                        "id": node_id,
+                                        "type": "fiware-orion-out",
+                                        "z": flow_id,
+                                        "name": "",
+                                        "service": conf_id,
+                                        "tls": "",
+                                        "entype": configData[sensors[i]]["entityType"],
+                                        "enid": sensors[i],
+                                        "userk1": configData[sensors[i]]["k1"],
+                                        "passk2": configData[sensors[i]]["k2"],
+                                        "x": 800,
+                                        "y": offsetY,
+                                        "wires": [
+                                            [
+                                                
+                                            ]
+                                        ]
+                                    })
+                                   /*  newflow.push({
                                         "id": node_id,
                                         "type": "http request",
                                         "z": flow_id,
@@ -6312,7 +6599,7 @@ RED.nodes.registerType('label',{
                                             ]
                                         ]
 
-                                    })
+                                    }) */
 
 
                                     break;
@@ -6637,7 +6924,7 @@ RED.nodes.registerType('label',{
                 /*** controllo iniziale se sono stati selzionati sensori  ***/
 
                 configData = allDataOut;
-                if (!sensors.length) return;
+                if (!sensors.length || changedUser) return;
 
 
 
@@ -6772,10 +7059,37 @@ RED.nodes.registerType('label',{
                             switch (protocol) {
                                 case "ngsi":
                                     orion_ids.push(node_id);
-
-
+                                    newflow.push({
+                                        "id": conf_id,
+                                        "type": "orion-service",
+                                        "z": "",
+                                        "name": configData[sensors[i]]["ip"] + ":" + configData[
+                                            sensors[i]]["port"],
+                                        "url": configData[sensors[i]]["ip"].replace("https://", "").replace("http://", ""),
+                                        "port": configData[sensors[i]]["port"]
+                                    })
 
                                     newflow.push({
+                                        "id": node_id,
+                                        "type": "fiware-orion-out",
+                                        "z": flow_id,
+                                        "name": "",
+                                        "service": conf_id,
+                                        "tls": "",
+                                        "entype": configData[sensors[i]]["entityType"],
+                                        "enid": sensors[i],
+                                        "userk1": configData[sensors[i]]["k1"],
+                                        "passk2": configData[sensors[i]]["k2"],
+                                        "x": 800,
+                                        "y": offsetY,
+                                        "wires": [
+                                            [
+                                            ]
+                                        ]
+                                    })
+
+
+                                    /* newflow.push({
                                         "id": node_id,
                                         "type": "http request",
                                         "z": flow_id,
@@ -6794,7 +7108,7 @@ RED.nodes.registerType('label',{
                                             ]
                                         ]
 
-                                    })
+                                    }) */
 
 
                                     break;
@@ -7099,8 +7413,27 @@ RED.nodes.registerType('label',{
 </script>
 
 
-//////////////////////////////////////////////////// // IOT DIRECTORY IN ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// // IOT DIRECTORY IN
+////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="iot-directory-in">
+
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
+    </div>
+    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to retrieve the updated list of IoT Devices.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to retrieve the updated list of IoT Devices.
+	</div>
 
     <div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Device-based-search')" id="deviceTabButton">Device-based search</button>
@@ -7524,8 +7857,27 @@ RED.nodes.registerType('label',{
 
 
 
-//////////////////////////////////////////////////// // IOT DIRECTORY IN SCRIPT OUT ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// // IOT DIRECTORY IN SCRIPT OUT
+////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="iot-directory-out">
+
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
+    </div>
+    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to retrieve the updated list of IoT Devices.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to retrieve the updated list of IoT Devices.
+	</div>
 
     <div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Device-based-search')" id="deviceTabButton">Device-based search</button>
@@ -7924,8 +8276,10 @@ RED.nodes.registerType('label',{
 
 
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// iot-directory-link-in //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// iot-directory-link-in ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 
 
@@ -7943,8 +8297,10 @@ RED.nodes.registerType('label',{
     <div class="form-row node-input-link-row"></div>
 </script>
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// iot-directory-link-out //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// iot-directory-link-out ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 
 
@@ -7961,8 +8317,10 @@ RED.nodes.registerType('label',{
 </script>
 
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// iot-directory-link-in //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// iot-directory-link-in ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 
 
@@ -7979,8 +8337,10 @@ RED.nodes.registerType('label',{
 
 
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// iot-directory-link-out //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// iot-directory-link-out ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 
 
@@ -7998,8 +8358,10 @@ RED.nodes.registerType('label',{
 
 
 
-//////////////////////////////////////////////////// //////////////////////////////////////////////////// ////////////////////////////////////////////////////
-// iot-directory-link all //////////////////////////////////////////////////// ////////////////////////////////////////////////////
+//////////////////////////////////////////////////// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// iot-directory-link all ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 ////////////////////////////////////////////////////
 
 

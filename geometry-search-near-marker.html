@@ -109,6 +109,16 @@
             return this.name || "geometry-search-near-marker";
         },
         oneditprepare: function () {
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
             node = this;
             map = L.map('node-input-map').setView([43.78, 11.23], 9);
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {

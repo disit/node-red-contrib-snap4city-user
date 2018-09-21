@@ -1,0 +1,81 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/javascript">
+    RED.nodes.registerType('snap4city-authentication', {
+        category: 'config',
+        defaults: {
+            name: {
+                value: ""
+            }
+        },
+        credentials: {
+            user: {
+                type: "text"
+            },
+            password: {
+                type: "password"
+            }
+        },
+        oneditprepare: function(){
+            $("#node-config-input-oldName").val($("#node-config-input-user").val());
+            $(".editor-tray-toolbar button.leftButton").attr("disabled", true)
+        },
+        oneditsave: function(){
+            if ($("#node-config-input-user").val() != $("#node-config-input-oldName").val()){
+                $.ajax({
+                    url: "setChangedUser/",
+                    async: false,
+                    type: "POST",
+                    dataType: "json",
+                    data: {"changedUser": "true"}
+                });
+            }
+        },
+        label: function () {
+            return this.name || 'snap4city-authentication';
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="snap4city-authentication">
+    <input type="hidden" id="node-config-input-oldName">
+    <div class="form-row">
+        <label for="node-config-input-name">
+            <i class="fa fa-globe"></i>
+            Name
+        </label>
+        <input type="text" id="node-config-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-user">
+            <i class="fa fa-user"></i>
+            Username
+        </label>
+        <input type="text" id="node-config-input-user">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password">
+            <i class="fa fa-lock"></i>
+            Password
+        </label>
+        <input type="password" id="node-config-input-password">
+    </div>
+    <div class="form-tips"  id="tip-authentication" >
+        You must have an account with Snap4city to use this node. You can register for one
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+</script>

@@ -15,44 +15,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function eventLog(inPayload, outPayload, config, _agent, _motivation, _ipext, _modcom) {
-        var os = require('os');
-        var ifaces = os.networkInterfaces();
-        var uri = "http://192.168.1.43/RsyslogAPI/rsyslog.php";
-
-        var pidlocal = RED.settings.APPID;
-        var iplocal = null;
-        Object.keys(ifaces).forEach(function (ifname) {
-            ifaces[ifname].forEach(function (iface) {
-                if ('IPv4' !== iface.family || iface.internal !== false) {
-                    // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-                    return;
-                }
-                iplocal = iface.address;
-            });
-        });
-        iplocal = iplocal + ":" + RED.settings.uiPort;
-        var timestamp = new Date().getTime();
-        var modcom = _modcom;
-        var ipext = _ipext;
-        var payloadsize = JSON.stringify(outPayload).length / 1000;
-        var agent = _agent;
-        var motivation = _motivation;
-        var lang = (inPayload.lang ? inPayload.lang : config.lang);
-        var lat = (inPayload.lat ? inPayload.lat : config.lat);
-        var lon = (inPayload.lon ? inPayload.lon : config.lon);
-        var serviceuri = (inPayload.serviceuri ? inPayload.serviceuri : config.serviceuri);
-        var message = (inPayload.message ? inPayload.message : config.message);
-        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-        var xmlHttp = new XMLHttpRequest();
-        console.log(encodeURI(uri + "?p=log" + "&pid=" + pidlocal + "&tmstmp=" + timestamp + "&modCom=" + modcom + "&IP_local=" + iplocal + "&IP_ext=" + ipext +
-            "&payloadSize=" + payloadsize + "&agent=" + agent + "&motivation=" + motivation + "&lang=" + lang + "&lat=" + (typeof lat != "undefined" ? lat : 0.0) + "&lon=" + (typeof lon != "undefined" ? lon : 0.0) + "&serviceUri=" + serviceuri + "&message=" + message));
-        xmlHttp.open("GET", encodeURI(uri + "?p=log" + "&pid=" + pidlocal + "&tmstmp=" + timestamp + "&modCom=" + modcom + "&IP_local=" + iplocal + "&IP_ext=" + ipext +
-            "&payloadSize=" + payloadsize + "&agent=" + agent + "&motivation=" + motivation + "&lang=" + lang + "&lat=" + (typeof lat != "undefined" ? lat : 0.0) + "&lon=" + (typeof lon != "undefined" ? lon : 0.0) + "&serviceUri=" + serviceuri + "&message=" + message), true); // false for synchronous request
-        xmlHttp.send(null);
-    }
-
     function RecommendationsWithinCircle(config) {
+        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
         node.on('input', function (msg) {
@@ -62,7 +26,7 @@ module.exports = function (RED) {
             var maxDists = (msg.payload.maxdists ? msg.payload.maxdists : config.maxdists);
             var language = (msg.payload.lang ? msg.payload.lang : config.lang);
             var profile = (msg.payload.profile ? msg.payload.profile : config.profile);
-            var uid = RED.settings.APPID;
+            var uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
@@ -80,7 +44,7 @@ module.exports = function (RED) {
                         } else {
                             msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
                         }
-                        eventLog(inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
+                        s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msg);
                     } else {
                         console.error(xmlHttp.statusText);

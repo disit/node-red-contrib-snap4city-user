@@ -263,7 +263,7 @@ module.exports = function (RED) {
         } else {
             this.error(RED._("websocket.errors.missing-conf"));
         }
-        this.on('close', function () {
+        node.on('close', function () {
             if (node.serverConfig) {
                 node.serverConfig.removeInputNode(node);
             }
@@ -335,7 +335,7 @@ module.exports = function (RED) {
                 }
             }
         });
-        this.on('close', function () {
+        node.on('close', function () {
             node.status({});
         });
     }

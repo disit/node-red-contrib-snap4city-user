@@ -114,8 +114,8 @@
 
 </script>
 
-<script type="text/javascript" src="s4c/js/leaflet.js"></script>
-<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script>
+<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
 
 <script type="text/javascript">
     RED.nodes.registerType('bus-routes-search-near-marker', {
@@ -158,6 +158,17 @@
             return this.name || "bus-routes-search-near-marker";
         },
         oneditprepare: function () {
+            node = this;
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
             node = this;
             map = L.map('node-input-map').setView([43.78, 11.23], 9);
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {

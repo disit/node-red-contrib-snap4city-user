@@ -65,11 +65,17 @@
     </div>
 </script>
 
-<script type="text/javascript" src="s4c/js/leaflet.js"></script>
-<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script>
-<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script>
+<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
 
 <script type="text/javascript">
+    $.ajax({
+        url: "s4c/js/jquery.fancytree-all.min.js",
+        async: false,
+        dataType: "script"
+    });
+
     function selectCategories() {
         selectedKeys = [];
         if ($("#node-input-fancytree").fancytree("getTree").isFilterActive()) {
@@ -132,6 +138,16 @@
             return this.name || "service-search-within-polygon";
         },
         oneditprepare: function () {
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
             node = this;
             map = L.map('node-input-map').setView([43.78, 11.23], 9);
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {

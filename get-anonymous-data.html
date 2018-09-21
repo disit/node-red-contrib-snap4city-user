@@ -21,6 +21,10 @@
             name: {
                 value: ""
             },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
             variablename: {
                 value: ""
             },
@@ -34,6 +38,24 @@
                 value: ""
             }
         },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
+            }
+        },
         outputs: 1,
         inputs: 1,
         icon: "white-globe.png",
@@ -44,6 +66,10 @@
 </script>
 
 <script type="text/x-red" data-template-name="get-anonymous-data">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
     <div class="form-row">
         <label for="node-input-name">Motivation</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Motivation">
@@ -69,6 +95,11 @@
             <option value="10">10</option>
             <option value="20">20</option>
         </select>
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+        You must have an account with Snap4city to use this node. You can register for one
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
     </div>
 </script>
 

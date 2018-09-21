@@ -120,7 +120,6 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('device-registration-user', {
-
         category: 'S4CIoT',
         color: //function() {
             //return nodeColor()|| '#a6bbcf';
@@ -129,6 +128,10 @@
         defaults: {
             name: {
                 value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
             },
             modcom: {
                 required: true
@@ -170,6 +173,42 @@
 
 
         oneditprepare: function () {
+
+            var accessToken = "";
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    } else {
+                        $.ajax({
+                            url: "setChangedUser/",
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                "changedUser": "false"
+                            }
+                        });
+                        $.ajax({
+                            url: "retrieveAccessTokenAuthentication",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    $("#deviceRegistrationUserContainer").hide();
+                                    $('#tipAuthenticationWrong').show();
+                                    $('#tipAuthentication').hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
             isSuccess = 0;
             var node = this;
             this._def.color = '#a6bbcf';
@@ -239,6 +278,17 @@
             addonChangeListener('');
 
 
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
+            node = this;
             map = L.map('node-input-map').setView([43.78, 11.23], 9);
             L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -426,6 +476,40 @@
                 window.node_input_map.invalidateSize(true);
             }
 
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (!resp.result) {
+                        if ($("#node-input-authentication").children().length > 1) {
+                            $("#node-input-authentication option[value='_ADD_']").remove();
+                        }
+                        $.ajax({
+                            url: "getChangedUser/",
+                            type: "GET",
+                            async: false,
+                            success: function (resp) {
+                                if (resp.changedUser == "true") {
+                                    $("#tipAuthentication").hide();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").show();
+                                    $("#deviceRegistrationUserContainer").hide();
+                                }
+                            },
+                            error: function (err) {
+                                if (err.status == 404) {
+                                    $("#tipAuthentication").show();
+                                    $("#tipAuthenticationDeployFirstTime").show();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").hide();
+                                    $("#deviceRegistrationUserContainer").hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
 
             var pos = $("#node-dialog-ok").position();
             var w = $("#node-dialog-ok").width();
@@ -630,107 +714,141 @@
 
     function sendToServer(id) {
 
+        var accessToken = "";
+        $.ajax({
+            url: "isThereLocalRefreshToken/",
+            type: "GET",
+            async: false,
+            success: function (resp) {
+                if (resp.result) {
+                    $.ajax({
+                        url: "retrieveAccessTokenLocal",
+                        type: "GET",
+                        async: false,
+                        success: function (_data) {
+                            if (_data.accessToken == "") {
+                                //VEDERE COSA FARE IN QUESTO CASO
+                            } else {
+                                accessToken = _data.accessToken;
+                            };
+                        }
+                    });
+                } else {
+                    $.ajax({
+                        url: "retrieveAccessTokenAuthentication",
+                        type: "GET",
+                        async: false,
+                        success: function (_data) {
+                            if (_data.accessToken == "") {
+                                //VEDERE COSA FARE IN QUESTO CASO
+                            } else {
+                                accessToken = _data.accessToken;
+                            };
+                        }
+                    });
+                }
+            }
+        });
 
 
-
-        var accesstoken = "";
+        var accesstoken = accessToken;
         var payload = {};
 
         console.log("k1 " + $("#node-input-k1").val());
         console.log("k2 " + $("#node-input-k2").val());
+        if (accesstoken != "") {
+            try {
+                //var accesstoken = "";
+                console.log("in retrieving access token");
+                console.log("this.id " + id);
 
-        try {
-            var accesstoken = "";
-            console.log("in retrieving access token");
-            console.log("this.id " + id);
-
-            $.ajax({
-                url: "deviceregistration/" + id,
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    console.log(resp);
-                    accesstoken = resp.accessToken;
-
-
-                    var payload = {
-                        action: "insert",
-                        attributes: attributes, // JSON.stringify(mynewAttributes),
-                        id: $("#node-input-name").val(),
-                        type: devicetype, //$("#node-input-devicetype").val(),
-                        kind: kind, //$("#node-input-devicekind").val(),
-                        contextbroker: contextbroker, //$("#node-input-contextbroker").val(),
-                        protocol: protocol, //nameprotocol,
-                        format: format, // nameformat,
-                        healthiness_criteria: healthiness_criteria,
-                        healthiness_value: healthiness_value,
-                        mac: "",
-                        model: "", //$("#node-input-devicemodel").val(),
-                        producer: producer, // $("#node-input-deviceproducer").val(),
-                        latitude: $("#node-input-devicelatitude").val(),
-                        longitude: $("#node-input-devicelongitude").val(),
-                        visibility: "private",
-                        owner: "marco",
-                        frequency: frequency, //"0"
-                        nodered: "yes",
-                        token: accesstoken,
-                        k1: $("#node-input-k1").val(),
-                        k2: $("#node-input-k2").val()
-                    };
+                /* $.ajax({
+                    url: "deviceregistration/" + id,
+                    type: "GET",
+                    async: false,
+                    success: function (resp) {
+                        console.log(resp);
+                        accesstoken = resp.accessToken; */
 
 
-                    $.ajax({
-                        url: "https://iotdirectory.snap4city.org/api/device.php",
-                        type: "POST",
-                        data: payload,
-                        dataType: "json",
-                        success: function (data) {
-                            console.log("success" + JSON.stringify(data));
-                            if (data.status == "ok") {
-                                alert("Your device registration has been done!");
-                                isdone = true;
-                                isSuccess = 1;
-                            } else {
-                                alert("Your device registration is not valid. " + data.msg +
-                                    " Please try again!");
-                                isdone = false;
-                                isSuccess = -1;
-                            }
+                var payload = {
+                    action: "insert",
+                    attributes: attributes, // JSON.stringify(mynewAttributes),
+                    id: $("#node-input-name").val(),
+                    type: devicetype, //$("#node-input-devicetype").val(),
+                    kind: kind, //$("#node-input-devicekind").val(),
+                    contextbroker: contextbroker, //$("#node-input-contextbroker").val(),
+                    protocol: protocol, //nameprotocol,
+                    format: format, // nameformat,
+                    healthiness_criteria: healthiness_criteria,
+                    healthiness_value: healthiness_value,
+                    mac: "",
+                    model: "", //$("#node-input-devicemodel").val(),
+                    producer: producer, // $("#node-input-deviceproducer").val(),
+                    latitude: $("#node-input-devicelatitude").val(),
+                    longitude: $("#node-input-devicelongitude").val(),
+                    visibility: "private",
+                    owner: "marco",
+                    frequency: frequency, //"0"
+                    nodered: "yes",
+                    token: accesstoken,
+                    k1: $("#node-input-k1").val(),
+                    k2: $("#node-input-k2").val()
+                };
 
-                            if (isdone) {
-                                $("#node-dialog-ok").css('background', '#A81A31').css(
-                                    'border-color', '#A81A31');
-                            }
-                        },
-                        error: function (data) {
-                            console.log("error");
-                            console.log(data);
-                            // if( isdone){
-                            //NODE._def.color= '#E9967A';
-                            alert("Your device registration has failed! please try again");
-                            // }
-                            // else{
-                            //        alert("Your device registration is not valid. The device name already exists, please choose another one and try again!"); 
-                            //    }
-                            console.log("Ko result: " + JSON.stringify(data));
+
+                $.ajax({
+                    url: "https://iotdirectory.snap4city.org/api/device.php",
+                    type: "POST",
+                    data: payload,
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("success" + JSON.stringify(data));
+                        if (data.status == "ok") {
+                            alert("Your device registration has been done!");
+                            isdone = true;
+                            isSuccess = 1;
+                        } else {
+                            alert("Your device registration is not valid. " + data.msg +
+                                " Please try again!");
                             isdone = false;
                             isSuccess = -1;
-
                         }
-                    });
-                },
+
+                        if (isdone) {
+                            $("#node-dialog-ok").css('background', '#A81A31').css(
+                                'border-color', '#A81A31');
+                        }
+                    },
+                    error: function (data) {
+                        console.log("error");
+                        console.log(data);
+                        // if( isdone){
+                        //NODE._def.color= '#E9967A';
+                        alert("Your device registration has failed! please try again");
+                        // }
+                        // else{
+                        //        alert("Your device registration is not valid. The device name already exists, please choose another one and try again!"); 
+                        //    }
+                        console.log("Ko result: " + JSON.stringify(data));
+                        isdone = false;
+                        isSuccess = -1;
+
+                    }
+                });
+                /* },
                 error: function (jqXHR, textStatus, errorThrown) {
                     console.log("ERROR");
                 }
-            });
+            }); */
 
 
-        } catch (err) {
-            console.log("error in access token " + err);
+            } catch (err) {
+                console.log("error in access token " + err);
+
+            }
 
         }
-
-
 
 
 
@@ -795,6 +913,25 @@
 
 
 <script type="text/x-red" data-template-name="device-registration-user">
+
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
+    </div>
+    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to retrieve the updated list of IoT Devices.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to retrieve the updated list of IoT Devices.
+	</div>
+    <div id="deviceRegistrationUserContainer">
     <div class="form-row" id="child">
         <label for="node-input-name">
             <i class="fa"></i> Device Name
@@ -817,7 +954,6 @@
         <link rel="stylesheet" href="s4c/css/leaflet.css" />
         <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
         <div id="node-input-map" style="height: 400px"></div>
-    </div>
     </div>
 
     <!--<div class="form-row">
@@ -871,15 +1007,13 @@
     <div>
         <p id="node-input-k-label-normal" style="font-size:12px; color:#808080">
             <i class="fa"></i>These keys have been generated automatically for your device. Keep track of them. Details on
-            <a style="font-size:12px; align-left: "
-                href="https://www.snap4city.org/drupal/node/76">info</a>
+            <a style="font-size:12px; align-left: " href="https://www.snap4city.org/drupal/node/76">info</a>
         </p>
     </div>
     <div>
         <p id="node-input-k-label-sigfox" style="font-size:12px; color:#808080">
             <i class="fa"></i>Generate in your SigFox server the keys and report them here. Details on
-            <a style="font-size:12px; align-left: "
-                href="https://www.snap4city.org/drupal/node/76">info</a>
+            <a style="font-size:12px; align-left: " href="https://www.snap4city.org/drupal/node/76">info</a>
         </p>
     </div>
     <!--
@@ -894,10 +1028,7 @@
     </div>
 
     <div id="done-cover" width="0px" height="0px></div>
-
+</div>
     
     
   </script>
-
-  <script type=" text/javascript " src="s4c/js/leaflet.js "></script>
-  <script type="text/javascript " src="s4c/js/leaflet.draw.js "></script>

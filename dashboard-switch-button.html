@@ -40,6 +40,10 @@
             flowName: {
                 value: ""
             },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
             username: {
                 value: ""
             },
@@ -77,27 +81,116 @@
         align: 'left',
         oneditprepare: function () {
             $("#node-input-dashboardTitle").val("");
-            $('#node-input-username').val($('#usermenu-item-username span b').text());
+            var accessToken = "";
+            var username = "";
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                        $.ajax({
+                            url: "retrieveAccessTokenLocal",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    //VEDERE COSA FARE IN QUESTO CASO
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                        if ($('#usermenu-item-username span b').length > 0) {
+                            username = $('#usermenu-item-username span b').text();
+                        }
+                    } else {
+                        $.ajax({
+                            url: "setChangedUser/",
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                "changedUser": "false"
+                            }
+                        });
+                        $.ajax({
+                            url: "retrieveAccessTokenAuthentication",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    $("#selectDashboardContainer").hide();
+                                    $("#selectWidgetName").hide();
+                                    $('#node-dashboard-view').hide();
+                                    $('#node-dashboard-edit').hide();
+                                    $('#tipAuthenticationWrong').show();
+                                    $('#tipAuthentication').hide();
+                                } else {
+                                    username = _data.username;
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    }
+                }
+            });
             $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
             $('#node-dashboard-edit').click(function () {
                 if ($('#node-input-dashboardTitle').val() != null && $('#node-input-dashboardTitle')
                     .val() != "") {
-                    window.open($('#node-input-dashboardManagerBaseUrl').val() +
-                        "/controllers/openNRDashboardEditor.php?username=" + $(
-                            '#usermenu-item-username span b').html() + "&dashboardTitle=" +
-                        encodeURIComponent($('#node-input-dashboardTitle').val()), '_blank');
+                    var dashboardTitle = $('#node-input-dashboardTitle').val();
+                    try {
+                        var dashboardTitleJson = JSON.parse(dashboardTitle);
+                        dashboardTitle = dashboardTitleJson.title;
+                    } catch (e) {
+                        //NOTHING TO DO
+                    }
+                    $.ajax({
+                        url: "dashboardManagerBaseUrl",
+                        type: "GET",
+                        async: true,
+                        success: function (_data) {
+                            window.open(_data.dashboardManagerBaseUrl +
+                                "/controllers/openNRDashboardEditor.php?username=" +
+                                username +
+                                "&dashboardTitle=" +
+                                encodeURIComponent(dashboardTitle),
+                                '_blank');
+                        }
+                    });
                 } else {
                     alert("Select a dashboard or enter the name of a new one");
                 }
             });
 
             $('#node-dashboard-view').click(function () {
-                if ($('#node-input-dashboardTitle').val() != null && $('#node-input-dashboardTitle')
+                if ($('#node-input-dashboardTitle').val() != null && $(
+                        '#node-input-dashboardTitle')
                     .val() != "") {
-                    window.open($('#node-input-dashboardManagerBaseUrl').val() +
-                        "/controllers/openNRDashboardViewer.php?username=" + $(
-                            '#usermenu-item-username span b').html() + "&dashboardTitle=" +
-                        encodeURIComponent($('#node-input-dashboardTitle').val()), '_blank');
+                    var dashboardTitle = $('#node-input-dashboardTitle').val();
+                    try {
+                        var dashboardTitleJson = JSON.parse(dashboardTitle);
+                        dashboardTitle = dashboardTitleJson.title;
+                    } catch (e) {
+                        //NOTHING TO DO
+                    }
+                    $.ajax({
+                        url: "dashboardManagerBaseUrl",
+                        type: "GET",
+                        async: true,
+                        success: function (_data) {
+                            window.open(_data.dashboardManagerBaseUrl +
+                                "/controllers/openNRDashboardViewer.php?username=" +
+                                username +
+                                "&dashboardTitle=" +
+                                encodeURIComponent(dashboardTitle),
+                                '_blank'
+                            );
+                        }
+                    });
                 } else {
                     alert("Select a dashboard or enter the name of a new one");
                 }
@@ -130,57 +223,124 @@
                 $("#node-input-createNewClicked").val("false");
             });
 
-            $("#node-input-dashboardTitle").empty();
-
-            $.ajax({
-                url: $('#node-input-dashboardManagerBaseUrl').val() +
-                    "/api/nodeRedDashboardsApi.php?secret=45awwprty_zzq34&username=" + $(
-                        '#node-input-username').val(),
-                type: "GET",
-                async: true,
-                dataType: "json",
-                success: function (data) {
-                    if (data.length != 0) {
-                        for (var i = 0; i < data.length; i++) {
-                            $("<option value=\"" + data[i] + "\">" + decodeURI(data[i].replace(
-                                /\+/g, " ")) + "</option>").appendTo($(
-                                "#node-input-dashboardTitle"));
-                            if (decodeURI(data[i].replace(/\+/g, " ")) == $(
-                                    "#node-input-selectedDashboard").val()) {
-                                $("#node-input-createNewClicked").val("false");
-                            }
-                        }
-
-                        if ($("#node-input-createNewClicked").val() != null && $("#node-input-createNewClicked").val() ==
-                            "true") {
-                                $("#createNewDashboardTitle").click();
-                        }
-                        $("#node-input-dashboardTitle").val($("#node-input-selectedDashboard").val());
-                    } else {
-                        $("#createNewDashboardTitle").click();
-                        $("#node-input-dashboardTitle").val($("#node-input-selectedDashboard").val());
-                    }
-                },
-                error: function (err) {
-                    $("#createNewDashboardTitle").click();
-                    $("#node-input-dashboardTitle").val($("#node-input-selectedDashboard").val());
-                    console.log(err);
-                }
-            });
+            $("#node-input-username").val(username);
+            refreshDashboardSelection(username, accessToken);
         },
         oneditsave: function () {
             $("#node-input-selectedDashboard").val($("#node-input-dashboardTitle").val());
+        },
+        oneditresize: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (!resp.result) {
+                        if ($("#node-input-authentication").children().length > 1) {
+                            $("#node-input-authentication option[value='_ADD_']").remove();
+                        }
+                        $.ajax({
+                            url: "getChangedUser/",
+                            type: "GET",
+                            async: false,
+                            success: function (resp) {
+                                if (resp.changedUser == "true") {
+                                    $("#tipAuthentication").hide();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").show();
+                                    $("#selectDashboardContainer").hide();
+                                    $("#selectWidgetName").hide();
+                                    $('#node-dashboard-view').hide();
+                                    $('#node-dashboard-edit').hide();
+                                }
+                            },
+                            error: function (err) {
+                                if (err.status == 404) {
+                                    $("#tipAuthentication").show();
+                                    $("#tipAuthenticationDeployFirstTime").show();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").hide();
+                                    $("#selectDashboardContainer").hide();
+                                    $("#selectWidgetName").hide();
+                                    $('#node-dashboard-view').hide();
+                                    $('#node-dashboard-edit').hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
         }
     });
+
+    var refreshDashboardSelection = function (username, accessToken) {
+        $("#node-input-dashboardTitle").empty();
+
+        if (username != "" && accessToken != "") {
+            $.ajax({
+                url: "dashboardManagerBaseUrl",
+                type: "GET",
+                async: false,
+                success: function (_data) {
+                    $.ajax({
+                        url: _data.dashboardManagerBaseUrl +
+                            "/api/nodeRedDashboardsApi.php?v2&secret=" + _data.dashboardSecret +
+                            "&username=" + username + "&accessToken=" +
+                            accessToken,
+                        type: "GET",
+                        async: true,
+                        dataType: "json",
+                        success: function (data) {
+                            if (data.length != 0) {
+                                $('#node-dashboard-view').show();
+                                $('#node-dashboard-edit').show();
+                                $("#node-input-dashboardTitle").empty();
+                                var currentValue = $("#node-input-selectedDashboard").val();
+                                for (var i = 0; i < data.length; i++) {
+                                    $("<option value='" + JSON.stringify(data[i]) + "'>" +
+                                            decodeURI(data[i].title.replace(
+                                                /\+/g, " ")) + "</option>")
+                                        .appendTo($("#node-input-dashboardTitle"));
+                                    if (JSON.stringify(data[i]) == $(
+                                            "#node-input-selectedDashboard").val() || data[i].title == $(
+                                            "#node-input-selectedDashboard").val()) {
+                                        currentValue = JSON.stringify(data[i]);
+                                        $("#node-input-createNewClicked").val("false");
+                                    }
+                                }
+                                if ($("#node-input-createNewClicked").val() != null && $(
+                                        "#node-input-createNewClicked").val() == "true") {
+                                    $("#createNewDashboardTitle").click();
+                                }
+                                $("#node-input-dashboardTitle").val(currentValue);
+                            } else {
+                                $("#createNewDashboardTitle").click();
+                                $("#node-input-dashboardTitle").val($(
+                                    "#node-input-selectedDashboard").val());
+                            }
+                        },
+                        error: function (err) {
+                            $("#createNewDashboardTitle").click();
+                            $("#node-input-dashboardTitle").val($(
+                                "#node-input-selectedDashboard").val());
+                            console.log(err);
+                        }
+                    });
+                }
+            });
+        }
+    }
 </script>
 
 <script type="text/x-red" data-template-name="switch-button">
-    <input type="hidden" id="node-input-username">
-    <input type="hidden" id="node-input-flowName">
+    <input type="hidden" id="node-input-username"><input type="hidden" id="node-input-flowName">
     <input type="hidden" id="node-input-createNewClicked">
     <input type="hidden" id="node-input-selectedDashboard">
-    <input type="hidden" id="node-input-dashboardManagerBaseUrl" value="https://main.snap4city.org">
-    <div class="form-row">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-row" id="selectDashboardContainer">
         <label for="node-input-dashboardTitle">
             <i class="fa fa-dashboard"></i>Dashboard Name</label>
         <input type="text" autocomplete="off" id="node-input-dashboardTitleNew" placeholder="Dashboard Name" style="display:none; width: 55%;">
@@ -189,7 +349,7 @@
         <button id="createNewDashboardTitle">Create New</button>
         <button id="backDashboardTitle" style="display:none">Show list</button>
     </div>
-    <div class="form-row">
+    <div class="form-row" id="selectWidgetName">
         <label for="node-input-name">
             <i class="icon-tag"></i> Widget Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Widget Name">
@@ -205,6 +365,18 @@
     <div id="node-input-tip" class="form-tips" style="display:none">The new dashboard is created entering the title and saving the node (with "Done" button) and deploying the flow (with
         "Deploy" button)
     </div>
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
+    </div>
+    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to retrieve the updated list of dashboards.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to retrieve the updated list of dashboards.
+	</div>
 </script>
 
 <script type="text/x-red" data-help-name="switch-button">

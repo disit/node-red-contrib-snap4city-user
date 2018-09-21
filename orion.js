@@ -31,6 +31,8 @@ module.exports = function (RED) {
 	var https = require("follow-redirects").https;
 	var urllib = require("url");
 	var util = require('util');
+	var fs = require('fs');
+	var https2 = require('https');
 
 	var testSubscriptionIDs = {}; //PB fix
 	var subscriptionIDs = {}; //PB fix
@@ -90,11 +92,11 @@ module.exports = function (RED) {
 			return when.promise(function (resolve, reject) {
 				// get token from context broker
 				getToken(node, serviceNode.url, credentials).then(function () {
-					/*console.log("validating broker connectivity");
+					/*util.log("validating broker connectivity");
 					validateOrionConnectivity(node, orionUrl).then(function(){
-						console.log("cleaning up");
+						util.log("cleaning up");
 						cleanupTestEnv(node, orionUrl).then(function(){
-							console.log("initialization finished");
+							util.log("initialization finished");
 							resolve();
 						});
 					});*/
@@ -109,78 +111,67 @@ module.exports = function (RED) {
 				shape: "dot",
 				text: "Querying data"
 			});
-
+			util.log("----------queryContext");
+			elementID = payload.entities[0].id;
+			var orionBrokerService = RED.nodes.getNode(n.service);
 			return when.promise(function (resolve, reject) {
 
+				var options = {
+					hostname: orionBrokerService.url,
+					port: orionBrokerService.port,
+					path: "/v1/queryContext/?limit=" + n.limit + "&elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+					method: 'POST',
+					rejectUnauthorized: false,
+					headers: {
+						'Content-Type': 'application/json',
+						'Content-Length': JSON.stringify(payload).length
+					}
+				};
 
-				// for (var i=0; i<payload.length; i++){
-				//		payload[i];
-				//		console.log("elementID: " + payload[i]);
-				//	}
+				var tlsNode = RED.nodes.getNode(n.tls);
 
-				elementID = payload.entities[0].id;
-				//snap_key1 = payload.entities[0].user;
-				//snap_key2 = payload.entities[0].passuser;
-				//console.log("elementID: " + elementID);	
-				payload = JSON.stringify(payload);
-				console.log("Payload: " + payload);
-				var url = orionUrl + "/v1/queryContext?limit=" + n.limit + "&elementid=" + elementID + "&k1=" + n.userk1 + "&k2=" + n.passk2 + "&details=on";
-				console.log("ORIONURL" + url);
-				var opts = urllib.parse(url);
-				opts.method = "POST";
-				opts.headers = {};
-				opts.headers['content-type'] = "application/json";
-				opts.headers["Accept"] = "application/json";
-
-				if (token) {
-					opts.headers["X-Auth-Token"] = token;
+				if (tlsNode != null) {
+					if (tlsNode.credentials != null) {
+						options.key = tlsNode.credentials.keydata;
+						options.cert = tlsNode.credentials.certdata;
+						options.ca = tlsNode.credentials.cadata;
+					}
 				}
 
-				opts.headers['content-length'] = payload.length;
 				var msg = {};
 
-				/*		var data_json = JSON.parse(payload);  //parse the JSON
-				
-			    data_json["snap_key1"]= snap_key1;
-			    data_json["snap_key2"] = snap_key2;
-				payload = JSON.stringify(data_json);
-		
-
-   			console.log("payload: " + payload);*/
-				// http request with query parameters
-
-
-
-				var req = ((/^https/.test(url)) ? https : http).request(opts, function (res) {
+				var req = https2.request(options, function (res) {
 					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 					msg.statusCode = res.statusCode;
+					msg.headers = res.headers;
 					msg.payload = "";
 					res.on('data', function (chunk) {
 						msg.payload += chunk;
 					});
 					res.on('end', function () {
-
 						if (res.statusCode === 200) {
 							node.status({});
 							resolve(msg);
 						} else {
-							reject(msg);
 							node.status({
 								fill: "red",
 								shape: "ring",
 								text: res.statusCode
 							});
+							reject(msg);
 						}
 					});
 				});
+
 				req.on('error', function (err) {
 					reject(err);
 				});
 
-				req.write(payload);
+				req.write(JSON.stringify(payload));
 				req.end();
 			});
-		};
+
+		}
 
 		this.createContext = function (node, n, payload) {
 			node.status({
@@ -188,16 +179,48 @@ module.exports = function (RED) {
 				shape: "dot",
 				text: "sending request"
 			});
-			console.log("----------createContext payload: " + JSON.stringify(payload));
+			util.log("----------createContext payload: " + JSON.stringify(payload));
 			elementID = payload.contextElements[0].id;
+
+			var orionBrokerService = RED.nodes.getNode(n.service);
 			return when.promise(function (resolve, reject) {
-				request(node, "POST", payload, orionUrl + "/v1/updateContext?elementid=" + elementID + "&k1=" + n.userk1 + "&k2=" + n.passk2).then(function (result) {
-					console.log("----------updateContext RESULT: " + JSON.stringify(result));
-					if (result.result != null) {
+
+				var options = {
+					hostname: orionBrokerService.url,
+					port: orionBrokerService.port,
+					path: "/v1/updateContext/?elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+					method: 'POST',
+					rejectUnauthorized: false,
+					headers: {
+						'Content-Type': 'application/json',
+						'Content-Length': JSON.stringify(payload).length
+					}
+				};
+
+				var tlsNode = RED.nodes.getNode(n.tls);
+
+				if (tlsNode != null) {
+					if (tlsNode.credentials != null) {
+						options.key = tlsNode.credentials.keydata;
+						options.cert = tlsNode.credentials.certdata;
+						options.ca = tlsNode.credentials.cadata;
+					}
+				}
+
+				util.log(options);
+
+
+				var req = https2.request(options, function (res) {
+					util.log('statusCode:', res.statusCode);
+					util.log('headers:', res.headers);
+					//util.log(res);
+					var client = res.client;
+					util.log("----------updateContext RESULT: " + res.statusMessage + " " + client.authorizationError);
+					if (res.statusCode != 200) {
 						node.status({
 							fill: "red",
 							shape: "dot",
-							text: result.message
+							text: res.statusMessage
 						});
 					} else {
 						node.status({
@@ -206,38 +229,67 @@ module.exports = function (RED) {
 							text: "success"
 						});
 					}
-					resolve(result);
+					resolve(res);
+
 				});
+
+				req.on('error', function (e) {
+					console.error(e);
+					node.status({
+						fill: "red",
+						shape: "ring",
+						text: e.code
+					});
+				});
+
+
+				req.write(JSON.stringify(payload));
+
+				req.end();
+
 			});
 		};
 
 		this.subscribe = function (node, n, payload) {
-			console.log("subscribe in with: " + orionUrl);
-			console.log("with node id: " + node.id);
-
-			var reference = payload.reference;
 			node.status({
 				fill: "blue",
 				shape: "dot",
-				text: "Subscribing"
+				text: "subscribing"
 			});
+			util.log("subscribe in with: " + orionUrl + " with node id: " + node.id);
+			var reference = payload.reference;
 			elementID = payload.entities[0].id;
-			var url = orionUrl + "/v1/subscribeContext?elementid=" + elementID + "&k1=" + n.userk1 + "&k2=" + n.passk2;
-			console.log("ORIONURL" + url);
-			payload = JSON.stringify(payload);
 
-			var opts = urllib.parse(url);
-			opts.method = "POST";
-			opts.headers = {};
-			opts.headers['content-type'] = "application/json";
-			opts.headers["Accept"] = "application/json";
-			opts.headers["X-Auth-Token"] = token;
-			opts.headers['content-length'] = payload.length;
+
+			//util.log(RED.nodes.getNode(n.tls));
+			var orionBrokerService = RED.nodes.getNode(n.service);
+			var options = {
+				hostname: orionBrokerService.url,
+				port: orionBrokerService.port,
+				path: "/v1/subscribeContext/?elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+				method: 'POST',
+				rejectUnauthorized: false,
+				headers: {
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+					'Content-Length': JSON.stringify(payload).length
+				}
+			};
+
+			var tlsNode = RED.nodes.getNode(n.tls);
+
+			if (tlsNode != null) {
+				if (tlsNode.credentials != null) {
+					options.key = tlsNode.credentials.keydata;
+					options.cert = tlsNode.credentials.certdata;
+					options.ca = tlsNode.credentials.cadata;
+				}
+			}
+
 
 			var msg = {};
 
-			// subscibing to context broker
-			var req = ((/^https/.test(url)) ? https : http).request(opts, function (res) {
+			var req = https2.request(options, function (res) {
 				(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 				msg.statusCode = res.statusCode;
 				msg.headers = res.headers;
@@ -246,12 +298,14 @@ module.exports = function (RED) {
 					msg.payload += chunk;
 				});
 				res.on('end', function () {
-					console.log("STOP " + msg.payload);
+					util.log("STOP " + msg.payload);
+					var parsed = JSON.parse(msg.payload);
+
 					if (JSON.parse(msg.payload).subscribeResponse != null) {
 						var subscriptionID = JSON.parse(msg.payload).subscribeResponse.subscriptionId;
 
 						var nodeID = (node.id + "").replace('.', '');
-						console.log("---- " + nodeID + " pre subID:" + subscriptionIDs[nodeID]);
+						util.log("---- " + nodeID + " pre subID:" + subscriptionIDs[nodeID]);
 						subscriptionIDs[nodeID] = subscriptionID;
 
 						if (subscriptionID) {
@@ -261,11 +315,18 @@ module.exports = function (RED) {
 								"brokerUrl": orionUrl
 							}
 						}
+					} else if (parsed.result == "false") {
+						node.status({
+							fill: "red",
+							shape: "ring",
+							text: parsed.message
+						});
 					}
 				});
 			});
+
 			req.on('error', function (err) {
-				msg.payload = err.toString() + " : " + url;
+				msg.payload = err.toString();
 				msg.statusCode = err.code;
 				node.send(msg);
 				node.status({
@@ -281,25 +342,26 @@ module.exports = function (RED) {
 
 			var nodeID = (node.id + "").replace('.', '');
 			listenOnUrl(nodeID, function (req, res) {
-				console.log("----------------------");
-				console.log("+++++++++++++++++++Received response with SUBID: " + req.body.subscriptionId);
+				util.log("----------------------");
+				util.log("+++++++++++++++++++Received response with SUBID: " + req.body.subscriptionId);
 
 				if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
-					console.log("Recognized invalid subscription in response body: " + req.body.subscriptionId);
-					unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl).then(function (res) {
-						console.log("Unsubscribed invalid subscription: " + req.body.subscriptionId);
+					util.log("Recognized invalid subscription in response body: " + req.body.subscriptionId);
+					unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, n, elementID).then(function (res) {
+						//util.log("Unsubscribed invalid subscription: " + req.body.subscriptionId);
+						//util.log("Unsubscribed: " + req.body.subscriptionId);
 					});
 				} else {
 					var payload = formatOutput(node, n, req.body);
-					console.log("formatted payload: " + payload);
-					console.log("node id: " + node.id);
+					util.log("formatted payload: " + payload);
+					util.log("node id: " + node.id);
 					node.send({
 						payload: payload,
 						statusCode: 200
 					});
 				}
 				res.sendStatus(200);
-				console.log("Send Status 200");
+				util.log("Send Status 200");
 			});
 
 			node.status({
@@ -309,7 +371,7 @@ module.exports = function (RED) {
 			});
 
 			if (payload) {
-				req.write(payload);
+				req.write(JSON.stringify(payload));
 			}
 
 			req.end();
@@ -327,58 +389,66 @@ module.exports = function (RED) {
 		}
 	});
 
-	function unsubscribeFromOrion(node, subscriptionId, url) {
+	function unsubscribeFromOrion(node, subscriptionId, url, n, elementID) {
 		node.log("in unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
-		url = url + "/v1/unsubscribeContext";
-
-		// url must start http:// or https:// so assume http:// if not set
-		if (!((url.indexOf("http://") === 0) || (url.indexOf("https://") === 0))) {
-			url = "http://" + url;
-		}
 
 		var payload = JSON.stringify({
 			"subscriptionId": subscriptionId
 		});
-		var opts = urllib.parse(url);
-		opts.method = "POST";
-		opts.headers = {
-			'content-type': "application/json",
-			"Accept": "application/json",
-			'content-length': payload.length
+
+		//util.log(RED.nodes.getNode(n.tls));
+		var orionBrokerService = RED.nodes.getNode(n.service);
+		var options = {
+			hostname: orionBrokerService.url,
+			port: orionBrokerService.port,
+			path: "/v1/unsubscribeContext/?elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+			method: 'POST',
+			rejectUnauthorized: false,
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'Content-Length': JSON.stringify(payload).length
+			}
 		};
 
-		if (token) {
-			opts.headers["X-Auth-Token"] = token;
+		var tlsNode = RED.nodes.getNode(n.tls);
+
+		if (tlsNode != null) {
+			if (tlsNode.credentials != null) {
+				options.key = tlsNode.credentials.keydata;
+				options.cert = tlsNode.credentials.certdata;
+				options.ca = tlsNode.credentials.cadata;
+			}
 		}
 
-		return when.promise(
-			function (resolve, reject) {
-				var req = ((/^https/.test(url)) ? https : http).request(opts, function (res) {
-					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
-					var payload = "";
-					res.on('data', function (chunk) {
-						payload += chunk;
-					});
-					res.on('end', function () {
-						node.status({});
-						console.log("Unsubscribed: " + subscriptionId);
-						resolve({});
-					});
-				});
+		return when.promise(function (resolve, reject) {
 
-				req.on('error', function (err) {
-					node.status({
-						fill: "red",
-						shape: "ring",
-						text: err.code
-					});
-					reject(err.toString());
-				});
 
-				req.write(payload);
-				req.end();
-			}
-		);
+			var req = https2.request(options, function (res) {
+				(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
+				var payload = "";
+				res.on('data', function (chunk) {
+					payload += chunk;
+				});
+				res.on('end', function () {
+					node.status({});
+					util.log("Unsubscribed: " + subscriptionId);
+					resolve({});
+				});
+			});
+
+			req.on('error', function (err) {
+				node.status({
+					fill: "red",
+					shape: "ring",
+					text: err.code
+				});
+				reject(err.toString());
+			});
+
+			req.write(payload);
+			req.end();
+		});
 	}
 
 	// retrieve token from context broker
@@ -410,7 +480,7 @@ module.exports = function (RED) {
 			if (!credentials.user) {
 				resolve();
 			} else {
-				console.log("--requesting token using payload: " + payload);
+				util.log("--requesting token using payload: " + payload);
 				var req = (https).request(opts, function (res) {
 					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 
@@ -419,7 +489,7 @@ module.exports = function (RED) {
 					});
 
 					res.on('end', function () {
-						console.log("--resolved token: " + token);
+						util.log("--resolved token: " + token);
 						resolve(token);
 					});
 				});
@@ -445,7 +515,7 @@ module.exports = function (RED) {
 
 	function formatOutput(node, n, msg) {
 
-		console.log("MSG: " + JSON.stringify(msg));
+		util.log("MSG: " + JSON.stringify(msg));
 		var contextResponses = msg.contextResponses;
 		var payload = [];
 
@@ -464,7 +534,7 @@ module.exports = function (RED) {
 			payload.push(contextElement);
 		});
 
-		return JSON.stringify(payload);
+		return payload;
 	}
 
 	function rawBodyParser(req, res, next) {
@@ -607,7 +677,7 @@ module.exports = function (RED) {
 	}
 
 	function request(node, method, payload, url) {
-		console.log("URL:  " + url);
+		util.log("URL:  " + url);
 		var opts = urllib.parse(url);
 
 		opts.method = method; //"POST";
@@ -643,7 +713,7 @@ module.exports = function (RED) {
 					text: err.code
 				});
 				node.send({
-					payload: err.toString() + " : " + url,
+					payload: err.toString(),
 					statusCode: err.code
 				});
 			});
@@ -657,10 +727,10 @@ module.exports = function (RED) {
 		var createElementPayload = getCreateTestElementPayload(node);
 
 		if (node.type == "fiware orion in") {
-			console.log("doing two way broker connectivity validation");
+			util.log("doing two way broker connectivity validation");
 			return validateOrionConnectivityTwoWays(node, orionUrl, createElementPayload);
 		} else {
-			console.log("doing one way broker connectivity validation");
+			util.log("doing one way broker connectivity validation");
 			return validateOrionConnectivityOneWay(node, orionUrl, createElementPayload);
 		}
 	}
@@ -688,18 +758,18 @@ module.exports = function (RED) {
 
 				/*PB commentato forza la validazione
 				if(result.subscriptionId != testSubscriptionID){
-                	console.log(nodeID+" result.subscriptionId: " + result.subscriptionId + "!=" + testSubscriptionID);
+                	util.log(nodeID+" result.subscriptionId: " + result.subscriptionId + "!=" + testSubscriptionID);
                 	node.error("Communication with context broker failed: received wrong subId");
 					unsubscribeFromOrion(node, result.subscriptionId, orionUrl).then(function(res){
-						console.log("Unsubscribed invalid subscription: " + result.subscriptionId + " res: " + JSON.stringify(res));
+						util.log("Unsubscribed invalid subscription: " + result.subscriptionId + " res: " + JSON.stringify(res));
 					});
 					unsubscribeFromOrion(node, testSubscriptionID, orionUrl).then(function(res){
-						console.log("Unsubscribed test subscription: " + testSubscriptionID + " res: " + JSON.stringify(res));
+						util.log("Unsubscribed test subscription: " + testSubscriptionID + " res: " + JSON.stringify(res));
 					});
 					
                 	reject("Communication with context broker failed");
                 }else{*/
-				console.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
+				util.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
 				resolve();
 				//}
 			});
@@ -711,7 +781,7 @@ module.exports = function (RED) {
 
 						try {
 							var testSubscriptionID = subscription.subscribeResponse.subscriptionId
-							console.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
+							util.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
 							testSubscriptionIDs[nodeID] = testSubscriptionID;
 
 							if (testSubscriptionID) {
@@ -733,7 +803,7 @@ module.exports = function (RED) {
 	}
 
 	function validateOrionConnectivityOneWay(node, orionUrl, createElementPayload) {
-		console.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
+		util.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
 
 		return when.promise(function (resolve, reject) {
 			request(node, "POST", createElementPayload, orionUrl + "/v1/updateContext").then(function (result) {
@@ -751,7 +821,7 @@ module.exports = function (RED) {
 	}
 
 	function cleanupTestEnv(node, orionUrl) {
-		console.log("deleting listener path");
+		util.log("deleting listener path");
 		return when.promise(function (resolve, reject) {
 
 			//delete test context entity, common for both nodes 
@@ -843,7 +913,7 @@ module.exports = function (RED) {
 		return when.promise(
 			function (resolve, reject) {
 				getMyUri(node).then(function (myUri) {
-					console.log("myUri: " + myUri);
+					util.log("myUri: " + myUri);
 					resolve({
 						"entities": [{
 							"type": "Test",
@@ -881,7 +951,7 @@ module.exports = function (RED) {
 							var app = JSON.parse(process.env.VCAP_APPLICATION);
 							myUri = app['application_uris'][0];
 						} catch (e) {
-							console.log("Probably not running in bluemix...");
+							util.log("Probably not running in bluemix...");
 						}
 					}
 				}
@@ -944,13 +1014,19 @@ module.exports = function (RED) {
 						function (msg) {
 							msg = formatOutput(node, n, JSON.parse(msg.payload));
 
+							node.status({
+								fill: "green",
+								shape: "dot",
+								text: "success"
+							});
+
 							/*var cred_json = {
 					        	   "key1": snap_key1,
 					        	   "key2": snap_key2
 					           	};
 								
 								var topic =  JSON.stringify(cred_json);
-								console.log("TOPIC" + topic);*/
+								util.log("TOPIC" + topic);*/
 
 							node.send({
 								payload: msg,
@@ -958,7 +1034,12 @@ module.exports = function (RED) {
 							});
 						},
 						function (reason) {
-							node.error("failed to query, reason: " + reason.payload);
+							node.status({
+								fill: "red",
+								shape: "ring",
+								text: "Authentication Problem"
+							});
+							node.error("failed to query, reason: " + reason);
 						}
 					);
 				});
@@ -1036,7 +1117,7 @@ module.exports = function (RED) {
 					node.brokerConn.createContext(node, n, payload).then(
 						function (msg) {},
 						function (reason) {
-							node.error("failed to create, reason: " + reason.payload);
+							node.error("failed to create, reason: " + reason);
 						}
 					);
 				});
@@ -1051,7 +1132,7 @@ module.exports = function (RED) {
 	}
 
 	function generateCreateElementPayload(node, n, msg) {
-		console.log("msg: " + JSON.stringify(msg));
+		util.log("msg: " + JSON.stringify(msg));
 
 		var attributes = [];
 		if (n.attrkey && n.attrvalue) {
@@ -1069,7 +1150,7 @@ module.exports = function (RED) {
 			throw "Missing 'attributes' property";
 		}
 
-		console.log("attributes2: " + attributes);
+		util.log("attributes2: " + attributes);
 		var payload = {
 			"contextElements": [{
 				"type": n.entype,
@@ -1095,32 +1176,46 @@ module.exports = function (RED) {
 			this.service = n.service;
 			this.brokerConn = RED.nodes.getNode(this.service);
 			var node = this;
-
-			// create json payload for context update
-			//var payload = generateCreateElementPayload(node, n, msg);
-			var payload = {
-				"contextElements": [{
-					"type": n.entype,
-					"isPattern": "false",
-					"id": n.enid,
-					"attributes": msg.payload
-				}],
-				"updateAction": "APPEND"
-			};
 			try {
-				node.brokerConn.init(node, n).then(function () {
-					node.brokerConn.createContext(node, n, payload).then(
-						function (msg) {},
-						function (reason) {
-							node.error("failed to create, reason: " + reason.payload);
-						}
-					);
-				});
-			} catch (err) {
-				node.error(err, msg);
-				node.send({
-					payload: err.toString(),
-					statusCode: err.code
+				if (typeof msg.payload == "string") {
+					msg.payload = JSON.parse(msg.payload);
+				}
+				if (typeof msg.payload.length == "undefined" && typeof msg.payload.name != "undefined" && typeof msg.payload.value != "undefined") {
+					msg.payload = [msg.payload];
+				}
+
+				// create json payload for context update
+				//var payload = generateCreateElementPayload(node, n, msg);
+				var payload = {
+					"contextElements": [{
+						"type": n.entype,
+						"isPattern": "false",
+						"id": n.enid,
+						"attributes": msg.payload
+					}],
+					"updateAction": "APPEND"
+				};
+				try {
+					node.brokerConn.init(node, n).then(function () {
+						node.brokerConn.createContext(node, n, payload).then(
+							function (msg) {},
+							function (reason) {
+								node.error("failed to create, reason: " + reason);
+							}
+						);
+					});
+				} catch (err) {
+					node.error(err, msg);
+					node.send({
+						payload: err.toString(),
+						statusCode: err.code
+					});
+				}
+			} catch (e) {
+				node.status({
+					fill: "red",
+					shape: "ring",
+					text: "Problem with input msg"
 				});
 			}
 		});

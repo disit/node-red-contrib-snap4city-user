@@ -22,51 +22,56 @@ module.exports = function (RED) {
 		RED.nodes.createNode(this, config);
 		var node = this;
 		node.on('input', function (msg) {
-			var uri = "http://192.168.1.43/RsyslogAPI/rsyslog.php";
-
-			var pidlocal = RED.settings.APPID;
-			var iplocal = null;
-			Object.keys(ifaces).forEach(function (ifname) {
-				ifaces[ifname].forEach(function (iface) {
-					if ('IPv4' !== iface.family || iface.internal !== false) {
-						// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-						return;
-					}
-					iplocal = iface.address;
+			var uri = RED.settings.eventLogUri;
+			if (uri != null) {
+				var pidlocal = RED.settings.APPID;
+				var iplocal = null;
+				Object.keys(ifaces).forEach(function (ifname) {
+					ifaces[ifname].forEach(function (iface) {
+						if ('IPv4' !== iface.family || iface.internal !== false) {
+							// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+							return;
+						}
+						iplocal = iface.address;
+					});
 				});
-			});
-			iplocal = iplocal + ":" + RED.settings.uiPort;
-			var timestamp = new Date().getTime();
-			var modcom = config.modcom;
+				iplocal = iplocal + ":" + RED.settings.uiPort;
+				var timestamp = new Date().getTime();
+				var modcom = config.modcom;
 
-			var ipext = (msg.payload.ipext ? msg.payload.ipext : config.ipext);
-			var payloadsize = JSON.stringify(msg.payload).length / 1000;
-			var agent = "Node-Red";
-			var motivation = config.motivation;
-			var lang = (msg.payload.lang ? msg.payload.lang : config.lang);
-			var lat = (msg.payload.lat ? msg.payload.lat : config.lat);
-			var lon = (msg.payload.lon ? msg.payload.lon : config.lon);
-			var serviceuri = (msg.payload.serviceuri ? msg.payload.serviceuri : config.serviceuri);
-			var message = (msg.payload.message ? msg.payload.message : config.message);
-			var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-			var xmlHttp = new XMLHttpRequest();
-			xmlHttp.open("GET", encodeURI(uri + "?p=log" + "&pid=" + pidlocal + "&tmstmp=" + timestamp + "&modCom=" + modcom + "&IP_local=" + iplocal + "&IP_ext=" + ipext +
-				"&payloadSize=" + payloadsize + "&agent=" + agent + "&motivation=" + motivation + "&lang=" + lang + "&lat=" + (typeof lat != "undefined" ? lat : 0.0) + "&lon=" + (typeof lon != "undefined" ? lon : 0.0) + "&serviceUri=" + serviceuri + "&message=" + message), true); // false for synchronous request
-			xmlHttp.onload = function (e) {
-				if (xmlHttp.readyState === 4) {
-					if (xmlHttp.status === 200) {
-						msgs[1].payload = xmlHttp.responseText;
-						msgs[0].payload = msg.payload;
-						node.send(msgs);
-					} else {
-						console.error(xmlHttp.statusText);
+				var ipext = (msg.payload.ipext ? msg.payload.ipext : config.ipext);
+				var payloadsize = JSON.stringify(msg.payload).length / 1000;
+				var agent = "Node-Red";
+				var motivation = config.motivation;
+				var lang = (msg.payload.lang ? msg.payload.lang : config.lang);
+				var lat = (msg.payload.lat ? msg.payload.lat : config.lat);
+				var lon = (msg.payload.lon ? msg.payload.lon : config.lon);
+				var serviceuri = (msg.payload.serviceuri ? msg.payload.serviceuri : config.serviceuri);
+				var message = (msg.payload.message ? msg.payload.message : config.message);
+				var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("GET", encodeURI(uri + "?p=log" + "&pid=" + pidlocal + "&tmstmp=" + timestamp + "&modCom=" + modcom + "&IP_local=" + iplocal + "&IP_ext=" + ipext +
+					"&payloadSize=" + payloadsize + "&agent=" + agent + "&motivation=" + motivation + "&lang=" + lang + "&lat=" + (typeof lat != "undefined" ? lat : 0.0) + "&lon=" + (typeof lon != "undefined" ? lon : 0.0) + "&serviceUri=" + serviceuri + "&message=" + message), true); // false for synchronous request
+				xmlHttp.onload = function (e) {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status === 200) {
+							msgs[1].payload = xmlHttp.responseText;
+						} else {
+							console.error(xmlHttp.statusText);
+						}
 					}
-				}
-			};
-			xmlHttp.onerror = function (e) {
-				console.error(xmlHttp.statusText);
-			};
-			xmlHttp.send(null);
+					msgs[0].payload = msg.payload;
+					node.send(msgs);
+				};
+				xmlHttp.onerror = function (e) {
+					console.error(xmlHttp.statusText);
+					
+				};
+				xmlHttp.send(null);
+			} else {
+				msgs[0].payload = msg.payload;
+				node.send(msgs);
+			}
 		});
 	}
 	RED.nodes.registerType("event-log", EventLog);
