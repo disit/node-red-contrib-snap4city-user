@@ -78,6 +78,13 @@ module.exports = function (RED) {
         });
     });
 
+    RED.httpAdmin.get("/retrieveAccessTokenLocal/", RED.auth.needsPermission('iot-directory-in.read'), function (req, res) {
+        var s4cUtility = require("./snap4city-utility.js");
+        res.json({
+            "accessToken": s4cUtility.retrieveAccessToken(RED, null, null, null)
+        });
+    });
+
     RED.httpAdmin.get('/s4c/js/*', function (req, res) {
         var options = {
             root: __dirname + '/lib/js/',
@@ -132,7 +139,7 @@ module.exports = function (RED) {
         // xmlHttp.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=" + categories + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true"), false); // false for synchronous request
         xmlHttpSensor.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists), false); // false for synchronous request
         console.log(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists);
-        xmlHttpSensor.send(null);;
+        xmlHttpSensor.send(null);
 
         if (xmlHttpSensor.responseText != "") {
             var responseSensor = JSON.parse(xmlHttpSensor.responseText);

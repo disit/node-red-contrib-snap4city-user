@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "body-parser": "^1.18.2",
@@ -85,7 +85,6 @@
             "dashboard-bar-content": "dashboard-bar-content.js",
             "dashboard-column-content": "dashboard-column-content.js",
             "dashboard-web-content": "dashboard-web-content.js",
-            "dashboard-web-socket": "dashboard-web-socket.js",
             "sigfox-device-filter": "sigfox-device-filter.js",
             "sigfox-in": "sigfox-in.js",
             "iot-directory": "iot-directory.js",

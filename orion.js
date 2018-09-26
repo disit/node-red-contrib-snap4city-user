@@ -315,7 +315,7 @@ module.exports = function (RED) {
 								"brokerUrl": orionUrl
 							}
 						}
-					} else if (parsed.result == "false") {
+					} else if (parsed.result == false) {
 						node.status({
 							fill: "red",
 							shape: "ring",

@@ -25,7 +25,7 @@ module.exports = function (RED) {
         var node = this;
         var wsServer = (RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "wss://dashboard.km4city.org:443/server");
         node.ws = null;
-
+        node.notRestart = false;
         //Meccanismo di passaggio dei valori tra il menu di add/edit node e il codice del nodo
         node.name = "NR_" + node.id.replace(".", "_");
         node.widgetTitle = config.name,
@@ -36,7 +36,7 @@ module.exports = function (RED) {
         node.dashboardId = "";
         try {
             var dashboardTitleJson = JSON.parse(node.dashboardTitle);
-            node.dashboardTitle =  decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
+            node.dashboardTitle = decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
             node.dashboardId = dashboardTitleJson.id
         } catch (e) {
             //NOTHING TO DO         
@@ -60,6 +60,7 @@ module.exports = function (RED) {
                 // Riavvio nodo
                 util.log("single-content node " + node.name + " is being rebooted");
             }
+            node.notRestart = true;
             node.ws.close();
             closedDoneCallback();
         });
@@ -106,7 +107,7 @@ module.exports = function (RED) {
                     accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
                 };
 
-                util.log(payload);
+                //util.log(payload);
 
                 util.log("impulse-button node " + node.name + " IS GOING TO CONNECT WS");
                 if (payload.accessToken != "") {
@@ -159,6 +160,7 @@ module.exports = function (RED) {
                         util.log("WebSocket server could not delete emitter type for impulse-button node " + node.name + ": " + response.result);
                     }
                     util.log("Closing webSocket server for impulse-button node " + node.name);
+                    node.notRestart = true;
                     node.ws.close();
                     break;
                 case "DataToEmitter":
@@ -227,10 +229,11 @@ module.exports = function (RED) {
 
             var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
-            if (wsServerRetryActive === 'yes') {
+            if (wsServerRetryActive === 'yes' && !node.notRestart) {
                 util.log("impulse-button node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
                 setTimeout(node.wsInit, parseInt(wsServerRetryTime) * 1000);
             }
+            node.notRestart = false;
         };
 
         node.wsErrorCallback = function (e) {
@@ -268,12 +271,16 @@ module.exports = function (RED) {
                     shape: "dot",
                     text: "connecting to " + wsServer
                 });
-                node.ws = new WebSocket(wsServer);
-                node.ws.on('error', node.wsErrorCallback);
-                node.ws.on('open', node.wsOpenCallback);
-                node.ws.on('message', node.wsMessageCallback);
-                node.ws.on('close', node.wsCloseCallback);
-                node.wsStart = new Date().getTime();
+                if (node.ws == null) {
+                    node.ws = new WebSocket(wsServer);
+                    node.ws.on('error', node.wsErrorCallback);
+                    node.ws.on('open', node.wsOpenCallback);
+                    node.ws.on('message', node.wsMessageCallback);
+                    node.ws.on('close', node.wsCloseCallback);
+                    node.wsStart = new Date().getTime();
+                } else {
+                    util.log("impulse-button node " + node.name + " already open WebSocket");
+                }
             } catch (e) {
                 util.log("impulse-button node " + node.name + " could not open WebSocket");
                 node.status({
@@ -304,11 +311,62 @@ module.exports = function (RED) {
         });
     });
 
-    RED.httpAdmin.get("/retrieveAccessTokenLocal/", RED.auth.needsPermission('impulse-button.read'), function (req, res) {
+    RED.httpAdmin.get('/dashboardList',RED.auth.needsPermission('impulse-button.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");
-        res.json({
-            "accessToken": s4cUtility.retrieveAccessToken(RED, null, null, null)
-        });
+        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+        var xmlHttp = new XMLHttpRequest();
+        var xmlHttp2 = new XMLHttpRequest();
+        var dashboardManagerBaseUrl = (RED.settings.dashboardManagerBaseUrl ? RED.settings.dashboardManagerBaseUrl : "https://main.snap4city.org");
+        var dashboardSecret = (RED.settings.dashboardSecret ? RED.settings.dashboardSecret : "45awwprty_zzq34");
+        var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
+        var uid = s4cUtility.retrieveAppID(RED);
+        var username = "";
+        var url = (RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/ownership-api/");
+        xmlHttp.open("GET", encodeURI(url + "v1/list/?elementId=" + uid + "&elementType=AppId&accessToken=" + accessToken), true); // false for synchronous request
+        xmlHttp.onload = function (e) {
+            if (xmlHttp.readyState === 4) {
+                if (xmlHttp.status === 200) {
+                    if (xmlHttp.responseText != "") {
+                        try {
+                            username = JSON.parse(xmlHttp.responseText)[0].username;
+                        } catch (e) {
+                            username = "";
+                        }
+                    }
+                    if (username != "" && uid != "" && accessToken != "" && dashboardSecret != "" && dashboardManagerBaseUrl != "") {
+                        xmlHttp2.open("GET", encodeURI(dashboardManagerBaseUrl + "/api/nodeRedDashboardsApi.php?v3&secret=" + dashboardSecret + "&username=" + username + "&accessToken=" + accessToken), true); // false for synchronous request
+                        xmlHttp2.onload = function (e) {
+                            if (xmlHttp2.readyState === 4) {
+                                if (xmlHttp2.status === 200) {
+                                    if (xmlHttp2.responseText != "") {
+                                        try {
+                                            var response = JSON.parse(xmlHttp2.responseText);
+                                            res.send({"dashboardList": response, "username": username});
+                                        } catch (e) {
+                                            res.send("");
+                                        }
+                                    }
+                                } else {
+                                    console.error(xmlHttp2.statusText);
+                                }
+                            }
+                        };
+                        xmlHttp2.onerror = function (e) {
+                            console.error(xmlHttp2.statusText);
+                        };
+                        xmlHttp2.send(null);
+                    }
+
+                } else {
+                    console.error(xmlHttp.statusText);
+                }
+            }
+        };
+        xmlHttp.onerror = function (e) {
+            console.error(xmlHttp.statusText);
+        };
+        xmlHttp.send(null);
+
     });
 
 };

@@ -24,7 +24,7 @@ module.exports = function (RED) {
         var node = this;
         var wsServer = (RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "wss://dashboard.km4city.org:443/server");
         node.ws = null;
-
+        node.notRestart = false;
         //Meccanismo di passaggio dei valori tra il menu di add/edit node e il codice del nodo
         node.name = "NR_" + node.id.replace(".", "_");
         node.widgetTitle = config.name,
@@ -35,7 +35,7 @@ module.exports = function (RED) {
         node.dashboardId = "";
         try {
             var dashboardTitleJson = JSON.parse(node.dashboardTitle);
-            node.dashboardTitle =  decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
+            node.dashboardTitle = decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
             node.dashboardId = dashboardTitleJson.id
         } catch (e) {
             //NOTHING TO DO         
@@ -59,6 +59,7 @@ module.exports = function (RED) {
                 // Riavvio nodo
                 util.log("single-content node " + node.name + " is being rebooted");
             }
+            node.notRestart = true;
             node.ws.close();
             closedDoneCallback();
         });
@@ -105,7 +106,7 @@ module.exports = function (RED) {
                     accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
                 };
 
-                util.log(payload);
+                //util.log(payload);
 
                 util.log("switch-button node " + node.name + " IS GOING TO CONNECT WS");
                 if (payload.accessToken != "") {
@@ -128,7 +129,7 @@ module.exports = function (RED) {
 
         node.wsMessageCallback = function (data) {
             var response = JSON.parse(data);
-            console.log(response);
+            util.log(response);
             switch (response.msgType) {
                 case "AddEmitter":
                     if (response.result === "Ok") {
@@ -158,6 +159,7 @@ module.exports = function (RED) {
                         util.log("WebSocket server could not delete emitter type for switch-button node " + node.name + ": " + response.result);
                     }
                     util.log("Closing webSocket server for switch-button node " + node.name);
+                    node.notRestart = true;
                     node.ws.close();
                     break;
                 case "DataToEmitter":
@@ -175,9 +177,9 @@ module.exports = function (RED) {
                                 payload: response.newValue
                             };
                         }
-                       
+
                         node.send(msg);
-                        
+
                         node.ws.send(JSON.stringify({
                             msgType: "DataToEmitterAck",
                             widgetUniqueName: node.widgetUniqueName,
@@ -224,10 +226,11 @@ module.exports = function (RED) {
 
             var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
-            if (wsServerRetryActive === 'yes') {
+            if (wsServerRetryActive === 'yes' && !node.notRestart) {
                 util.log("switch-button node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
                 setTimeout(node.wsInit, parseInt(wsServerRetryTime) * 1000);
             }
+            node.notRestart = false;
         };
 
         node.wsErrorCallback = function (e) {
@@ -265,12 +268,16 @@ module.exports = function (RED) {
                     shape: "dot",
                     text: "connecting to " + wsServer
                 });
-                node.ws = new WebSocket(wsServer);
-                node.ws.on('error', node.wsErrorCallback);
-                node.ws.on('open', node.wsOpenCallback);
-                node.ws.on('message', node.wsMessageCallback);
-                node.ws.on('close', node.wsCloseCallback);
-                node.wsStart = new Date().getTime();
+                if (node.ws == null) {
+                    node.ws = new WebSocket(wsServer);
+                    node.ws.on('error', node.wsErrorCallback);
+                    node.ws.on('open', node.wsOpenCallback);
+                    node.ws.on('message', node.wsMessageCallback);
+                    node.ws.on('close', node.wsCloseCallback);
+                    node.wsStart = new Date().getTime();
+                } else {
+                    util.log("swithc-button node " + node.name + " already open WebSocket");
+                }
             } catch (e) {
                 util.log("switch-button node " + node.name + " could not open WebSocket");
                 node.status({
@@ -302,10 +309,4 @@ module.exports = function (RED) {
         });
     });
 
-    RED.httpAdmin.get("/retrieveAccessTokenLocal/", RED.auth.needsPermission('switch-button.read'), function (req, res) {
-        var s4cUtility = require("./snap4city-utility.js");
-        res.json({
-            "accessToken": s4cUtility.retrieveAccessToken(RED, null, null, null)
-        });
-    });
 };

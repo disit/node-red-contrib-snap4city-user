@@ -102,7 +102,12 @@ module.exports = function (RED) {
         res.sendFile(req.params[0], options);
     });
 
-
+    RED.httpAdmin.get("/retrieveAccessTokenLocal/", RED.auth.needsPermission('device-registration-user.read'), function (req, res) {
+        var s4cUtility = require("./snap4city-utility.js");
+        res.json({
+            "accessToken": s4cUtility.retrieveAccessToken(RED, null, null, null)
+        });
+    });
 
     RED.httpAdmin.get("/deviceregistration/:id", RED.auth.needsPermission('device-registration-user.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");

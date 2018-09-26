@@ -24,7 +24,7 @@ module.exports = function (RED) {
         var node = this;
         var wsServer = (RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "wss://dashboard.km4city.org:443/server");
         node.ws = null;
-
+        node.notRestart = false;
         node.name = config.name;
         node.username = config.username;
         node.flowName = config.flowName;
@@ -33,7 +33,7 @@ module.exports = function (RED) {
         node.dashboardId = "";
         try {
             var dashboardTitleJson = JSON.parse(node.dashboardTitle);
-            node.dashboardTitle =  decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
+            node.dashboardTitle = decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
             node.dashboardId = dashboardTitleJson.id;
         } catch (e) {
             //NOTHING TO DO  
@@ -54,6 +54,7 @@ module.exports = function (RED) {
                 node.ws.removeListener('open', node.wsOpenCallback);
                 node.ws.removeListener('message', node.wsMessageCallback);
                 node.ws.removeListener('close', node.wsCloseCallback);
+                node.notRestart = true;
                 node.ws.close();
                 node.ws = null;
                 node.ws = new WebSocket(wsServer);
@@ -99,6 +100,7 @@ module.exports = function (RED) {
                 // Riavvio nodo
                 util.log("column-content node " + node.name + " is being rebooted");
             }
+            node.notRestart = true;
             node.ws.close();
             closedDoneCallback();
         });
@@ -156,6 +158,7 @@ module.exports = function (RED) {
 
         node.wsMessageCallback = function (data) {
             var response = JSON.parse(data);
+            util.log(response);
             switch (response.msgType) {
                 case "AddEditMetric":
                     if (response.result === "Ok") {
@@ -180,6 +183,7 @@ module.exports = function (RED) {
                         util.log("WebSocket server could not delete metric type for column-content node " + node.name + ": " + response.result);
                     }
                     util.log("Closing webSocket server for column-content node " + node.name);
+                    node.notRestart = true;
                     node.ws.close();
                     break;
 
@@ -213,10 +217,11 @@ module.exports = function (RED) {
 
             var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
-            if (wsServerRetryActive === 'yes') {
+            if (wsServerRetryActive === 'yes' && !node.notRestart) {
                 util.log("column-content node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
                 setTimeout(node.wsInit, parseInt(wsServerRetryTime) * 1000);
             }
+            node.notRestart = false;
         };
 
         node.wsErrorCallback = function (e) {
@@ -256,12 +261,16 @@ module.exports = function (RED) {
                     shape: "dot",
                     text: "connecting to " + wsServer
                 });
-                node.ws = new WebSocket(wsServer);
-                node.ws.on('error', node.wsErrorCallback);
-                node.ws.on('open', node.wsOpenCallback);
-                node.ws.on('message', node.wsMessageCallback);
-                node.ws.on('close', node.wsCloseCallback);
-                node.wsStart = new Date().getTime();
+                if (node.ws == null) {
+                    node.ws = new WebSocket(wsServer);
+                    node.ws.on('error', node.wsErrorCallback);
+                    node.ws.on('open', node.wsOpenCallback);
+                    node.ws.on('message', node.wsMessageCallback);
+                    node.ws.on('close', node.wsCloseCallback);
+                    node.wsStart = new Date().getTime();
+                } else {
+                    util.log("column-content node " + node.name + " already open WebSocket");
+                }
             } catch (e) {
                 util.log("column-content node " + node.name + " could not open WebSocket");
                 node.status({
@@ -293,10 +302,4 @@ module.exports = function (RED) {
         });
     });
 
-    RED.httpAdmin.get("/retrieveAccessTokenLocal/", RED.auth.needsPermission('column-content.read'), function (req, res) {
-        var s4cUtility = require("./snap4city-utility.js");
-        res.json({
-            "accessToken": s4cUtility.retrieveAccessToken(RED, null, null, null)
-        });
-    });
 };
