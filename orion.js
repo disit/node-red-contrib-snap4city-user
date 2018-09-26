@@ -392,12 +392,13 @@ module.exports = function (RED) {
 	function unsubscribeFromOrion(node, subscriptionId, url, n, elementID) {
 		node.log("in unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
 
-		var payload = JSON.stringify({
+		var payload = {
 			"subscriptionId": subscriptionId
-		});
+		};
 
 		//util.log(RED.nodes.getNode(n.tls));
 		var orionBrokerService = RED.nodes.getNode(n.service);
+		return when.promise(function (resolve, reject) {
 		var options = {
 			hostname: orionBrokerService.url,
 			port: orionBrokerService.port,
@@ -421,17 +422,15 @@ module.exports = function (RED) {
 			}
 		}
 
-		return when.promise(function (resolve, reject) {
-
-
+		
 			var req = https2.request(options, function (res) {
 				(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
-				var payload = "";
+				var response = "";
 				res.on('data', function (chunk) {
-					payload += chunk;
+					response += chunk;
 				});
 				res.on('end', function () {
-					node.status({});
+					console.log(response);
 					util.log("Unsubscribed: " + subscriptionId);
 					resolve({});
 				});
@@ -445,8 +444,7 @@ module.exports = function (RED) {
 				});
 				reject(err.toString());
 			});
-
-			req.write(payload);
+			req.write(JSON.stringify(payload));
 			req.end();
 		});
 	}
