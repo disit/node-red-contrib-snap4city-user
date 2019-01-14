@@ -32,7 +32,6 @@ module.exports = function (RED) {
             if (accessToken != "" && typeof accessToken != "undefined") {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-
                 console.log(encodeURI(uri + "?accessToken=" + accessToken));
                 xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
@@ -60,12 +59,12 @@ module.exports = function (RED) {
                             s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "MyData", uri, "TX");
                             node.send(msg);
                         } else {
-                            console.error(xmlHttp.statusText);
+                            console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
                         }
                     }
                 };
                 xmlHttp.onerror = function (e) {
-                    console.error(xmlHttp.statusText);
+                    console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
                 };
                 try {
                     xmlHttp.send(JSON.stringify({

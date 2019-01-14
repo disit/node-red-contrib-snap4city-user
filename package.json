@@ -1,7 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.0.7",
-    "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
+    "version": "0.1.2",    "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "body-parser": "^1.18.2",
         "cookie-parser": "^1.4.3",
@@ -65,11 +64,16 @@
             "value-type-search-within-polygon": "value-type-search-within-polygon.js",
             "value-type-search-along-path": "value-type-search-along-path.js",
             "get-my-data": "get-my-data.js",
+            "get-my-kpidata": "get-my-kpidata.js",
+            "get-my-kpidata-values": "get-my-kpidata-values.js",
+            "get-public-kpidata-values": "get-public-kpidata-values.js",
+            "get-delegated-kpidata-values": "get-delegated-kpidata-values.js",
             "get-my-delegator": "get-my-delegator.js",
             "get-my-delegated": "get-my-delegated.js",
             "get-my-activity": "get-my-activity.js",
             "get-other-activity-on-my-data": "get-other-activity-on-my-data.js",
             "save-my-data": "save-my-data.js",
+            "save-my-kpidata-values": "save-my-kpidata-values.js",
             "get-my-annotation": "get-my-annotation.js",
             "get-anonymous-data": "get-anonymous-data.js",
             "get-other-data": "get-other-data.js",
@@ -94,7 +98,8 @@
             "show-general-iframe": "show-general-iframe/show-general-iframe.js",
             "twitter-last-channel": "twitter-last-channel.js",
             "twitter-last-tweet": "twitter-last-tweet.js",
-            "snap4city-authentication": "snap4city-authentication.js"
+            "snap4city-authentication": "snap4city-authentication.js",
+            "snap4all-button": "snap4all-button.js"
         }
     }
 }

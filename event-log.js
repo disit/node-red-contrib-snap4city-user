@@ -57,14 +57,14 @@ module.exports = function (RED) {
 						if (xmlHttp.status === 200) {
 							msgs[1].payload = xmlHttp.responseText;
 						} else {
-							console.error(xmlHttp.statusText);
+							console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
 						}
 					}
 					msgs[0].payload = msg.payload;
 					node.send(msgs);
 				};
 				xmlHttp.onerror = function (e) {
-					console.error(xmlHttp.statusText);
+					console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
 					
 				};
 				xmlHttp.send(null);

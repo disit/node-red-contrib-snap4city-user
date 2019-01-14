@@ -1,0 +1,348 @@
+<!--
+  Copyright 2016 IBM Corp.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+
+//////////////////////////////////////////////////// // ORION CONTEXT BROKER SUBSCRIBE NODE
+////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="snap4all-button">
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+	<div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+	<div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to retrieve the updated list of dashboards.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to retrieve the updated list of dashboards.
+	</div>
+	<div class="form-row" id="selectSnap4allButtonContainer">
+        <label for="node-input-buttonName">
+            <i class="fa fa-dashboard"></i>Button Name</label>
+        <select id="node-input-buttonName" style="width: 55%;">
+        </select>
+    </div>
+	<div class="form-row" id="node-input-entypeContainer">
+		<label for="node-input-entype">
+			<i class="fa fa-globe"></i>
+			<span>Device type</span>
+		</label>
+		<input type="text" id="node-input-entype">
+	</div>
+	<div class="form-row" id="node-input-enidContainer">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Device NameID</span>
+		</label>
+		<input type="text" id="node-input-enid">
+	</div>
+	<div class="form-row" id="node-input-userk1Container">
+		<label for="node-input-userk1">
+			<i class="fa fa-globe"></i>
+			<span>key 1</span>
+		</label>
+		<input type="text" id="node-input-userk1">
+	</div>
+	<div class="form-row" id="node-input-passk2Container">
+		<label for="node-input-passk2">
+			<i class="fa fa-globe"></i>
+			<span>key 2</span>
+		</label>
+		<input type="text" id="node-input-passk2">
+	</div>
+	<div class="form-row" id="node-input-nameContainer">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="snap4all-button">
+	<p>Provides a node subscribing on Fiware Orion context broker and listening for the changes.</p>
+
+	<ul>
+		<li>
+			<code>url</code>, used as the context broker url of the request. Url shouldn't contain port</li>
+		<li>
+			<code>port</code>, used as the url port.</li>
+		<li>
+			<code>entity type</code>, if set, should be context element entity type. If not specified, will search for all types</li>
+		<li>
+			<code>entity id</code>, if set, should be context element entity ID. If not specified, will search for all IDs</li>
+	</ul>
+	<p>
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> containing list of changed elements</li>
+			<li>
+				<code>statusCode</code> is the status code, or the error code if the subscription processing failed</li>
+		</ul>
+</script>
+
+<script type="text/javascript">
+	RED.nodes.registerType('snap4all-button', {
+		category: 'S4CIoT',
+		color: "rgb(231, 231, 174)",
+		defaults: {
+			name: {
+				value: ""
+			},
+			service: {
+				type: "orion-service",
+				required: true
+			},
+			authentication: {
+				type: "snap4city-authentication",
+				required: false
+			},
+			throttle: {
+				value: "PT5S"
+			},
+			entype: {
+				value: ""
+			},
+			enid: {
+				value: ""
+			},
+			userk1: {
+				value: ""
+			},
+			passk2: {
+				value: ""
+			},
+			ispattern: {
+				value: false
+			},
+			duration: {
+				value: "P1M"
+			},
+			attributes: {
+				value: ""
+			},
+			condvalues: {
+				value: ""
+			},
+			includeattr: {
+				value: true
+			},
+			noderedhost: {
+				value: ""
+			},
+			noderedhostauto: {
+				value: true
+			},
+			brokerIP: {
+				value: ""
+			},
+			brokerPort: {
+				value: ""
+			}
+		},
+		inputs: 0,
+		outputs: 7,
+		outputLabels: ["round one short", "round two short", "round one long", "square one short",
+			"square two short", "square one long", "reset"
+		],
+		icon: "orioncb.png",
+		label: function () {
+			if (this.name) {
+				return this.name;
+			} else {
+				return "Snap4all Button";
+			}
+		},
+		labelStyle: function () {
+			return this.name ? "node_label_italic" : "";
+		},
+		oneditprepare: function () {
+			$("#node-input-buttonName").val("");
+			var buttonList = "";
+			var accessToken = "";
+			$.ajax({
+				url: "isThereLocalRefreshToken/",
+				type: "GET",
+				async: false,
+				success: function (resp) {
+					if (resp.result) {
+						$("#rowAuthentication").hide();
+						$("#tipAuthentication").hide();
+						$.ajax({
+							url: "snap4allButtonList",
+							type: "GET",
+							async: false,
+							success: function (_data) {
+								buttonList = _data;
+							}
+						});
+					} else {
+						$.ajax({
+							url: "setChangedUser/",
+							async: false,
+							type: "POST",
+							dataType: "json",
+							data: {
+								"changedUser": "false"
+							}
+						});
+						$.ajax({
+							url: "retrieveAccessTokenAuthentication",
+							type: "GET",
+							async: false,
+							success: function (_data) {
+								if (_data.accessToken == "") {
+									$("#selectSnap4allButtonContainer").hide();
+									$('#tipAuthenticationWrong').show();
+									$('#tipAuthentication').hide();
+									$("#node-input-entype").val("");
+									$("#node-input-enid").val("");
+									$("#node-input-userk1").val("");
+									$("#node-input-passk2").val("");
+									$("#node-input-entypeContainer").hide();
+									$("#node-input-enidContainer").hide();
+									$("#node-input-userk1Container").hide();
+									$("#node-input-passk2Container").hide();
+
+								} else {
+									accessToken = _data.accessToken;
+								};
+							}
+						});
+					}
+				}
+			});
+			refreshButtonsSelection(accessToken, buttonList);
+		},
+		oneditresize: function () {
+			$.ajax({
+				url: "isThereLocalRefreshToken/",
+				type: "GET",
+				async: false,
+				success: function (resp) {
+					if (!resp.result) {
+						if ($("#node-input-authentication").children().length > 1) {
+							$("#node-input-authentication option[value='_ADD_']").remove();
+						}
+						$.ajax({
+							url: "getChangedUser/",
+							type: "GET",
+							async: false,
+							success: function (resp) {
+								if (resp.changedUser == "true") {
+									$("#tipAuthentication").hide();
+									$("#tipAuthenticationWrong").hide();
+									$("#tipAuthenticationRedeploy").show();
+									$("#selectSnap4allButtonContainer").hide();
+									$("#node-input-entype").val("");
+									$("#node-input-enid").val("");
+									$("#node-input-userk1").val("");
+									$("#node-input-passk2").val("");
+									$("#node-input-entypeContainer").hide();
+									$("#node-input-enidContainer").hide();
+									$("#node-input-userk1Container").hide();
+									$("#node-input-passk2Container").hide();
+
+
+								}
+							},
+							error: function (err) {
+								if (err.status == 404) {
+									$("#tipAuthentication").show();
+									$("#tipAuthenticationDeployFirstTime").show();
+									$("#tipAuthenticationWrong").hide();
+									$("#tipAuthenticationRedeploy").hide();
+									$("#selectSnap4allButtonContainer").hide();
+									$("#node-input-entype").val("");
+									$("#node-input-enid").val("");
+									$("#node-input-userk1").val("");
+									$("#node-input-passk2").val("");
+									$("#node-input-entypeContainer").hide();
+									$("#node-input-enidContainer").hide();
+									$("#node-input-userk1Container").hide();
+									$("#node-input-passk2Container").hide();
+
+								}
+							}
+						});
+					}
+				}
+			});
+		}
+	});
+
+	var refreshButtonsSelection = function (accessToken, buttonList) {
+		$("#node-input-buttonName").empty();
+		if (buttonList != "") {
+			createButtonsSelection(buttonList);
+		} else if (accessToken != "" && buttonList == "") {
+			$.ajax({
+				url: "https://iotdirectory.snap4city.org/api/device.php?action=get_config_data&nodered=yes&token=" +
+					accessToken,
+				type: "GET",
+				async: true,
+				dataType: "json",
+				success: function (_data) {
+					createButtonsSelection(_data.content);
+				},
+				error: function (err) {
+					console.log(err);
+				}
+			});
+		}
+	}
+
+	var createButtonsSelection = function (currentButtonsObject) {
+		var buttonsList = [];
+		for (var buttonsName in currentButtonsObject) {
+			if (currentButtonsObject[buttonsName].visibility != null && currentButtonsObject[buttonsName].model != null) {
+				if (currentButtonsObject[buttonsName].visibility.indexOf("MyOwn") != -1 && currentButtonsObject[buttonsName].model
+					.indexOf("Snap4AllButtonV1") != -1) {
+					currentButtonsObject[buttonsName].deviceNameId = buttonsName;
+					buttonsList.push(currentButtonsObject[buttonsName]);
+				}
+			}
+		}
+		if (buttonsList.length != 0) {
+			$("#node-input-buttonName").empty();
+			for (var i = 0; i < buttonsList.length; i++) {
+				$("<option value='" + JSON.stringify(buttonsList[i]) + "'>" +
+						buttonsList[i].deviceNameId + "</option>")
+					.appendTo($("#node-input-buttonName"));
+			}
+			$('#node-input-buttonName').val("");
+			$("#node-input-buttonName").change(function () {
+				if ($('#node-input-buttonName').val() != null && $('#node-input-buttonName').val() != "") {
+					var buttonDetails = JSON.parse($('#node-input-buttonName').val());
+					$("#node-input-entype").val(buttonDetails.entityType);
+					$("#node-input-enid").val(buttonDetails.deviceNameId);
+					$("#node-input-userk1").val(buttonDetails.k1);
+					$("#node-input-passk2").val(buttonDetails.k2);
+					$("#node-input-brokerIP").val(buttonDetails.ip);
+					$("#node-input-brokerPort").val(buttonDetails.port);
+				}
+			});
+		}
+	}
+</script>

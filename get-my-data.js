@@ -33,7 +33,6 @@ module.exports = function (RED) {
             if (accessToken != "" && typeof accessToken != "undefined") {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-
                 console.log(encodeURI(uri + "?sourceRequest=iotapp" + (typeof variableName != "undefined" && variableName != "" ? "&variableName=" + variableName : "") + (typeof motivation != "undefined" && motivation != "" ? "&motivation=" + motivation : "") + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "") + "&accessToken=" + accessToken));
                 xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp" + (typeof variableName != "undefined" && variableName != "" ? "&variableName=" + variableName : "") + (typeof motivation != "undefined" && motivation != "" ? "&motivation=" + motivation : "") + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "") + "&accessToken=" + accessToken), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
@@ -52,12 +51,12 @@ module.exports = function (RED) {
                             s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "MyData", uri, "RX");
                             node.send(msg);
                         } else {
-                            console.error(xmlHttp.statusText);
+                            console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
                         }
                     }
                 };
                 xmlHttp.onerror = function (e) {
-                    console.error(xmlHttp.statusText);
+                    console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
                 };
                 xmlHttp.send(null);
 

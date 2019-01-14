@@ -104,9 +104,9 @@ module.exports = function (RED) {
             var expiresTimestamp = node.credentials.expiresTimestamp;
             var refreshToken = node.credentials.refreshToken;
             if (typeof refreshToken == "undefined" || typeof expiresTimestamp == "undefined" || new Date().getTime() > expiresTimestamp) {
-                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&grant_type=password&username=" + node.credentials.user + "&password=" + node.credentials.password;
+                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=password&username=" + node.credentials.user + "&password=" + node.credentials.password;
             } else {
-                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
+                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             }
             var response = "";
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
@@ -147,7 +147,8 @@ module.exports = function (RED) {
             var s4cUtility = require("./snap4city-utility.js");
             res.json({
                 "accessToken": s4cUtility.retrieveAccessToken(RED, node, node.id, null),
-                "username": s4cUtility.retrieveCurrentUser(RED, node, node.id)
+                "username": s4cUtility.retrieveCurrentUser(RED, node, node.id),
+                "appId": s4cUtility.retrieveAppID(RED),
             });
         });
 

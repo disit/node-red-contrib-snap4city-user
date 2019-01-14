@@ -31,7 +31,6 @@ module.exports = function (RED) {
 	var https = require("follow-redirects").https;
 	var urllib = require("url");
 	var util = require('util');
-	var fs = require('fs');
 	var https2 = require('https');
 
 	var testSubscriptionIDs = {}; //PB fix
@@ -39,87 +38,58 @@ module.exports = function (RED) {
 
 	var when = require('when');
 	var token = "";
-	var INCLUDEATTR = false;
 
 	var LIMIT = 30;
-	var TIMEOUT = 30000; //30 seconds?		
-	//var snap_key1= "";
-	//var snap_key2= "";
-	var elementID = "";
 
 
-	function OrionService(n) {
-		RED.nodes.createNode(this, n);
+	function OrionService(config) {
+		RED.nodes.createNode(this, config);
 		var serviceNode = this;
 
-		this.url = n.url;
-		this.port = n.port;
-		var orionUrl = getOrionUrl(n);
-		var credentials = this.credentials;
-		//snap_key1= credentials.user;
-		//snap_key2=credentials.password;
-
-
+		this.url = config.url;
+		this.port = config.port;
+		var orionUrl = getOrionUrl(config);
+		var credentials = {};
 		credentials.user = "";
 		credentials.password = "";
-
-
 		if (/\/$/.test(this.url)) {
 			this.url = this.url.substring(this.url.length - 1);
 		}
 
-		var err = "";
-		if (((!!credentials.password) != (!!credentials.user))) {
-			err = "Missing orion credentials";
-		}
-
 		if (!this.port) {
-			err = "Missing port";
+			throw "Missing port";
 		}
 
-		if (err) {
-			throw err;
-		}
-
-
-		this.init = function (node, n) {
+		this.init = function (node) {
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "Initializing"
 			});
 
-			return when.promise(function (resolve, reject) {
+			return when.promise(function (resolve) {
 				// get token from context broker
 				getToken(node, serviceNode.url, credentials).then(function () {
-					/*util.log("validating broker connectivity");
-					validateOrionConnectivity(node, orionUrl).then(function(){
-						util.log("cleaning up");
-						cleanupTestEnv(node, orionUrl).then(function(){
-							util.log("initialization finished");
-							resolve();
-						});
-					});*/
 					resolve();
 				});
 			});
 		};
 
-		this.queryContext = function (node, n, payload) {
+		this.queryContext = function (node, config, payload) {
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "Querying data"
 			});
-			util.log("----------queryContext");
-			elementID = payload.entities[0].id;
-			var orionBrokerService = RED.nodes.getNode(n.service);
+			util.log("queryContext");
+			//elementID = payload.entities[0].id;
+			var orionBrokerService = RED.nodes.getNode(config.service);
 			return when.promise(function (resolve, reject) {
 
 				var options = {
 					hostname: orionBrokerService.url,
 					port: orionBrokerService.port,
-					path: "/v1/queryContext/?limit=" + n.limit + "&elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+					path: "/v1/queryContext/?limit=" + config.limit + "&elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 					method: 'POST',
 					rejectUnauthorized: false,
 					headers: {
@@ -128,7 +98,7 @@ module.exports = function (RED) {
 					}
 				};
 
-				var tlsNode = RED.nodes.getNode(n.tls);
+				var tlsNode = RED.nodes.getNode(config.tls);
 
 				if (tlsNode != null) {
 					if (tlsNode.credentials != null) {
@@ -173,22 +143,22 @@ module.exports = function (RED) {
 
 		}
 
-		this.createContext = function (node, n, payload) {
+		this.createContext = function (node, config, payload) {
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "sending request"
 			});
-			util.log("----------createContext payload: " + JSON.stringify(payload));
-			elementID = payload.contextElements[0].id;
+			//util.log("updateContext PAYLOAD: " + JSON.stringify(payload));
+			//elementID = payload.contextElements[0].id;
 
-			var orionBrokerService = RED.nodes.getNode(n.service);
+			var orionBrokerService = RED.nodes.getNode(config.service);
 			return when.promise(function (resolve, reject) {
 
 				var options = {
 					hostname: orionBrokerService.url,
 					port: orionBrokerService.port,
-					path: "/v1/updateContext/?elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+					path: "/v1/updateContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 					method: 'POST',
 					rejectUnauthorized: false,
 					headers: {
@@ -197,7 +167,7 @@ module.exports = function (RED) {
 					}
 				};
 
-				var tlsNode = RED.nodes.getNode(n.tls);
+				var tlsNode = RED.nodes.getNode(config.tls);
 
 				if (tlsNode != null) {
 					if (tlsNode.credentials != null) {
@@ -207,15 +177,12 @@ module.exports = function (RED) {
 					}
 				}
 
-				util.log(options);
+				//util.log(options);
 
 
 				var req = https2.request(options, function (res) {
-					util.log('statusCode:', res.statusCode);
-					util.log('headers:', res.headers);
-					//util.log(res);
 					var client = res.client;
-					util.log("----------updateContext RESULT: " + res.statusMessage + " " + client.authorizationError);
+					//util.log("updateContext RESULT: " + res.statusMessage + " " + client.authorizationError);
 					if (res.statusCode != 200) {
 						node.status({
 							fill: "red",
@@ -230,7 +197,6 @@ module.exports = function (RED) {
 						});
 					}
 					resolve(res);
-
 				});
 
 				req.on('error', function (e) {
@@ -250,23 +216,22 @@ module.exports = function (RED) {
 			});
 		};
 
-		this.subscribe = function (node, n, payload) {
+		this.subscribe = function (node, config, payload) {
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "subscribing"
 			});
-			util.log("subscribe in with: " + orionUrl + " with node id: " + node.id);
+			util.log("subscribeContext in: " + orionUrl + " with node id: " + node.id);
 			var reference = payload.reference;
-			elementID = payload.entities[0].id;
 
+			//elementID = payload.entities[0].id;
 
-			//util.log(RED.nodes.getNode(n.tls));
-			var orionBrokerService = RED.nodes.getNode(n.service);
+			var orionBrokerService = RED.nodes.getNode(config.service);
 			var options = {
 				hostname: orionBrokerService.url,
 				port: orionBrokerService.port,
-				path: "/v1/subscribeContext/?elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
+				path: "/v1/subscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
@@ -276,7 +241,7 @@ module.exports = function (RED) {
 				}
 			};
 
-			var tlsNode = RED.nodes.getNode(n.tls);
+			var tlsNode = RED.nodes.getNode(config.tls);
 
 			if (tlsNode != null) {
 				if (tlsNode.credentials != null) {
@@ -285,7 +250,6 @@ module.exports = function (RED) {
 					options.ca = tlsNode.credentials.cadata;
 				}
 			}
-
 
 			var msg = {};
 
@@ -298,28 +262,21 @@ module.exports = function (RED) {
 					msg.payload += chunk;
 				});
 				res.on('end', function () {
-					util.log("STOP " + msg.payload);
-					var parsed = JSON.parse(msg.payload);
+					util.log("subscribeContext RESULT: " + res.statusMessage);
+					var parsedResponse = JSON.parse(msg.payload);
 
-					if (JSON.parse(msg.payload).subscribeResponse != null) {
-						var subscriptionID = JSON.parse(msg.payload).subscribeResponse.subscriptionId;
+					if (parsedResponse.subscribeResponse != null) {
+						var subscriptionID = parsedResponse.subscribeResponse.subscriptionId;
 
 						var nodeID = (node.id + "").replace('.', '');
-						util.log("---- " + nodeID + " pre subID:" + subscriptionIDs[nodeID]);
+						util.log("elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
 						subscriptionIDs[nodeID] = subscriptionID;
 
-						if (subscriptionID) {
-							var data = {
-								"_id": node.id,
-								"subscriptionId": subscriptionID,
-								"brokerUrl": orionUrl
-							}
-						}
-					} else if (parsed.result == false) {
+					} else if (parsedResponse.result == false) {
 						node.status({
 							fill: "red",
 							shape: "ring",
-							text: parsed.message
+							text: parsedResponse.message
 						});
 					}
 				});
@@ -336,34 +293,6 @@ module.exports = function (RED) {
 				});
 			});
 
-			var errorHandler = function (err, req, res, next) {
-				res.sendStatus(500);
-			};
-
-			var nodeID = (node.id + "").replace('.', '');
-			listenOnUrl(nodeID, function (req, res) {
-				util.log("----------------------");
-				util.log("+++++++++++++++++++Received response with SUBID: " + req.body.subscriptionId);
-
-				if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
-					util.log("Recognized invalid subscription in response body: " + req.body.subscriptionId);
-					unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, n, elementID).then(function (res) {
-						//util.log("Unsubscribed invalid subscription: " + req.body.subscriptionId);
-						//util.log("Unsubscribed: " + req.body.subscriptionId);
-					});
-				} else {
-					var payload = formatOutput(node, n, req.body);
-					util.log("formatted payload: " + payload);
-					util.log("node id: " + node.id);
-					node.send({
-						payload: payload,
-						statusCode: 200
-					});
-				}
-				res.sendStatus(200);
-				util.log("Send Status 200");
-			});
-
 			node.status({
 				fill: "blue",
 				shape: "dot",
@@ -375,6 +304,21 @@ module.exports = function (RED) {
 			}
 
 			req.end();
+
+			var nodeID = (node.id + "").replace('.', '');
+			listenOnUrl(nodeID, function (req, res) {
+				if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
+					util.log("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
+					unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
+				} else {
+					var payload = formatOutput(node, config, req.body);
+					node.send({
+						payload: payload,
+						statusCode: 200
+					});
+				}
+				res.sendStatus(200);
+			});
 		};
 	}
 
@@ -389,40 +333,41 @@ module.exports = function (RED) {
 		}
 	});
 
-	function unsubscribeFromOrion(node, subscriptionId, url, n, elementID) {
+	function unsubscribeFromOrion(node, subscriptionId, url, config) {
 		node.log("in unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
 
 		var payload = {
 			"subscriptionId": subscriptionId
 		};
 
-		//util.log(RED.nodes.getNode(n.tls));
-		var orionBrokerService = RED.nodes.getNode(n.service);
+		util.log("elementid " + config.enid + " k1 " + config.userk1 + " k2 " + config.passk2);
+		var orionBrokerService = RED.nodes.getNode(config.service);
 		return when.promise(function (resolve, reject) {
-		var options = {
-			hostname: orionBrokerService.url,
-			port: orionBrokerService.port,
-			path: "/v1/unsubscribeContext/?elementid=" + elementID + (n.userk1 ? "&k1=" + n.userk1 : "") + (n.passk2 ? "&k2=" + n.passk2 : ""),
-			method: 'POST',
-			rejectUnauthorized: false,
-			headers: {
-				'Content-Type': 'application/json',
-				'Accept': 'application/json',
-				'Content-Length': JSON.stringify(payload).length
+			var options = {
+				hostname: orionBrokerService.url,
+				port: orionBrokerService.port,
+				path: "/v1/unsubscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				method: 'POST',
+				rejectUnauthorized: false,
+				headers: {
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+					'Content-Length': JSON.stringify(payload).length
+				}
+			};
+
+			util.log(options);
+
+			var tlsNode = RED.nodes.getNode(config.tls);
+
+			if (tlsNode != null) {
+				if (tlsNode.credentials != null) {
+					options.key = tlsNode.credentials.keydata;
+					options.cert = tlsNode.credentials.certdata;
+					options.ca = tlsNode.credentials.cadata;
+				}
 			}
-		};
 
-		var tlsNode = RED.nodes.getNode(n.tls);
-
-		if (tlsNode != null) {
-			if (tlsNode.credentials != null) {
-				options.key = tlsNode.credentials.keydata;
-				options.cert = tlsNode.credentials.certdata;
-				options.ca = tlsNode.credentials.cadata;
-			}
-		}
-
-		
 			var req = https2.request(options, function (res) {
 				(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 				var response = "";
@@ -430,8 +375,7 @@ module.exports = function (RED) {
 					response += chunk;
 				});
 				res.on('end', function () {
-					console.log(response);
-					util.log("Unsubscribed: " + subscriptionId);
+					util.log("elementId: " + config.enid + " Unsubscribed: " + subscriptionId + " Response: " + response);
 					resolve({});
 				});
 			});
@@ -444,6 +388,7 @@ module.exports = function (RED) {
 				});
 				reject(err.toString());
 			});
+			util.log("SEND DATA FOR UNSUBSCRIBE: " + JSON.stringify(payload));
 			req.write(JSON.stringify(payload));
 			req.end();
 		});
@@ -513,7 +458,7 @@ module.exports = function (RED) {
 
 	function formatOutput(node, n, msg) {
 
-		util.log("MSG: " + JSON.stringify(msg));
+		//util.log("MSG: " + JSON.stringify(msg));
 		var contextResponses = msg.contextResponses;
 		var payload = [];
 
@@ -576,7 +521,14 @@ module.exports = function (RED) {
 
 	function validateInput(node, n) {
 		var err = null;
-
+		n.url = n.url;
+		n.port = n.port;
+		n.enid = n.enid;
+		n.entype = n.entype;
+		n.userk1 = n.userk1;
+		n.passk2 = n.passk2;
+		n.attributes = n.attributes;
+		n.includeattr = n.includeattr;
 		n.port = n.port * 1;
 
 		if (!n.enid || !n.entype) {
@@ -609,7 +561,7 @@ module.exports = function (RED) {
 							"isPattern": n.ispattern,
 							"id": n.enid
 						}],
-						"attributes": n.attributes,
+						"attributes": [n.attributes],
 						"reference": "http://" + myUri + "/" + nodeID,
 						"duration": n.duration,
 						"notifyConditions": [{
@@ -631,47 +583,6 @@ module.exports = function (RED) {
 		}
 
 		return orionUrl;
-	}
-
-	function getCreateTestElementPayload(node) {
-		var nodeID = node.id + "";
-		nodeID = nodeID.replace('.', '');
-
-		var myval = Math.floor((Math.random() * 100) + 1);
-
-		var payload = {
-			"contextElements": [{
-				"type": "Test",
-				"isPattern": "false",
-				"id": nodeID,
-				"attributes": [{
-					"name": "test",
-					"type": "float",
-					"value": myval
-				}]
-			}],
-			"updateAction": "APPEND"
-		};
-
-		return payload;
-	}
-
-	function getDeleteElementPayload(node) {
-		var nodeID = node.id + "";
-		nodeID = nodeID.replace('.', '');
-
-		var myval = Math.floor((Math.random() * 100) + 1);
-
-		var payload = {
-			"contextElements": [{
-				"type": "Test",
-				"isPattern": "false",
-				"id": nodeID
-			}],
-			"updateAction": "DELETE"
-		};
-
-		return payload;
 	}
 
 	function request(node, method, payload, url) {
@@ -719,18 +630,6 @@ module.exports = function (RED) {
 			req.write(payload);
 			req.end();
 		});
-	}
-
-	function validateOrionConnectivity(node, orionUrl) {
-		var createElementPayload = getCreateTestElementPayload(node);
-
-		if (node.type == "fiware orion in") {
-			util.log("doing two way broker connectivity validation");
-			return validateOrionConnectivityTwoWays(node, orionUrl, createElementPayload);
-		} else {
-			util.log("doing one way broker connectivity validation");
-			return validateOrionConnectivityOneWay(node, orionUrl, createElementPayload);
-		}
 	}
 
 	// To validate two ways connectivity following flow implemented	
@@ -818,38 +717,13 @@ module.exports = function (RED) {
 		}
 	}
 
-	function cleanupTestEnv(node, orionUrl) {
-		util.log("deleting listener path");
-		return when.promise(function (resolve, reject) {
-
-			//delete test context entity, common for both nodes 
-			request(node, "POST", getDeleteElementPayload(node), orionUrl + "/v1/updateContext").then(function (res) {});
-
-			if (node.type != "fiware orion in") {
-				resolve();
-			} else {
-				var nodeID = node.id + "";
-				nodeID = nodeID.replace('.', '');
-				RED.httpNode._router.stack.forEach(function (route, i, routes) {
-					if (route.route && route.route.path) {
-						routes.splice(i, 1);
-					}
-				});
-
-
-				// unsubscribe exisiting subscription from context broker
-				unsubscribeFromOrion(node, testSubscriptionIDs[nodeID], orionUrl).then(function (res) {
-					resolve({});
-				});
-			}
-		});
-	}
-
 	function OrionSubscribe(n) {
 		RED.nodes.createNode(this, n);
 		this.service = n.service;
 		this.brokerConn = RED.nodes.getNode(this.service);
 		this.noderedhost = n.noderedhost;
+		this.userk1 = n.userk1;
+		this.passk2 = n.passk2;
 
 		var node = this;
 
@@ -868,6 +742,7 @@ module.exports = function (RED) {
 
 		// validate mandatory fields
 		validateInput(this, n);
+
 
 		node.brokerConn.init(node, n).then(function () {
 			getSubscribePayload(node, n).then(function (payload) {

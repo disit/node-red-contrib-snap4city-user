@@ -358,15 +358,14 @@ module.exports = function (RED) {
                     }
 
                 } else {
-                    console.error(xmlHttp.statusText);
+                    console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
                 }
             }
         };
         xmlHttp.onerror = function (e) {
-            console.error(xmlHttp.statusText);
+            console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
         };
         xmlHttp.send(null);
-
     });
 
 };

@@ -147,6 +147,11 @@
 			<option value="P1D">P1D</option>
 			<option value="P1W">P1W</option>
 			<option value="P1M">P1M</option>
+			<option value="P3M">P3M</option>
+			<option value="P6M">P6M</option>
+			<option value="P1Y">P1Y</option>
+			<option value="P2Y">P2Y</option>
+			<option value="P3Y">P3Y</option>
 		</select>
 	</div>
 
@@ -289,7 +294,8 @@
 
 </script>
 
-////////////////////////////////////////////////////////////////////////// //SIMPLE ORION CONTEXT BROKER CREATE NODE (currently used to test) 
+////////////////////////////////////////////////////////////////////////// //SIMPLE ORION CONTEXT BROKER CREATE NODE
+(currently used to test)
 // //////////////////////////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-test">
 
@@ -633,7 +639,7 @@
 					value: false
 				},
 				duration: {
-					value: "P1W"
+					value: "P1Y"
 				},
 				attributes: {
 					value: ""
@@ -840,7 +846,7 @@
 			inputs: 1,
 			outputs: 1,
 			icon: "orioncb.png",
-			oneditprepare : function(){
+			oneditprepare: function () {
 				$.ajax({
 					url: "isThereLocalRefreshToken/",
 					type: "GET",
@@ -891,7 +897,7 @@
 			inputs: 1,
 			outputs: 0,
 			icon: "orioncb.png",
-			oneditprepare : function(){
+			oneditprepare: function () {
 				$.ajax({
 					url: "isThereLocalRefreshToken/",
 					type: "GET",

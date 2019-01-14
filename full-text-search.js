@@ -51,12 +51,12 @@ module.exports = function (RED) {
                         s4cUtility.eventLog(RED, inPayload, msgs, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msgs);
                     } else {
-                        console.error(xmlHttp.statusText);
+                        console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);
+                console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);
         });

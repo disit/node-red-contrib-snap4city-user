@@ -15,26 +15,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function GetMyAnnotation(config) {
+    function GetMyKPIData(config) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             var uid = s4cUtility.retrieveAppID(RED);
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/apps/" + uid + "/data";
+            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/kpidata";
             var inPayload = msg.payload;
-            var motivation = "Annotation";
-            var startdate = (msg.payload.startdate ? msg.payload.startdate : config.startdate);
-            var enddate = (msg.payload.enddate ? msg.payload.enddate : config.enddate);
-            var last = (msg.payload.last ? msg.payload.last : config.last);
             var accessToken = "";
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             if (accessToken != "" && typeof accessToken != "undefined") {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-
-                console.log(encodeURI(uri + "?sourceRequest=iotapp" + (typeof motivation != "undefined" && motivation != "" ? "&motivation=" + motivation : "") + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "") + "&accessToken=" + accessToken));
-                xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp" + (typeof motivation != "undefined" && motivation != "" ? "&motivation=" + motivation : "") + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "") + "&accessToken=" + accessToken), true);
+                console.log(encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken));
+                xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" + accessToken), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.onload = function (e) {
                     if (xmlHttp.readyState === 4) {
@@ -63,5 +58,6 @@ module.exports = function (RED) {
             }
         });
     }
-    RED.nodes.registerType("get-my-annotation", GetMyAnnotation);
+
+    RED.nodes.registerType("get-my-kpidata", GetMyKPIData);
 }
