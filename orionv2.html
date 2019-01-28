@@ -14,7 +14,7 @@
 
 //////////////////////////////////////////////////// // ORION CONTEXT BROKER SERVICE CONFIG NODE
 ////////////////////////////////////////////////////
-<script type="text/x-red" data-template-name="orion-service">
+<script type="text/x-red" data-template-name="orion-service-v2">
 	<div class="form-row">
 		<label for="node-config-input-url">
 			<i class="fa fa-cloud"></i> Broker URL</label>
@@ -52,7 +52,7 @@
 
 //////////////////////////////////////////////////// // ORION CONTEXT BROKER SUBSCRIBE NODE
 ////////////////////////////////////////////////////
-<script type="text/x-red" data-template-name="fiware orion in">
+<script type="text/x-red" data-template-name="fiware-orion-in-v2">
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -81,6 +81,13 @@
 		<input type="text" id="node-input-enid">
 	</div>
 	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-ispattern" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>is pattern</span>
+		</label>
+	</div>
+	<div class="form-row">
 		<label for="node-input-userk1">
 			<i class="fa fa-globe"></i>
 			<span>key 1</span>
@@ -101,13 +108,7 @@
 		</label>
 		<input type="text" id="node-input-apikey">
 	</div>
-	<div class="form-row">
-		<label>&nbsp;</label>
-		<input type="checkbox" id="node-input-ispattern" style="display: inline-block; width: auto; vertical-align: top;">
-		<label style="width: 70%;">
-			<span>is pattern</span>
-		</label>
-	</div>
+	
 
 	<div class="form-row">
 		<label for="node-input-attributes">
@@ -137,12 +138,12 @@
 			<span>throttle</span>
 		</label>
 		<select type="text" id="node-input-throttle" style="width:52%;">
-			<option value="PT1S">PT1S</option>
-			<option value="PT5S">PT5S</option>
-			<option value="PT10S">PT10S</option>
-			<option value="PT30S">PT30S</option>
-			<option value="PT1M">PT1M</option>
-			<option value="PT5M">PT5M</option>
+			<option value="1">PT1S</option>
+			<option value="5">PT5S</option>
+			<option value="10">PT10S</option>
+			<option value="30">PT30S</option>
+			<option value="60">PT1M</option>
+			<option value="300">PT5M</option>
 		</select>
 	</div>
 	<div class="form-row">
@@ -151,14 +152,14 @@
 			<span>duration</span>
 		</label>
 		<select type="text" id="node-input-duration" style="width:52%;">
-			<option value="P1D">P1D</option>
-			<option value="P1W">P1W</option>
-			<option value="P1M">P1M</option>
-			<option value="P3M">P3M</option>
-			<option value="P6M">P6M</option>
-			<option value="P1Y">P1Y</option>
-			<option value="P2Y">P2Y</option>
-			<option value="P3Y">P3Y</option>
+			<option value="864">P1D</option>
+			<option value="6048">P1W</option>
+			<option value="25920">P1M</option>
+			<option value="77760">P3M</option>
+			<option value="155520">P6M</option>
+			<option value="315360">P1Y</option>
+			<option value="630720">P2Y</option>
+			<option value="946080">P3Y</option>
 		</select>
 	</div>
 
@@ -193,7 +194,7 @@
 
 ////////////////////////////////////////////////////// //ORION CONTEXT BROKER QUERY NODE //
 //////////////////////////////////////////////////////
-<script type="text/x-red" data-template-name="fiware orion">
+<script type="text/x-red" data-template-name="fiware-orion-query-v2">
 
 	<div class="form-row">
 		<label for="node-input-service">
@@ -310,92 +311,8 @@
 ////////////////////////////////////////////////////////////////////////// //SIMPLE ORION CONTEXT BROKER CREATE NODE
 (currently used to test)
 // //////////////////////////////////////////////////////////////////////////
-<script type="text/x-red" data-template-name="orion-test">
 
-	<div class="form-row">
-		<label for="node-input-service">
-			<i class="fa fa-cloud"></i> Service</label>
-		<input type="text" id="node-input-service">
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-tls">
-			<i class="fa fa-cloud"></i>Certificates</label>
-		<input type="text" id="node-input-tls">
-	</div>
-
-	<div class="form-tips"  id="tipAuthentication" style="max-width: none">
-		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-entype">
-			<i class="fa fa-globe"></i>
-			<span>Device type</span>
-		</label>
-		<input type="text" id="node-input-entype">
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-enid">
-			<i class="fa fa-globe"></i>
-			<span>Device NameID</span>
-		</label>
-		<input type="text" id="node-input-enid">
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-userk1">
-			<i class="fa fa-globe"></i>
-			<span>key 1</span>
-		</label>
-		<input type="text" id="node-input-userk1">
-	</div>
-	<div class="form-row">
-		<label for="node-input-passk2">
-			<i class="fa fa-globe"></i>
-			<span>key 2</span>
-		</label>
-		<input type="text" id="node-input-passk2">
-	</div>
-	<div class="form-row">
-		<label for="node-input-apikey">
-			<i class="fa fa-globe"></i>
-			<span>apikey</span>
-		</label>
-		<input type="text" id="node-input-apikey">
-	</div>
-	<div class="form-row">
-		<label for="node-input-attrkey">
-			<i class="fa fa-globe"></i>
-			<span>Attribute key</span>
-		</label>
-		<input type="text" id="node-input-attrkey">
-	</div>
-
-
-	<div class="form-row">
-		<label for="node-input-attrvalue">
-			<i class="fa fa-globe"></i>
-			<span>Attribute value</span>
-		</label>
-		<input type="text" id="node-input-attrvalue">
-	</div>
-
-	<div class="form-row">
-		<label for="node-input-name">
-			<i class="fa fa-tag"></i>
-			<span>Name</span>
-		</label>
-		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
-	</div>
-	<div class="form-tips"  id="tip-json" hidden>
-		<span data-i18n="httpin.tip.req"></span>
-	</div>
-
-</script>
-
-<script type="text/x-red" data-template-name="fiware-orion-out">
+<script type="text/x-red" data-template-name="fiware-orion-out-v2">
 
 	<div class="form-row">
 		<label for="node-input-service">
@@ -463,13 +380,11 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="fiware-orion-out"></script>
+<script type="text/x-red" data-help-name="fiware-orion-out-v2"></script>
 
-<script type="text/x-red" data-help-name="orion-test"></script>
+<script type="text/x-red" data-help-name="orion-service-v2"></script>
 
-<script type="text/x-red" data-help-name="orion-service"></script>
-
-<script type="text/x-red" data-help-name="fiware orion in">
+<script type="text/x-red" data-help-name="fiware-orion-in-v2">
 	<p>Provides a node subscribing on Fiware Orion context broker and listening for the changes.</p>
 
 	<ul>
@@ -510,7 +425,7 @@
 		</ul>
 </script>
 
-<script type="text/x-red" data-help-name="fiware orion">
+<script type="text/x-red" data-help-name="fiware-orion-query-v2">
 	<p>Provides a node for making requests to Fiware Orion context broker.</p>
 	<p>The URL and port can be configured in the node, if they are left blank they should be set in an incoming message on
 		<code>msg.url</code> and
@@ -568,7 +483,7 @@
 
 <script type="text/javascript">
 	(function () {
-		RED.nodes.registerType('orion-service', {
+		RED.nodes.registerType('orion-service-v2', {
 			category: 'config',
 			defaults: {
 				name: {
@@ -595,7 +510,7 @@
 				}
 			},
 			label: function () {
-				return this.name || this.namespace || "Orion Service";
+				return this.name || this.namespace || "Orion Service V2";
 			},
 			oneditprepare: function () {
 				if (this.credentials.user || this.credentials.password) {
@@ -630,7 +545,7 @@
 				}
 			}
 		});
-		RED.nodes.registerType('fiware orion in', {
+		RED.nodes.registerType('fiware-orion-in-v2', {
 			category: 'S4CIoT',
 			color: "rgb(231, 231, 174)",
 			defaults: {
@@ -638,7 +553,7 @@
 					value: ""
 				},
 				service: {
-					type: "orion-service",
+					type: "orion-service-v2",
 					required: true
 				},
 				tls: {
@@ -646,7 +561,7 @@
 					required: false
 				},
 				throttle: {
-					value: "PT5S"
+					value: 5
 				},
 				entype: {
 					value: ""
@@ -667,7 +582,7 @@
 					value: false
 				},
 				duration: {
-					value: "P1Y"
+					value: 315360
 				},
 				attributes: {
 					value: ""
@@ -689,11 +604,7 @@
 			outputs: 1,
 			icon: "orioncb.png",
 			label: function () {
-				if (this.name) {
-					return this.name;
-				} else {
-					return "Fiware Orion";
-				}
+				return this.name || "Fiware Orion In V2";
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";
@@ -724,7 +635,7 @@
 			}
 		});
 
-		RED.nodes.registerType('fiware orion', {
+		RED.nodes.registerType('fiware-orion-query-v2', {
 			category: 'S4CIoT',
 			color: "rgb(231, 231, 174)",
 			defaults: {
@@ -732,7 +643,7 @@
 					value: ""
 				},
 				service: {
-					type: "orion-service",
+					type: "orion-service-v2",
 					required: true
 				},
 				tls: {
@@ -775,7 +686,7 @@
 			outputs: 1,
 			icon: "orioncb.png",
 			label: function () {
-				return this.name || "Fiware Orion Query";
+				return this.name || "Fiware Orion Query V2";
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";
@@ -840,67 +751,8 @@
 				});
 			}
 		});
-		RED.nodes.registerType('orion-test', {
-			category: 'S4CIoT',
-			color: "rgb(42, 231, 42)",
-			defaults: {
-				name: {
-					value: ""
-				},
-				service: {
-					type: "orion-service",
-					required: true
-				},
-				tls: {
-					type: "tls-config",
-					required: false
-				},
-				entype: {
-					value: ""
-				},
-				enid: {
-					value: ""
-				},
-				userk1: {
-					value: ""
-				},
-				passk2: {
-					value: ""
-				},
-				apikey: {
-					value: ""
-				},
-				attrkey: {
-					value: ""
-				},
-				attrvalue: {
-					value: ""
-				}
-			},
-			inputs: 1,
-			outputs: 1,
-			icon: "orioncb.png",
-			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
-			},
-			label: function () {
-				return this.name || "Fiware Orion Test";
-			},
-			labelStyle: function () {
-				return this.name ? "node_label_italic" : "";
-			}
-		});
 
-		RED.nodes.registerType('fiware-orion-out', {
+		RED.nodes.registerType('fiware-orion-out-v2', {
 			category: 'S4CIoT',
 			color: "rgb(231, 231, 174)",
 			defaults: {
@@ -912,7 +764,7 @@
 					required: false
 				},
 				service: {
-					type: "orion-service",
+					type: "orion-service-v2",
 					required: true
 				},
 				entype: {
@@ -947,7 +799,7 @@
 				});
 			},
 			label: function () {
-				return this.name || "fiware-orion-out";
+				return this.name || "Fiware Orion Out V2";
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";

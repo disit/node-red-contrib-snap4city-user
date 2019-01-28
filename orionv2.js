@@ -42,7 +42,7 @@ module.exports = function (RED) {
 	var LIMIT = 30;
 
 
-	function OrionService(config) {
+	function OrionServiceV2(config) {
 		RED.nodes.createNode(this, config);
 		var serviceNode = this;
 
@@ -100,14 +100,13 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/queryContext/?limit=" + config.limit + "&elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
-					method: 'POST',
+					path: prefixPath + "/v1/entities" + (config.enid ? "/" + config.enid : "") + "/?" + (config.limit ? "limit=" + config.limit : "") + (config.entype ? "&type=" + config.entype : "") + (payload.attributes.length > 0 ? "&attrs=" + payload.attributes.toString() : "") + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					method: 'GET',
 					rejectUnauthorized: false,
-					headers: {
-						'Content-Type': 'application/json',
-						'Content-Length': JSON.stringify(payload).length
-					}
+					headers: {}
 				};
+
+				console.log(options);
 
 				if (config.apikey != null && config.apikey != "") {
 					options.headers.apikey = config.apikey;
@@ -154,7 +153,6 @@ module.exports = function (RED) {
 					reject(err);
 				});
 
-				req.write(JSON.stringify(payload));
 				req.end();
 			});
 
@@ -186,8 +184,8 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/updateContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
-					method: 'POST',
+					path: prefixPath + "/v1/entities/" + config.enid + "/attrs/?" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					method: 'PATCH',
 					rejectUnauthorized: false,
 					headers: {
 						'Content-Type': 'application/json',
@@ -255,7 +253,7 @@ module.exports = function (RED) {
 				text: "subscribing"
 			});
 			util.log("subscribeContext in: " + orionUrl + " with node id: " + node.id);
-			var reference = payload.reference;
+			var reference = payload.notification.http.url;
 
 			//elementID = payload.entities[0].id;
 
@@ -274,7 +272,7 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v1/subscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v1/subscriptions" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
@@ -312,33 +310,27 @@ module.exports = function (RED) {
 				});
 				res.on('end', function () {
 
-					util.log("subscribeContext RESULT: " + res.statusMessage);
+					util.log("subscriptions RESULT: " + res.statusMessage);
 
-					try {
-						var parsedResponse = JSON.parse(msg.payload);
+					if (res.headers.location != null) {
+						var subscriptionID = res.headers.location.substring(res.headers.location.lastIndexOf("/") + 1);
 
-						if (parsedResponse.subscribeResponse != null) {
-							var subscriptionID = parsedResponse.subscribeResponse.subscriptionId;
-
-							var nodeID = (node.id + "").replace('.', '');
-							util.log("elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
-							var idToUnsubscribe = subscriptionIDs[nodeID];
-							if (typeof subscriptionIDs[nodeID] != "undefined") {
-								setTimeout(function () {
-									unsubscribeFromOrion(node, idToUnsubscribe, orionUrl, config);
-								}, 2000);
-							}
-							subscriptionIDs[nodeID] = subscriptionID;
-
-						} else if (parsedResponse.result == false) {
-							node.status({
-								fill: "red",
-								shape: "ring",
-								text: parsedResponse.message
-							});
+						var nodeID = (node.id + "").replace('.', '');
+						util.log("elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
+						var idToUnsubscribe = subscriptionIDs[nodeID];
+						if (typeof subscriptionIDs[nodeID] != "undefined") {
+							setTimeout(function () {
+								unsubscribeFromOrion(node, idToUnsubscribe, orionUrl, config);
+							}, 2000);
 						}
-					} catch (e) {
-						node.error(msg.payload);
+						subscriptionIDs[nodeID] = subscriptionID;
+
+					} else {
+						node.status({
+							fill: "red",
+							shape: "ring",
+							text: res.statusMessage
+						});
 					}
 				});
 			});
@@ -361,7 +353,7 @@ module.exports = function (RED) {
 			});
 
 			if (payload) {
-				util.log(payload);
+				util.log(JSON.stringify(payload));
 				req.write(JSON.stringify(payload));
 			}
 
@@ -369,6 +361,7 @@ module.exports = function (RED) {
 
 			var nodeID = (node.id + "").replace('.', '');
 			listenOnUrl(nodeID, function (req, res) {
+				util.log(req.body);
 				if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
 					util.log("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
 					unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
@@ -384,7 +377,7 @@ module.exports = function (RED) {
 		};
 	}
 
-	RED.nodes.registerType("orion-service", OrionService, {
+	RED.nodes.registerType("orion-service-v2", OrionServiceV2, {
 		credentials: {
 			user: {
 				type: "text"
@@ -419,14 +412,10 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v1/unsubscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
-				method: 'POST',
+				path: prefixPath + "/v1/subscriptions/" + subscriptionId + "/?" + (config.userk1 ? "k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				method: 'DELETE',
 				rejectUnauthorized: false,
-				headers: {
-					'Content-Type': 'application/json',
-					'Accept': 'application/json',
-					'Content-Length': JSON.stringify(payload).length
-				}
+				headers: {}
 			};
 
 			if (config.apikey != null && config.apikey != "") {
@@ -452,7 +441,7 @@ module.exports = function (RED) {
 					response += chunk;
 				});
 				res.on('end', function () {
-					util.log("elementId: " + config.enid + " Unsubscribed: " + subscriptionId + " Response: " + response);
+					util.log("elementId: " + config.enid + " Unsubscribed: " + subscriptionId + " Response: " + response + " " + res.statusMessage);
 					resolve({});
 				});
 			});
@@ -466,7 +455,7 @@ module.exports = function (RED) {
 				reject(err.toString());
 			});
 			util.log("SEND DATA FOR UNSUBSCRIBE: " + JSON.stringify(payload));
-			req.write(JSON.stringify(payload));
+			//req.write(JSON.stringify(payload));
 			req.end();
 		});
 	}
@@ -535,22 +524,25 @@ module.exports = function (RED) {
 
 	function formatOutput(node, n, msg) {
 
-		//util.log("MSG: " + JSON.stringify(msg));
-		var contextResponses = msg.contextResponses;
+		util.log("MSG: " + JSON.stringify(msg));
+		if (Array.isArray(msg)) {
+			var contextResponses = msg;
+		} else {
+			var contextResponses = [msg];
+		}
+
 		var payload = [];
 
 		contextResponses.forEach(function (entry) {
-			var contextElement = entry.contextElement;
+			var contextElement = entry;
 			delete contextElement.isPattern;
 			if (!n.includeattr) {
 				// removing attribute metadata
-				node.log("cleaning contextElement.attributes: " + JSON.stringify(contextElement.attributes));
-				contextElement.attributes.forEach(function (entry) {
-					node.log("deleting: " + JSON.stringify(entry.metadatas));
-					delete entry.metadatas;
-				});
+				node.log("cleaning contextElement.attributes: " + JSON.stringify(contextElement));
+				for (var attribute in contextElement) {
+					delete contextElement[attribute].metadata;
+				}
 			}
-
 			payload.push(contextElement);
 		});
 
@@ -644,24 +636,37 @@ module.exports = function (RED) {
 		var nodeID = node.id + "";
 		nodeID = nodeID.replace('.', '');
 
+
+
 		return when.promise(
 			function (resolve, reject) {
 				getMyUri(n).then(function (myUri) {
-					resolve({
-						"entities": [{
-							"type": n.entype,
-							"isPattern": n.ispattern,
-							"id": n.enid
-						}],
-						"attributes": n.attributes,
-						"reference": "http://" + myUri + "/" + nodeID,
-						"duration": n.duration,
-						"notifyConditions": [{
-							"type": "ONCHANGE",
-							"condValues": n.condvals
-						}],
-						"throttling": n.throttle
-					});
+					var labelType = n.ispattern ? "typePattern" : "type";
+					var labelId = n.ispattern ? "idPattern" : "id";
+					var jsonToResolve = {
+						"description": "A subscription to get info about " + n.enid,
+						"subject": {
+							"entities": [{
+								labelType: n.entype,
+								labelId: n.enid
+							}],
+							"condition": {
+								"attrs": n.condvalues
+							}
+						},
+						"notification": {
+							"http": {
+								"url": "http://" + myUri + "/" + nodeID
+							},
+							"attrs": n.attributes
+						},
+						"expires": new Date(new Date().getTime() + n.duration * 100000).toISOString(),
+						"throttling": parseInt(n.throttle)
+					};
+
+					jsonToResolve.subject.entities[0][labelType] = n.entype;
+					jsonToResolve.subject.entities[0][labelId] = n.enid;
+					resolve(jsonToResolve);
 				})
 			}
 		);
@@ -736,7 +741,7 @@ module.exports = function (RED) {
 	// #cleanup
 	// 5. delete element
 	// 6. delete subscription
-	function validateOrionConnectivityTwoWays(node, orionUrl, createElementPayload) {
+	/* function validateOrionConnectivityTwoWays(node, orionUrl, createElementPayload) {
 		var nodeID = node.id + "";
 		nodeID = nodeID.replace('.', '');
 
@@ -757,7 +762,7 @@ module.exports = function (RED) {
 					});
 					
                 	reject("Communication with context broker failed");
-                }else{*/
+                }else{
 				util.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
 				resolve();
 				//}
@@ -789,9 +794,9 @@ module.exports = function (RED) {
 				});
 			});
 		});
-	}
+	} */
 
-	function validateOrionConnectivityOneWay(node, orionUrl, createElementPayload) {
+	/* function validateOrionConnectivityOneWay(node, orionUrl, createElementPayload) {
 		util.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
 
 		return when.promise(function (resolve, reject) {
@@ -800,7 +805,7 @@ module.exports = function (RED) {
 				resolve();
 			});
 		});
-	}
+	} */
 
 	function rcValidate(expected, result, reject) {
 		var rc = result.contextResponses[0].statusCode.code;
@@ -809,7 +814,7 @@ module.exports = function (RED) {
 		}
 	}
 
-	function OrionSubscribe(n) {
+	function OrionSubscribeV2(n) {
 		RED.nodes.createNode(this, n);
 		this.service = n.service;
 		this.brokerConn = RED.nodes.getNode(this.service);
@@ -833,6 +838,7 @@ module.exports = function (RED) {
 			});
 
 			unsubscribeFromOrion(node, subscriptionIDs[nodeID], null, n);
+
 		});
 
 		// validate mandatory fields
@@ -846,8 +852,8 @@ module.exports = function (RED) {
 		});
 	}
 
-	//Register OrionSubscribe node
-	RED.nodes.registerType("fiware orion in", OrionSubscribe, {
+	//Register OrionSubscribeV2 node
+	RED.nodes.registerType("fiware-orion-in-v2", OrionSubscribeV2, {
 		credentials: {
 			user: {
 				type: "text"
@@ -946,7 +952,7 @@ module.exports = function (RED) {
 	}
 
 	//////Orion-request node constructor
-	function Orion(n) {
+	function OrionQueryV2(n) {
 		RED.nodes.createNode(this, n);
 
 		this.on("input", function (msg) {
@@ -1022,7 +1028,7 @@ module.exports = function (RED) {
 	}
 
 	// register node
-	RED.nodes.registerType("fiware orion", Orion, {
+	RED.nodes.registerType("fiware-orion-query-v2", OrionQueryV2, {
 		credentials: {
 			user: {
 				type: "text"
@@ -1039,7 +1045,7 @@ module.exports = function (RED) {
 	function processInput(node, n, msg) {
 		n.url = n.url || msg.url;
 		n.port = n.port || msg.port;
-		n.enid = n.enid || msg.enid || ".*";
+		n.enid = n.enid || msg.enid;
 		n.entype = n.entype || msg.entype;
 		n.limit = n.limit || msg.limit || LIMIT;
 		n.userk1 = n.userk1 || msg.userk1;
@@ -1056,7 +1062,6 @@ module.exports = function (RED) {
 			n.rvalue = "entity::type";
 		}
 
-		//	n.attributes = n.attributes || '.*';
 		n.attributes = n.attributes || [];
 		if (n.attributes.constructor !== Array) {
 			n.attributes = (n.attributes || "").split(",");
@@ -1064,40 +1069,6 @@ module.exports = function (RED) {
 				n.attributes[i] = n.attributes[i].trim();
 			}
 		}
-	}
-
-	// register node
-	RED.nodes.registerType("orion-test", OrionTest);
-
-	//Orion-test node constructor
-	function OrionTest(n) {
-		RED.nodes.createNode(this, n);
-
-		this.on("input", function (msg) {
-			this.service = n.service;
-			this.brokerConn = RED.nodes.getNode(this.service);
-			var node = this;
-
-			// create json payload for context update
-			var payload = generateCreateElementPayload(node, n, msg);
-
-			try {
-				node.brokerConn.init(node, n).then(function () {
-					node.brokerConn.createContext(node, n, payload).then(
-						function (msg) {},
-						function (reason) {
-							node.error("failed to create, reason: " + reason);
-						}
-					);
-				});
-			} catch (err) {
-				node.error(err, msg);
-				node.send({
-					payload: err.toString(),
-					statusCode: err.code
-				});
-			}
-		});
 	}
 
 	function generateCreateElementPayload(node, n, msg) {
@@ -1135,10 +1106,10 @@ module.exports = function (RED) {
 
 
 	// register node
-	RED.nodes.registerType("fiware-orion-out", FiwareOrionOut);
+	RED.nodes.registerType("fiware-orion-out-v2", FiwareOrionOutV2);
 
 	//Orion-test node constructor
-	function FiwareOrionOut(n) {
+	function FiwareOrionOutV2(n) {
 		RED.nodes.createNode(this, n);
 
 		this.on("input", function (msg) {
