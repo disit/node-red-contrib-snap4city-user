@@ -25,8 +25,8 @@ module.exports = function (RED) {
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             var uid = s4cUtility.retrieveAppID(RED);
-            if (checkValue(msg.payload.value, node.kpiDataType)) {
-                var value = msg.payload.value;
+            if (checkValue(msg.payload, node.kpiDataType)) {
+                var value = msg.payload;
                 var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/kpivalue/save";
                 var inPayload = msg.payload;
                 var accessToken = "";
@@ -34,7 +34,7 @@ module.exports = function (RED) {
                 if (accessToken != "" && typeof accessToken != "undefined") {
                     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                     var xmlHttp = new XMLHttpRequest();
-                    console.log(encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken));
+                    console.log(encodeURI(uri + "?sourceRequest=iotapp"));
                     xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken), true);
                     xmlHttp.setRequestHeader("Content-Type", "application/json");
                     xmlHttp.onload = function (e) {

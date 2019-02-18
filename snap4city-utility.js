@@ -87,7 +87,7 @@ module.exports = {
                         node.status({
                             fill: "red",
                             shape: "dot",
-                            text: "Authenticaton Problem"
+                            text: "Authentication Problem"
                         });
                     }
                 }

@@ -29,7 +29,7 @@ module.exports = function (RED) {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
 
-                console.log(encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken));
+                console.log(encodeURI(uri + "?sourceRequest=iotapp"));
                 xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.onload = function (e) {
