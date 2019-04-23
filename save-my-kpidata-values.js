@@ -20,14 +20,19 @@ module.exports = function (RED) {
         var node = this;
         node.selectedKPIDataId = config.selectedKPIDataId;
         node.kpiId = config.kpiId.split("-")[0];
-        node.kpiDataType = config.kpiId.split("-")[1];
+        node.kpiValueName = config.kpiId.split("-")[1];
+        node.kpiDataType = config.kpiId.split("-")[2];
+        
 
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             var uid = s4cUtility.retrieveAppID(RED);
-            if (checkValue(msg.payload, node.kpiDataType)) {
-                var value = msg.payload;
-                var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/kpivalue/save";
+            if (checkValue(msg.payload.value, node.kpiDataType)) {
+                var value = msg.payload.value;
+                var latitude = msg.payload.latitude;
+                var longitude = msg.payload.longitude;
+                var dataTime = (msg.payload.datatime ? new Date(msg.payload.datatime).getTime() : new Date().getTime());
+                var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/kpidata/" + node.kpiId + "/values/";
                 var inPayload = msg.payload;
                 var accessToken = "";
                 accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
@@ -65,8 +70,9 @@ module.exports = function (RED) {
                         xmlHttp.send(JSON.stringify({
                             "kpiId": node.kpiId,
                             "value": value,
-                            "insertTime": new Date().toJSON(),
-                            "dataTime": new Date().toJSON()
+                            "latitude": latitude,
+                            "longitude": longitude,
+                            "dataTime": dataTime
                         }));
                     } catch (e) {
                         console.log(e);

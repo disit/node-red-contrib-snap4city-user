@@ -21,7 +21,7 @@ module.exports = function (RED) {
         var node = this;
         var msgs = [{}, {}];
         node.on('input', function (msg) {
-            var uri = "https://servicemap.km4city.org/WebAppGrafo/api/v1/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/";
             var polygon = (msg.payload.polygon ? msg.payload.polygon : config.polygon);
             var valuetype = (msg.payload.valuetype ? msg.payload.valuetype : config.valuetype);
             var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);

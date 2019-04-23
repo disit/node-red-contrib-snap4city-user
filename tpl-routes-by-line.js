@@ -20,7 +20,7 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.on('input', function (msg) {
-            var uri = "https://servicemap.km4city.org/WebAppGrafo/api/v1/tpl/bus-routes/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/tpl/bus-routes/";
             var agency = (msg.payload.agency ? msg.payload.agency : config.agency);
             var line = (msg.payload.line ? msg.payload.line : config.line);
             var uid = s4cUtility.retrieveAppID(RED);

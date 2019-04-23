@@ -21,7 +21,7 @@ module.exports = function (RED) {
         var node = this;
         var msgs = [{}, {}];
         node.on('input', function (msg) {
-            var uri = "https://servicemap.km4city.org/WebAppGrafo/api/v1/tpl/bus-stops/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/tpl/bus-stops/";
             var route = (msg.payload.route ? msg.payload.route : config.route);
             var uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;

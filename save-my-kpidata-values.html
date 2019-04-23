@@ -89,6 +89,7 @@
         },
         oneditsave: function () {
             $("#node-input-selectedKPIDataId").val($("#node-input-kpiId").val());
+            $("#node-input-name").val("Save on " + $("#node-input-kpiId").val().split("-")[1]);
         },
         oneditresize: function () {
             $.ajax({
@@ -164,7 +165,7 @@
             $("#node-input-kpiId").empty();
             var currentValue = $("#node-input-selectedKPIDataId").val();
             for (var i = 0; i < currentKPIDataList.length; i++) {
-                $("<option value='" + currentKPIDataList[i].id + "-" + currentKPIDataList[i].dataType + "'>" + currentKPIDataList[i].id + "-" +
+                $("<option value='" + currentKPIDataList[i].id + "-" + currentKPIDataList[i].valueName + "-" + currentKPIDataList[i].dataType + "'>" + currentKPIDataList[i].id + "-" +
                     currentKPIDataList[i].valueName + "</option>").appendTo($("#node-input-kpiId"));
             }
             $("#node-input-kpiId").val(currentValue);
@@ -173,6 +174,7 @@
 </script>
 
 <script type="text/x-red" data-template-name="save-my-kpidata-values">
+    <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-selectedKPIDataId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
@@ -199,7 +201,25 @@
 </script>
 
 <script type="text/x-red" data-help-name="save-my-kpidata-values">
-    <p>It allows to retrieve the personal data inserted in My Personal KPI Data.</p>
+    <p>It allows to save the personal data inserted in My Personal KPI Data.</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>value
+            <span class="property-type">depends on kpi</span>
+        </dt>
+        <dd> value to save in selected kpi data</dd>
+        <dt>latitude
+            <span class="property-type">float</span>
+        </dt>
+        <dd> (optional) if you want to add gps metadata to the value</dd>
+        <dt>longitude
+            <span class="property-type">float</span>
+        </dt>
+        <dd> (optional) if you want to add gps metadata to the value</dd>
+    </dl>
 
     <h3>Outputs</h3>
     <dl class="message-properties">

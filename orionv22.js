@@ -42,7 +42,7 @@ module.exports = function (RED) {
 	var LIMIT = 30;
 
 
-	function OrionServiceV2(config) {
+	function OrionServiceV22(config) {
 		RED.nodes.createNode(this, config);
 		var serviceNode = this;
 
@@ -100,7 +100,7 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/entities" + (config.enid ? "/" + config.enid : "") + "/?" + (config.limit ? "limit=" + config.limit : "") + (config.entype ? "&type=" + config.entype : "") + (payload.attributes.length > 0 ? "&attrs=" + payload.attributes.toString() : "") + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					path: prefixPath + "/v2/entities" + (config.enid ? "/" + config.enid : "") + "/?" + (config.limit ? "limit=" + config.limit : "") + (config.entype ? "&type=" + config.entype : "") + (payload.attributes.length > 0 ? "&attrs=" + payload.attributes.toString() : "") + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 					method: 'GET',
 					rejectUnauthorized: false,
 					headers: {}
@@ -188,7 +188,7 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/entities/" + config.enid + "/attrs/?" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					path: prefixPath + "/v2/entities/" + config.enid + "/attrs/?" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 					method: 'PATCH',
 					rejectUnauthorized: false,
 					headers: {
@@ -204,6 +204,7 @@ module.exports = function (RED) {
 				if (config.basicAuth != null && config.basicAuth != "") {
 					options.headers.Authorization = config.basicAuth;
 				}
+
 
 				var tlsNode = RED.nodes.getNode(config.tls);
 
@@ -280,7 +281,7 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v1/subscriptions" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v2/subscriptions" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
@@ -389,7 +390,7 @@ module.exports = function (RED) {
 		};
 	}
 
-	RED.nodes.registerType("orion-service-v2", OrionServiceV2, {
+	RED.nodes.registerType("orion-service-v22", OrionServiceV22, {
 		credentials: {
 			user: {
 				type: "text"
@@ -424,7 +425,7 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v1/subscriptions/" + subscriptionId + "/?" + (config.userk1 ? "k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v2/subscriptions/" + subscriptionId + "/?" + (config.userk1 ? "k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
 				method: 'DELETE',
 				rejectUnauthorized: false,
 				headers: {}
@@ -785,10 +786,10 @@ module.exports = function (RED) {
 				//}
 			});
 
-			request(node, "POST", createElementPayload, orionUrl + "/v1/updateContext").then(function (result) {
+			request(node, "POST", createElementPayload, orionUrl + "/v2/updateContext").then(function (result) {
 
 				getSubscribeTestPayload(node).then(function (subscribePayload) {
-					request(node, "POST", subscribePayload, orionUrl + "/v1/subscribeContext").then(function (subscription) {
+					request(node, "POST", subscribePayload, orionUrl + "/v2/subscribeContext").then(function (subscription) {
 
 						try {
 							var testSubscriptionID = subscription.subscribeResponse.subscriptionId
@@ -817,7 +818,7 @@ module.exports = function (RED) {
 		util.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
 
 		return when.promise(function (resolve, reject) {
-			request(node, "POST", createElementPayload, orionUrl + "/v1/updateContext").then(function (result) {
+			request(node, "POST", createElementPayload, orionUrl + "/v2/updateContext").then(function (result) {
 				rcValidate(200, result, reject);
 				resolve();
 			});
@@ -831,7 +832,7 @@ module.exports = function (RED) {
 		}
 	}
 
-	function OrionSubscribeV2(n) {
+	function OrionSubscribeV22(n) {
 		RED.nodes.createNode(this, n);
 		this.service = n.service;
 		this.brokerConn = RED.nodes.getNode(this.service);
@@ -870,8 +871,8 @@ module.exports = function (RED) {
 		});
 	}
 
-	//Register OrionSubscribeV2 node
-	RED.nodes.registerType("fiware-orion-in-v2", OrionSubscribeV2, {
+	//Register OrionSubscribeV22 node
+	RED.nodes.registerType("fiware-orion-in-v22", OrionSubscribeV22, {
 		credentials: {
 			user: {
 				type: "text"
@@ -970,7 +971,7 @@ module.exports = function (RED) {
 	}
 
 	//////Orion-request node constructor
-	function OrionQueryV2(n) {
+	function OrionQueryV22(n) {
 		RED.nodes.createNode(this, n);
 
 		this.on("input", function (msg) {
@@ -1046,7 +1047,7 @@ module.exports = function (RED) {
 	}
 
 	// register node
-	RED.nodes.registerType("fiware-orion-query-v2", OrionQueryV2, {
+	RED.nodes.registerType("fiware-orion-query-v22", OrionQueryV22, {
 		credentials: {
 			user: {
 				type: "text"
@@ -1125,10 +1126,10 @@ module.exports = function (RED) {
 
 
 	// register node
-	RED.nodes.registerType("fiware-orion-out-v2", FiwareOrionOutV2);
+	RED.nodes.registerType("fiware-orion-out-v22", FiwareOrionOutV22);
 
 	//Orion-test node constructor
-	function FiwareOrionOutV2(n) {
+	function FiwareOrionOutV22(n) {
 		RED.nodes.createNode(this, n);
 
 		this.on("input", function (msg) {

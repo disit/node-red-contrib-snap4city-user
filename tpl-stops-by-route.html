@@ -37,7 +37,7 @@
             var node = this;
             $("#node-input-agency").empty();
             $.ajax({
-                url: "https://servicemap.km4city.org/WebAppGrafo/api/v1/tpl/agencies/",
+                url: "https://www.disit.org/superservicemap/api/v1/tpl/agencies/",
                 type: "GET",
                 async: false,
                 dataType: "json",
@@ -58,7 +58,7 @@
                 if ($("#node-input-agency").val() != null) {
                     $("#node-input-line").empty();
                     $.ajax({
-                        url: "https://servicemap.disit.org/WebAppGrafo/api/v1/tpl/bus-lines/?agency=" +
+                        url: "https://www.disit.org/superservicemap/api/v1/tpl/bus-lines/?agency=" +
                             $("#node-input-agency").val(),
                         type: "GET",
                         async: false,
@@ -83,7 +83,7 @@
                 if ($("#node-input-line").val() != null) {
                     $("#node-input-route").empty();
                     $.ajax({
-                        url: "https://servicemap.disit.org/WebAppGrafo/api/v1/tpl/bus-routes/?line=" +
+                        url: "https://www.disit.org/superservicemap/api/v1/tpl/bus-routes/?line=" +
                             $("#node-input-line").val(),
                         type: "GET",
                         async: false,

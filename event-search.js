@@ -21,7 +21,7 @@ module.exports = function (RED) {
         var node = this;
         var msgs = [{}, {}];
         node.on('input', function (msg) {
-            var uri = "https://servicemap.km4city.org/WebAppGrafo/api/v1/events/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/events/";
             var range = (msg.payload.range ? msg.payload.range : config.range);
             var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);
             var uid = s4cUtility.retrieveAppID(RED);

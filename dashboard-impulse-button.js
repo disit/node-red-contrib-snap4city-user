@@ -358,12 +358,12 @@ module.exports = function (RED) {
                     }
 
                 } else {
-                    console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                    console.error(xmlHttp.statusText);
                 }
             }
         };
         xmlHttp.onerror = function (e) {
-            console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+            console.error(xmlHttp.statusText);
         };
         xmlHttp.send(null);
     });

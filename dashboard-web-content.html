@@ -201,6 +201,12 @@
                 $("#node-dashboard-edit").hide();
                 $("#node-input-tip").show();
                 $("#node-input-createNewClicked").val("true");
+                $('#node-input-dashboardTitle').keypress(function (e) {
+                    var txt = String.fromCharCode(e.which);
+                    if (!txt.match(/[A-Za-z0-9&. ]/)) {
+                        return false;
+                    }
+                });
             });
 
             $("#backDashboardTitle").click(function () {
@@ -298,39 +304,40 @@
                 }
             });
         }
-        
+
     }
 
-    var createSelection = function(currentDashboardList){
+    var createSelection = function (currentDashboardList) {
         if (currentDashboardList.length != 0) {
-                $('#node-dashboard-view').show();
-                $('#node-dashboard-edit').show();
-                $("#node-input-dashboardTitle").empty();
-                var currentValue = $("#node-input-selectedDashboard").val();
-                for (var i = 0; i < currentDashboardList.length; i++) {
-                    $("<option value='" + JSON.stringify(currentDashboardList[i]) + "'>" +
-                            decodeURI(currentDashboardList[i].title.replace(
-                                /\+/g, " ")) + "</option>")
-                        .appendTo($("#node-input-dashboardTitle"));
-                    if (JSON.stringify(currentDashboardList[i]) == $(
-                            "#node-input-selectedDashboard").val() || decodeURI(currentDashboardList[i].title.replace(
-                            /\+/g, " ")) == $(
-                            "#node-input-selectedDashboard").val()) {
-                        currentValue = JSON.stringify(currentDashboardList[i]);
-                        $("#node-input-createNewClicked").val("false");
-                    }
+            $('#node-dashboard-view').show();
+            $('#node-dashboard-edit').show();
+            $("#node-input-dashboardTitle").empty();
+            var currentValue = $("#node-input-selectedDashboard").val();
+            for (var i = 0; i < currentDashboardList.length; i++) {
+                $("<option value='" + JSON.stringify(currentDashboardList[i]) + "'>" +
+                        decodeURI(currentDashboardList[i].title.replace(
+                            /\+/g, " ")) + "</option>")
+                    .appendTo($("#node-input-dashboardTitle"));
+                if (JSON.stringify(currentDashboardList[i]) == $(
+                        "#node-input-selectedDashboard").val() || decodeURI(currentDashboardList[i].title.replace(
+                        /\+/g, " ")) == $(
+                        "#node-input-selectedDashboard").val()) {
+                    currentValue = JSON.stringify(currentDashboardList[i]);
+                    $("#node-input-createNewClicked").val("false");
                 }
-                if ($("#node-input-createNewClicked").val() != null && $(
-                        "#node-input-createNewClicked").val() == "true") {
-                    $("#createNewDashboardTitle").click();
-                }
-                $("#node-input-dashboardTitle").val(currentValue);
-            } else {
-                $("#createNewDashboardTitle").click();
-                $("#node-input-dashboardTitle").val($(
-                    "#node-input-selectedDashboard").val());
             }
-    }</script>
+            if ($("#node-input-createNewClicked").val() != null && $(
+                    "#node-input-createNewClicked").val() == "true") {
+                $("#createNewDashboardTitle").click();
+            }
+            $("#node-input-dashboardTitle").val(currentValue);
+        } else {
+            $("#createNewDashboardTitle").click();
+            $("#node-input-dashboardTitle").val($(
+                "#node-input-selectedDashboard").val());
+        }
+    }
+</script>
 
 <script type="text/x-red" data-template-name="web-content">
     <input type="hidden" id="node-input-username"><input type="hidden" id="node-input-flowName">

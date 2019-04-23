@@ -21,7 +21,7 @@ module.exports = function (RED) {
         var node = this;
         var msgs = [{}, {}];
         node.on('input', function (msg) {
-            var uri = "https://servicemap.km4city.org/WebAppGrafo/api/v1/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/";
             var search = (msg.payload.search ? msg.payload.search : config.search);
             var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);
             var language = (msg.payload.lang ? msg.payload.lang : config.lang);
@@ -38,8 +38,10 @@ module.exports = function (RED) {
                         if (xmlHttp.responseText != "") {
                             var response = JSON.parse(xmlHttp.responseText);
                             var serviceUriArray = [];
-                            for (var i = 0; i < response.features.length; i++) {
-                                serviceUriArray.push(response.features[i].properties.serviceUri);
+                            if (typeof response.features != "undefined") {
+                                for (var i = 0; i < response.features.length; i++) {
+                                    serviceUriArray.push(response.features[i].properties.serviceUri);
+                                }
                             }
                             msgs[0].payload = serviceUriArray;
                             msgs[1].payload = response;

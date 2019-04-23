@@ -21,7 +21,7 @@ module.exports = function (RED) {
         var node = this;
         var msgs = [{}, {}];
         node.on('input', function (msg) {
-            var uri = "https://servicemap.km4city.org/WebAppGrafo/api/v1/location/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/location/";
             var latitude = (msg.payload.latitude ? msg.payload.latitude : config.latitude);
             var longitude = (msg.payload.longitude ? msg.payload.longitude : config.longitude);
             var uid = s4cUtility.retrieveAppID(RED);

@@ -20,7 +20,8 @@ module.exports = function (RED) {
         var node = this;
         node.selectedKPIDataId = config.selectedKPIDataId;
         node.kpiId = config.kpiId.split("-")[0];
-        node.kpiDataType = config.kpiId.split("-")[1];
+        node.kpiValueName = config.kpiId.split("-")[1];
+        node.kpiDataType = config.kpiId.split("-")[2];
         
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");

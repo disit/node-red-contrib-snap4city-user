@@ -200,6 +200,12 @@
                 $("#node-dashboard-edit").hide();
                 $("#node-input-tip").show();
                 $("#node-input-createNewClicked").val("true");
+                $('#node-input-dashboardTitle').keypress(function (e) {
+                    var txt = String.fromCharCode(e.which);
+                    if (!txt.match(/[A-Za-z0-9&. ]/)) {
+                        return false;
+                    }
+                });
             });
 
             $("#backDashboardTitle").click(function () {

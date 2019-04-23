@@ -98,6 +98,7 @@
         },
         oneditsave: function () {
             $("#node-input-selectedKPIDataId").val($("#node-input-kpiId").val());
+            $("#node-input-name").val("Value of delegated " + $("#node-input-kpiId").val().split("-")[1]);
         },
         oneditresize: function () {
             $.ajax({
@@ -173,7 +174,7 @@
             $("#node-input-kpiId").empty();
             var currentValue = $("#node-input-selectedKPIDataId").val();
             for (var i = 0; i < currentKPIDataList.length; i++) {
-                $("<option value='" + currentKPIDataList[i].id + "-" + currentKPIDataList[i].dataType + "'s>" + currentKPIDataList[i].id + "-" +
+                $("<option value='" + currentKPIDataList[i].id + "-" + currentKPIDataList[i].valueName + "-" + currentKPIDataList[i].dataType + "'s>" + currentKPIDataList[i].id + "-" +
                     currentKPIDataList[i].valueName + "</option>").appendTo($("#node-input-kpiId"));
             }
             $("#node-input-kpiId").val(currentValue);
@@ -182,6 +183,7 @@
 </script>
 
 <script type="text/x-red" data-template-name="get-delegated-kpidata-values">
+    <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-selectedKPIDataId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>

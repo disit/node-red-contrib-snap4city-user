@@ -113,6 +113,10 @@ module.exports = function (RED) {
 					options.headers.apikey = config.apikey;
 				}
 
+				if (config.basicAuth != null && config.basicAuth != "") {
+					options.headers.Authorization = config.basicAuth;
+				}
+
 				var tlsNode = RED.nodes.getNode(config.tls);
 
 				if (tlsNode != null) {
@@ -197,6 +201,10 @@ module.exports = function (RED) {
 
 				if (config.apikey != null && config.apikey != "") {
 					options.headers.apikey = config.apikey;
+				}
+
+				if (config.basicAuth != null && config.basicAuth != "") {
+					options.headers.Authorization = config.basicAuth;
 				}
 
 				var tlsNode = RED.nodes.getNode(config.tls);
@@ -286,6 +294,10 @@ module.exports = function (RED) {
 
 			if (config.apikey != null && config.apikey != "") {
 				options.headers.apikey = config.apikey;
+			}
+
+			if (config.basicAuth != null && config.basicAuth != "") {
+				options.headers.Authorization = config.basicAuth;
 			}
 
 			var tlsNode = RED.nodes.getNode(config.tls);
@@ -431,6 +443,10 @@ module.exports = function (RED) {
 
 			if (config.apikey != null && config.apikey != "") {
 				options.headers.apikey = config.apikey;
+			}
+
+			if (config.basicAuth != null && config.basicAuth != "") {
+				options.headers.Authorization = config.basicAuth;
 			}
 
 			util.log(options);
@@ -606,6 +622,7 @@ module.exports = function (RED) {
 		n.userk1 = n.userk1;
 		n.passk2 = n.passk2;
 		n.apikey = n.apikey;
+		n.basicAuth = n.basicAuth;
 		n.attributes = n.attributes;
 		n.condvalues = n.condvalues;
 		n.includeattr = n.includeattr;
@@ -817,6 +834,7 @@ module.exports = function (RED) {
 		this.userk1 = n.userk1;
 		this.passk2 = n.passk2;
 		this.apikey = n.apikey;
+		this.basicAuth = n.basicAuth;
 
 		var node = this;
 
@@ -1045,6 +1063,7 @@ module.exports = function (RED) {
 		n.userk1 = n.userk1 || msg.userk1;
 		n.passk2 = n.passk2 || msg.passk2;
 		n.apikey = n.apikey || msg.apikey;
+		n.basicAuth = n.basicAuth || msg.basicAuth;
 		n.attributes = n.attributes || msg.attributes;
 		n.ispattern = n.ispattern || msg.ispattern || false;
 		n.includeattr = n.includeattr || msg.includeattr;
