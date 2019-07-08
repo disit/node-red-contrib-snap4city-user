@@ -1,0 +1,111 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-DEVELOPER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/javascript">
+    RED.nodes.registerType('distance-from-coordinates', {
+        category: 'S4CSearch',
+        color: '#E9967A',
+        defaults: {
+            name: {
+                value: ""
+            },
+            sourcelatitude: {
+                required: false,
+                validate: RED.validators.number()
+            },
+            sourcelongitude: {
+                required: false,
+                validate: RED.validators.number()
+            },
+            destinationlatitude: {
+                required: false,
+                validate: RED.validators.number()
+            },
+            destinationlongitude: {
+                required: false,
+                validate: RED.validators.number()
+            }
+        },
+        outputs: 1,
+        inputs: 1,
+        outputLabels: ["distance (meters)"],
+        icon: "marker.png",
+        label: function () {
+            return this.name || "distance-from-coordinates";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="distance-from-coordinates">
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-sourcelatitude">Source Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-sourcelatitude" placeholder="Source Latitude">
+    </div>
+    <div class="form-row">
+        <label for="node-input-sourcelongitude">Source Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-sourcelongitude" placeholder="Source Longitude">
+    </div>
+    <div class="form-row">
+        <label for="node-input-destinationlatitude">Destination Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-destinationlatitude" placeholder="Destination Latitude">
+    </div>
+    <div class="form-row">
+        <label for="node-input-destinationlongitude">Destination Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-destinationlongitude" placeholder="Destination Longitude">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="distance-from-coordinates">
+    <p>It allows to calculate the distance in meter from two GPS Coordinates</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>sourcelatitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> latitude of a GPS position</dd>
+        <dt>sourcelongitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> longitude of a GPS position</dd>
+        <dt>destinationlatitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> latitude of a GPS position</dd>
+        <dt>destinationlongitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> longitude of a GPS position</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+        Distance
+            <dl class="message-properties">
+                <dd> Returns the value (in meters) of the distance calculated between the two point inserted</dd>
+            </dl>
+
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+        in either part, an error is generated for the necessary parameters.</p>
+
+</script>

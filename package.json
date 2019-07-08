@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.1.7",    "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
+    "version": "0.1.9",    "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "body-parser": "^1.18.2",
         "cookie-parser": "^1.4.3",
@@ -33,6 +33,7 @@
             "service-search-within-circle": "service-search-within-circle.js",
             "service-search-within-polygon": "service-search-within-polygon.js",
             "service-search-along-path": "service-search-along-path.js",
+            "distance-from-coordinates": "distance-from-coordinates.js",
             "service-info": "service-info.js",
             "full-text-search-near-marker": "full-text-search-near-marker.js",
             "full-text-search-within-circle": "full-text-search-within-circle.js",

@@ -141,7 +141,7 @@
                 success: function (_data) {
                     $.ajax({
                         url: _data.myPersonalDataUrl +
-                            "/api/v1/kpidata/?sourceRequest=iotapp&highLevelTpe=MyKPI&accessToken=" +
+                            "/api/v1/kpidata/?sourceRequest=iotapp&accessToken=" +
                             accessToken,
                         type: "GET",
                         async: true,
@@ -219,6 +219,10 @@
             <span class="property-type">float</span>
         </dt>
         <dd> (optional) if you want to add gps metadata to the value</dd>
+        <dt>datatime
+            <span class="property-type">date</span>
+        </dt>
+        <dd> (optional) if you want to insert the data of the value</dd>
     </dl>
 
     <h3>Outputs</h3>
