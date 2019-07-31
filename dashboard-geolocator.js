@@ -203,7 +203,8 @@ module.exports = function (RED) {
                             msgType: "DataToEmitterAck",
                             widgetUniqueName: node.widgetUniqueName,
                             result: "Ok",
-                            msgId: response.msgId
+                            msgId: response.msgId,
+                            accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
                         }));
                     } else {
                         node.status({
@@ -264,7 +265,8 @@ module.exports = function (RED) {
                 user: node.username,
                 appId: uid,
                 flowId: node.z,
-                flowName: node.flowName
+                flowName: node.flowName,
+                accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
             };
 
             try {

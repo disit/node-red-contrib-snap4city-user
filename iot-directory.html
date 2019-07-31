@@ -275,7 +275,7 @@
 <!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
 <!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
 <!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
-<!--<script type="text/javascript" src="s4c/js/require.js"></script>-->
+<script type="text/javascript" src="s4c/js/require.js"></script>
 <script type="text/javascript" src="s4c/js/jquery-simulate-ext-master/libs/jquery.simulate.js"></script>
 <script type="text/javascript" src="s4c/js/jquery-simulate-ext-master/libs/bililiteRange.js"></script>
 
@@ -381,7 +381,19 @@ RED.nodes.registerType('label',{
 
         oneditprepare: function () {
 
-            var accessToken = "";
+            //release keycloak
+            var KEYCLOACK="https://www.snap4city.org/auth/realms/master/protocol/openid-connect/userinfo";
+            //test keycloak
+            //var KEYCLOACK="https://www.disit.org/auth/realms/master/protocol/openid-connect/userinfo";
+            
+             username="";
+             user_roles=[];
+             role="manager";
+             organization="";
+             gpsCentreLatLng="";
+            
+             accessToken = "";
+            
             $.ajax({
                 url: "isThereLocalRefreshToken/",
                 type: "GET",
@@ -431,6 +443,51 @@ RED.nodes.registerType('label',{
                     }
                 }
             });
+            
+            if(accessToken!=""){
+                $.ajax({
+                            url: KEYCLOACK,
+                            type: "GET",
+                            async: false,
+                            headers:{
+                                Accept:"application/json" ,
+                                Authorization:"Bearer "+ accessToken,
+                                "Access-Control-Allow-Origin":"*"
+                            },
+                            success: function (_data) {
+                                if(_data.preferred_username!="" && _data.preferred_username!=undefined && _data.preferred_username!="undefined")
+                                    username= _data.preferred_username;
+                                else
+                                    username=_data.username;
+                                
+                                
+                                user_roles= _data.roles;
+                                
+                                for(var i=0; i<user_roles.length; i++){
+                                    if(user_roles[i].toLowerCase()=="rootadmin" ||
+                                      user_roles[i].toLowerCase()=="tooladmin"||
+                                      user_roles[i].toLowerCase()=="areamanager")
+                                        
+                                    {
+                                        role=user_roles[i];
+                                        break;
+                                    }
+                                    
+                                }
+                                
+                            }
+                        });
+                console.log("username: "+ username);
+                console.log("role: "+ role);
+                
+            }
+        
+
+            
+           //******uncomment for Testing 
+            /*username="fatimaroot";
+            accessToken="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJRczF6Wko2REIyTlp0ajB3RlVHNlFfN2JwZGhuRnRFX1NMZFdHb29CSUFFIn0.eyJqdGkiOiI0Mjc1NWI3YS01NzA3LTQwNmItOTY2Zi01NzczZjNlNmQzZWQiLCJleHAiOjE1NjM5MjYyMTIsIm5iZiI6MCwiaWF0IjoxNTYzOTI0NzEyLCJpc3MiOiJodHRwOi8vd3d3LmRpc2l0Lm9yZy9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJwaHAtaW90LWRpcmVjdG9yeS10ZXN0Iiwic3ViIjoiNjQyMDllZmUtYTQwOC00MGM4LTk5Y2YtOGFmYjk4MTRlOTBhIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoicGhwLWlvdC1kaXJlY3RvcnktdGVzdCIsIm5vbmNlIjoiZDBiZWIzN2Y3ZmQyNmRlYWU4YWRmNDcxYzE5MmE2NTUiLCJhdXRoX3RpbWUiOjE1NjI2NzU5NDEsInNlc3Npb25fc3RhdGUiOiJiMjExMTU4Yi0xNTc5LTRiNTEtOWRmMi02NDUwOGQ5YjVkZDkiLCJhY3IiOiIwIiwiYWxsb3dlZC1vcmlnaW5zIjpbXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbInVtYV9hdXRob3JpemF0aW9uIiwiUm9vdEFkbWluIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwicm9sZXMiOlsidW1hX2F1dGhvcml6YXRpb24iLCJvZmZsaW5lX2FjY2VzcyIsIlJvb3RBZG1pbiJdLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJmYXRpbWFyb290IiwiZW1haWwiOiJhbmdlbG8uZGlmaW5vQGdtYWlsLmNvbSJ9.ICzrvGBdbm8E7_vQsYqj9oztpBuwqUSMBL8xC0u3kpTziVWt1t8UZ5VpTLKhPmyZo4wQQy1jEuwGGLj1ZwVnkTmeNIZMHRHnXd0PIBdCqdLR9JDlN-AS8VsqBnJyVntwqw4-oaYhS4TTdp2vxYwR30ZvillOf6NM7PDyLg39FR7oYos5scqauIwt5mqYhbJy6JtEqGP7IGacDQUcUONbC92ztWeg3zkn2L_YwPVbZTx8KrNzQ2T8CqfrMmPfARKum1Hspcgiyc1lvEbO6x4g7XUHE6I134bwGGYQdxjch4L6tmnULC9F0-Xv2IAGE_wClvCgHmpImRA3QVwd2AqqOw";
+            role="RootAdmin";    */
 
 
             $(".editor-tray").css("width", "700px");
@@ -453,6 +510,12 @@ RED.nodes.registerType('label',{
 
             //serverURL = "https://www.snap4city.org/iotdirectorytest/api/device.php?"; //for testing
             serverURL = "https://iotdirectory.snap4city.org/api/device.php?"; //official
+            
+            //findOrg_url = "https://www.snap4city.org/iotdirectorytest/api/nodeRedConnection.php?" + "action=get_organization";
+            findOrg_url = "https://iotdirectory.snap4city.org/api/nodeRedConnection.php?" + "action=get_organization";
+            
+            //_serviceIP="https://www.snap4city.org/iotdirectorytest/stubs";//for testing
+            _serviceIP="https://iotdirectory.snap4city.org/stubs";//official
 
             openedTab = "Device-based-search";
             $("#deviceTabButton").simulate("click");
@@ -512,6 +575,15 @@ RED.nodes.registerType('label',{
             redIcon = new L.Icon({
 
                 iconUrl: 'https://www.snap4city.org/iotdirectorytest/markerPrivate.png',
+                iconSize: new L.Point(32, 32),
+                iconAnchor: new L.Point(16, 16),
+                popupAnchor: new L.Point(0, -18)
+
+            });
+            
+            pinkIcon = new L.Icon({
+
+                iconUrl: 'https://www.snap4city.org/iotdirectorytest/markerDelegated.png',
                 iconSize: new L.Point(32, 32),
                 iconAnchor: new L.Point(16, 16),
                 popupAnchor: new L.Point(0, -18)
@@ -1786,6 +1858,8 @@ RED.nodes.registerType('label',{
                     nodeList2.append(li);
                 });
             }
+            
+            
 
 
             /*********	
@@ -2076,164 +2150,253 @@ RED.nodes.registerType('label',{
                 console.log("ACCESS TOKEN: " + accessToken);
                 var accesstoken = accessToken;
                 try {
-                    console.log("in retrieving access token");
-                    console.log("this.id " + this.id);
+                    //console.log("in retrieving access token");
+                    //console.log("this.id " + this.id);
                     //var accesstoken= "";
-                    /*                 $.ajax({
+                    //********comment this block for testing, don't forget the ending brackets
+                                     $.ajax({
                                         url: "deviceregistration/" + this.id,
                                         type: "GET",
                                         async: false,
                                         success: function (resp) {
                                             console.log(resp);
                                             //accesstoken = resp.refreshToken;
-                                            accesstoken = resp.accessToken; */
+                                            accesstoken = resp.accessToken; 
 
-                    var url = serverURL + "action=get_config_data";
+                    //*****until here//
+                    
 
-                    if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                        accesstoken != "undefined")
-                        url += "&nodered=yes&token=" + accesstoken;
+                                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                                accesstoken != "undefined")
+                                            {
+                                                findOrg_url += "&nodered=yes&token=" + accesstoken;
+                                                findOrg_url +="&username="+username+"&loggedrole="+role;
+                                            }
 
-                    console.log("url");
-                    console.log(url);
-                    console.log("accesstoken: ");
-                    console.log(accesstoken);
-                    //console.log("accesstoken: " + resp.accessToken);
-                    //console.log("refreshtoken: " + resp.refreshToken);
+                                            console.log("findOrg_url");
+                                            console.log(findOrg_url);
 
-                    var jqxhr = $.getJSON(url, function (data) {
-                            console.log("success");
-                            console.log(data);
-                        })
-                        .done(function (data) {
+                                            var jqxhr = $.getJSON(findOrg_url, function (data) {
+                                                    console.log("findOrg_url success");
+                                                    console.log(data);
+                                                })
+                                                .done(function (data) {
 
-                            if (data.status == "ok") {
-                                console.log("second success");
+                                                    if (data.status == "ok") {
+                                                        console.log("findOrg_url second success");
+                                                        organization = data.content;
+                                                        info=data.info;
+                                                        kbUrl=info.kbUrl;
+                                                        gpsCentreLatLng=info.gpsCentreLatLng;
+                                                        zoomLevel=info.zoomLevel;
 
-                                data = data.content;
-                                allDataIn = data;
+                                                        if (gpsCentreLatLng!=""){
+                                                            try{
+                                                                var centerMapArr= gpsCentreLatLng.split(",",2);
+                                                                var centerLat= parseFloat(centerMapArr[0].trim());
+                                                                var centerLng= parseFloat(centerMapArr[1].trim());   
+                                                                map.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
+                                                                map2.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
 
-                                // crea lista entiti principale
-                                node.configData = data;
-                                createNodeList();
-                                //crea dati per le select
-                                createRetrievePanel();
-                                // crea map
-                                drawMap();
+                                                            }
+                                                            catch(err){
+                                                                console.log("error setting the map viewview");
+                                                        }
 
-                                var marker_array = [];
-
-                                for (var k in data) {
-
-                                    lat = Number(data[k]["latitude"]); //45.4858914;
-                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    lng = Number(data[k]["longitude"]); //9.202094;
-                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    popup = "<b>" + data[k]['name'] + "</b><br>" + data[
-                                        k]['entityType'] + "<br>" + data[k]['kind'];
-                                    if (data[k]["visibility"] == "public") {
-
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: blueIcon
-                                        }).bindPopup(popup);
-                                    } else {
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: redIcon
-                                        }).bindPopup(popup);
-                                    }
-
-                                    marker_array.push(m);
-                                }
-
-                                var markersGroup = L.layerGroup(marker_array);
-                                markersGroup.addTo(map);
-
-                            } else {
-                                console.log(data.status);
-                            }
-
-
-                        })
-                        .fail(function () {
-                            console.log("error");
-                        })
-                        .always(function () {
-                            console.log("complete");
-                        });
+                                                        }
+                                                        console.log(organization);
+                                                        console.log(kbUrl);
+                                                        console.log(gpsCentreLatLng);
+                                                        console.log(zoomLevel);
 
 
 
-                    var url_values = serverURL + "action=get_config_data_values";
-                    if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                        accesstoken != "undefined")
-                        url_values += "&nodered=yes&token=" + accesstoken;
-                    console.log("url_values");
-                    console.log(url_values);
-                    var jqxhrValues = $.getJSON(url_values,
-                            function (data) {
-                                console.log("success");
-                                console.log(data);
-                            })
-                        .done(function (data) {
-                            if (data.status == "ok") {
-                                console.log("second success");
-                                data = data.content;
+                                            //##################STUBS######################//
 
-                                allDataIn2 = data;
+                                                        //console.log("going to call the stub");
+                                                        //activateStub("orionUNIFI","192.168.1.9:1026","ngsi","dee6c609021814511d117946c2204a33","http://iot-app.snap4city.org/orion-broker/","custom","","","/v2/entities?limit=100", "","internal");
+                                            //########################################//            
 
-                                // crea lista entiti principale
-                                node2.configData = data;
-                                createNodeList2();
-                                //crea dati per le select
-                                createRetrievePanel2();
-                                // crea map
-                                drawMap2();
+                                            var url = serverURL + "action=get_config_data";
 
-                                var marker_array = [];
-                                for (var k in data) {
-
-                                    lat = Number(data[k]["latitude"]); //45.4858914;
-                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    lng = Number(data[k]["longitude"]); //9.202094;
-                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    popup = "<b>" + data[k]['device'] + "</b><br>" +
-                                        data[k]['value_type'];
-                                    if (data[k]["visibility"] == "private") {
-
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: redIcon
-                                        }).bindPopup(popup);
-                                    } else {
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: blueIcon
-                                        }).bindPopup(popup);
-                                    }
-
-                                    marker_array.push(m);
-                                }
-
-                                var markersGroup = L.layerGroup(marker_array);
-                                markersGroup.addTo(map2);
-
-                            } else {
-                                console.log(data.status);
-                            }
-                        })
-                        .fail(function () {
-                            console.log("error");
-                        })
-                        .always(function () {
-                            console.log("complete");
-                        });
+                                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                                accesstoken != "undefined")
+                                            {
+                                                url += "&nodered=yes&token=" + accesstoken;
+                                                url +="&username="+username+"&loggedrole="+role+"&organization="+organization;
+                                            }
 
 
-                    /* },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        console.log("ERROR");
-                    }
-                }); */
+                                            console.log("url");
+                                            console.log(url);
+
+                                            //console.log("accesstoken: " + resp.accessToken);
+                                            //console.log("refreshtoken: " + resp.refreshToken);
+
+                                            var jqxhr = $.getJSON(url, function (data) {
+                                                    console.log("success");
+                                                    console.log(data);
+                                                })
+                                                .done(function (data) {
+
+                                                    if (data.status == "ok") {
+                                                        console.log("second success");
+
+                                                        data = data.content;
+                                                        allDataIn = data;
+
+                                                        // crea lista entiti principale
+                                                        node.configData = data;
+                                                        createNodeList();
+                                                        //crea dati per le select
+                                                        createRetrievePanel();
+                                                        // crea map
+                                                        drawMap();
+
+                                                        var marker_array = [];
+
+                                                        for (var k in data) {
+
+                                                            lat = Number(data[k]["latitude"]); //45.4858914;
+                                                            est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                            lng = Number(data[k]["longitude"]); //9.202094;
+                                                            est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                            popup = "<b>" + data[k]['name'] + "</b><br>" + data[
+                                                                k]['entityType'] + "<br>" + data[k]['kind'];
+
+                                                            if (data[k]["visibility"] == "public") {
+
+                                                                m = L.marker([est_lat, est_lng], {
+                                                                    icon: blueIcon
+                                                                }).bindPopup(popup);
+                                                            } else if (data[k]["visibility"] == "MyOwnPublic" || data[k]["visibility"] == "MyOwnPrivate") {
+                                                                m = L.marker([est_lat, est_lng], {
+                                                                    icon: redIcon
+                                                                }).bindPopup(popup);
+                                                            }else if (data[k]["visibility"] == "delegated") {
+                                                                m = L.marker([est_lat, est_lng], {
+                                                                    icon: pinkIcon
+                                                                }).bindPopup(popup);}
+
+                                                            marker_array.push(m);
+                                                        }
+
+                                                        var markersGroup = L.layerGroup(marker_array);
+                                                        markersGroup.addTo(map);
+
+                                                    } else {
+                                                        console.log(data.status);
+                                                    }
 
 
+                                                })
+                                                .fail(function () {
+                                                    console.log("error");
+                                                })
+                                                .always(function () {
+                                                    console.log("complete");
+                                                });
+
+
+
+
+
+                                            var url_values = serverURL + "action=get_config_data_values";
+                                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                                accesstoken != "undefined")
+                                                {
+                                                url_values += "&nodered=yes&token=" + accesstoken;
+                                                url_values +="&username="+username+"&loggedrole="+role+"&organization="+organization;
+                                            }
+                                            console.log("url_values");
+                                            console.log(url_values);
+                                            var jqxhrValues = $.getJSON(url_values,
+                                                    function (data) {
+                                                        console.log("success");
+                                                        console.log(data);
+                                                    })
+                                                .done(function (data) {
+                                                    if (data.status == "ok") {
+                                                        console.log("second success");
+                                                        data = data.content;
+
+                                                        allDataIn2 = data;
+
+                                                        // crea lista entiti principale
+                                                        node2.configData = data;
+                                                        createNodeList2();
+                                                        //crea dati per le select
+                                                        createRetrievePanel2();
+                                                        // crea map
+                                                        drawMap2();
+
+                                                        var marker_array = [];
+                                                        for (var k in data) {
+
+                                                            lat = Number(data[k]["latitude"]); //45.4858914;
+                                                            est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                            lng = Number(data[k]["longitude"]); //9.202094;
+                                                            est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                            popup = "<b>" + data[k]['device'] + "</b><br>" +
+                                                                data[k]['value_type'];
+                                                            if (data[k]["visibility"] == "private") {
+
+                                                                m = L.marker([est_lat, est_lng], {
+                                                                    icon: redIcon
+                                                                }).bindPopup(popup);
+                                                            }
+                                                            else if (data[k]["visibility"] == "delegated") {
+                                                                m = L.marker([est_lat, est_lng], {
+                                                                    icon: pinkIcon
+                                                                }).bindPopup(popup);}
+                                                            else {
+                                                                m = L.marker([est_lat, est_lng], {
+                                                                    icon: blueIcon
+                                                                }).bindPopup(popup);
+                                                            }
+
+                                                            marker_array.push(m);
+                                                        }
+
+                                                        var markersGroup = L.layerGroup(marker_array);
+                                                        markersGroup.addTo(map2);
+
+                                                    } else {
+                                                        console.log(data.status);
+                                                    }
+                                                })
+                                                .fail(function () {
+                                                    console.log("error");
+                                                })
+                                                .always(function () {
+                                                    console.log("complete");
+                                                });
+
+
+                                            /* },
+                                            error: function (jqXHR, textStatus, errorThrown) {
+                                                console.log("ERROR");
+                                            }
+                                        }); */
+                                                        } else {
+                                                        console.log(data.status);
+                                                    }
+
+
+                                                })
+                                                .fail(function () {
+                                                    console.log("error");
+                                                })
+                                                .always(function () {
+                                                    console.log("complete");
+                                                });
+                                        },
+                                         
+                                         error: function(jqXHR,textStatus,errorThrown) { //******also comment this error block for testing
+                                             console.log("ERROR");
+                            
+                                         }
+                                     });
 
                 } catch (err) {
                     console.log("error creating the token " + err);
@@ -2626,7 +2789,10 @@ RED.nodes.registerType('label',{
                             }
 
 
+                            console.log("looook here");
                             console.log(counter_id);
+                            console.log(configData[sensors[i]]["ip"]);
+                            console.log(node_id);
                             //orion
                             switch (protocol) {
                                 case "ngsi":
@@ -2764,9 +2930,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "\r\n\r\n\/* determine type of value and extract the contained attributes according to the following formats \r\n- format A (comma separated pairs):\r\n  attribute:value, ...., attribute:value  \r\n- format B (comma separated basic values):\r\n  value, ..., value (in this case the attribute name would be csv_\"pos\" where pos is the position) \r\n- format C (JSON values):\r\n  {attribute:value, ..., attribute:value}\r\n- format D (XML values):\r\n  <record><attribute>value<\/attribute>...<attribute>value<\/attribute><\/record>  \r\n*\/\r\n\/*\r\n{\r\n  \"id\": \"Room1\",\r\n  \"type\": \"Room\",\r\n  \"temperature\": {\r\n    \"value\": 23,\r\n    \"type\": \"Float\"\r\n  },\r\n  \"pressure\": {\r\n    \"value\": 720,\r\n    \"type\": \"Integer\"\r\n  }\r\n}\r\n*\/\r\nfunction snap4cityParser(sensorID, protocol, value, selectedAttributes)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  if (protocol==\"ngsi\") \r\n   {  \r\n     var x=\"\";\r\n     \/\/value=JSON.parse(value); \r\n     for (x in value)\r\n\t {\r\n\t   if (x==\"id\") newId= value[x];\r\n\t   else if (x==\"type\") newType=value[x];\r\n\t   else attributes[x]=value[x];\r\n\t }\r\n   }\r\n  else{   \r\n\t  var f = \"\"; \/\/ identified format\r\n\t  value=value.trim();\r\n\t  var first = value.charAt(0);\r\n\t  switch (first)\r\n\t  {\r\n\t\tcase \"{\": \/\/ Format C\r\n\t\t\tattributes = parseJSON(value);\r\n\t\t\tf=\"JSON\";\r\n\t\t\tbreak;\r\n\t\tcase \"<\": \/\/ Format D\r\n\t\t\tattributes = parseXML(value);\r\n\t\t\tf=\"XML\";\r\n\t\t\tbreak;\r\n\t\tdefault: \/\/ Format A or B\r\n\t\t   attributes = parseCSV(value);\r\n\t\t   f=\"CSV\";\r\n\t  }\r\n   }  \r\n   if (selectedAttributes.length==0)\r\n   {         \r\n\t  return {\"id\": sensorID, \"source\": protocol, \"type\": newType, attributes};\r\n   }\r\n   else\r\n   {\r\n      for (x in attributes)\r\n\t  {\r\n\t    if (selectedAttributes.indexOf(x)==-1)  delete attributes[x];\r\n\t  }\r\n      return {\"id\": sensorID, \"source\": protocol, \"type\": newType, attributes};\r\n   }    \r\n}\r\n\r\nNumber.prototype.padLeft = function(base,chr){\r\n   var  len = (String(base || 10).length - String(this).length)+1;\r\n   return len > 0? new Array(len).join(chr || \'0\')+this : this;\r\n}\r\n\r\n\r\nfunction parseCSV(value)\r\n{\r\n  \/*\r\n  parse comma separated values \r\n  each value can assume the following formats:\r\n  format A (comma separated pair): attribute:value  \r\n  format B (comma separated basic value):  value\r\n  *\/\r\n    \r\n  \r\n  var delims = \",\"; \r\n  var properties = value.split(delims);\r\n  var attributes = {};\r\n  var format = \"A\";\r\n  var cv;\r\n  var pos=1;\r\n  for (i = 0; i < properties.length; i++)\r\n  {\r\n    var prop = properties[i].trim();\r\n    if (prop.indexOf(\":\")==-1 || (prop.indexOf(\":\")>0 && prop.indexOf(\":\")!=prop.lastIndexOf(\":\")))\r\n    { \/\/ condition is that \":\" do not occur or\r\n      \/\/ \":\"  occurs once in any prop and not in the first position\r\n        id =\"csv_\" + pos;\r\n        pos++;\r\n        val =properties[i].trim();\r\n        if (determineType(val)==\"date\")\r\n          {\r\n            var d = new Date(val);\r\n            val =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join(\'\/\')+\r\n                    \' \' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(\':\');\r\n\r\n          }\r\n          attributes[id]={\"type\": determineType(val),\"value\" : val};\r\n    }\r\n    else\r\n    {\r\n\t  cv= properties[i].split(\":\");\r\n\t  myid=cv[0].trim();\r\n          val=cv[1].trim();\r\n          var attr={};\r\n          if (determineType(val)==\"date\") \r\n          {\r\n            var d = new Date(val);\r\n            val =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join(\'\/\')+\r\n                    \' \' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(\':\');\r\n\r\n          }\r\n          attributes[myid]= {\"type\": determineType(val), \"value\":val};\r\n    }\r\n  }\r\n  \/\/ console.log(attributes);\r\n  return attributes;\r\n}\r\n\r\n\/*  this function should be completed *\/\r\nfunction parseXML(value)\r\n{\r\n    var parser = new DOMParser();\r\n    var xmlDoc = parser.parseFromString(value, \"text\/xml\");\r\n    \r\n    var element = xmlDoc.documentElement;\r\n    var elements = element.querySelectorAll(\"*\");\r\n    \r\n    var attributes = [];\r\n\r\n    for (var i = 0; i < elements.length; i++) {\r\n        var text = null;\r\n        if (elements[i].childNodes.length == 1 && elements[i].childNodes[0].nodeType == 3) \/\/if nodeType == text node\r\n        {\r\n            text = elements[i].textContent; \/\/get text of the element\r\n            var id =elements[i].tagName;\r\n            var val =text.trim();\r\n            \r\n             if (determineType(val)==\"date\") {\r\n                 val= dateThing(val);\r\n             }\r\n            attributes[id]= {\"type\": determineType(val), \"value\":val};\r\n            \r\n        }\r\n        \/\/console.log(\"TagName : \", id, \", value : \", val);\r\n        \r\n        \r\n    }\r\n    return attributes;\r\n    \r\n}\r\n\r\n\/*  this function should be completed *\/\r\nfunction parseJSON(value)\r\n{  try{\r\n   jsonvalue= JSON.parse(value);\r\n    var attributes = [];\r\n    \r\n    for (var key in jsonvalue){\r\n     \r\n        var id =key; \r\n        if (id==\"type\" || id==\"id\") continue; \/\/these are not attribute, we don\'t need them\r\n        var val =jsonvalue[id];\r\n        if(typeof(val)==\'object\') {\r\n            \r\n            jsonSubValue=val;\r\n            \r\n            for (var k in jsonSubValue){\r\n                if (k==\"type\" || k==\"id\") continue; \/\/these are not attribute, we don\'t need them\r\n                v= jsonSubValue[k];\r\n                \r\n                try{v=v.trim();} catch(err){}\r\n                if (determineType(v)== \"date\") {\r\n                    v= dateThing(v);\r\n                    }\r\n                attributes.push({\"name\":key ,\"type\": determineType(v),\"value\" : v});\r\n            }\r\n        }\r\n        else{\r\n            val= val.trim(); \r\n            if (determineType(val)== \"date\") {\r\n                 val= dateThing(val);\r\n             }\r\n            \r\n            attributes.push({\"name\":id ,\"type\": determineType(val),\"value\" : val});\r\n        }\r\n            \r\n    }\r\n    \r\n  return attributes;\r\n}\r\n catch(err){\r\n     return [];\r\n}\r\n}\r\n\r\n\r\nfunction validateFloat(strFloat) {\r\n    if (\/^(\\-|\\+)?([0-9]+(\\.[0-9]+)?|Infinity)$\/\r\n      .test(strFloat))\r\n      return true;\r\n  return false;\r\n}\r\n\r\nfunction validateInt(strInt) {\r\n    if (\/^(\\-|\\+)?([0-9]+)$\/\r\n      .test(strInt))\r\n      return true;\r\n  return false;\r\n}\r\n\r\n\/\/ YYYY\/MM\/DD or MM\/DD\/YYYY\r\nfunction validateDate(strDate) {\r\n\/\/  var t = \/^(?=.+([\\\/.-])..\\1)(?=.{10}$)(?:(\\d{4}).|)(\\d\\d).(\\d\\d)(?:.(\\d{4})|)$\/;\r\n\/\/  strDate.replace(t, function($, _, y, m, d, y2) {\r\n\/\/    $ = new Date(y = y || y2, m, d);\r\n\/\/    t = $.getFullYear() != y || $.getMonth() != m || $.getDate() != d;\r\n\/\/  });\r\n\/\/  return !t;\r\n   var mydate= Date.parse(strDate);\r\n   if (isNaN(mydate)) return false;\r\n   else return true; \r\n}\r\n\r\nfunction determineType(value)\r\n{\r\n  var selectorType= \"\";\r\n  if (validateInt(value)) {selectorType = \"integer\";}\r\n  else if (value.match(\"[A-Za-z][A-Za-z0-9]*\")) {selectorType = \"string\";}\r\n  else if (validateFloat(value)) {selectorType = \"float\";}\r\n  else if (validateDate(value)) {selectorType = \"date\";\r\n  }else {selectorType = \"object\";}\r\n  return selectorType;\r\n}\r\n\r\nfunction dateThing(value){\r\n    var d = new Date(value);\r\n            value =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join(\'\/\')+\r\n                    \' \' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(\':\');\r\n    return value;\r\n}\r\n msg.payload = snap4cityParser(\"" +
-                                    sensors[i] + "\", \"ngsi\", msg.payload, [" +
-                                    attributes_string + "] );\r\n return msg;\r\n\r\n\r\n",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      var xmlhRequest = global.get(\'xmlhRequest\');\r\n      var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n       request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n}\r\n snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 600,
@@ -3096,6 +3260,10 @@ RED.nodes.registerType('label',{
                             console.log(counter_id);
 
                             //device
+                            console.log("looook here");
+                            console.log(counter_id);
+                            console.log(configData[sensors[i]]["ip"]);
+                            console.log(node_id);
                             switch (protocol) {
                                 case "ngsi":
                                     //addInjectNode=true;
@@ -3274,9 +3442,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "\r\n\r\n\/* determine type of value and extract the contained attributes according to the following formats \r\n- format A (comma separated pairs):\r\n  attribute:value, ...., attribute:value  \r\n- format B (comma separated basic values):\r\n  value, ..., value (in this case the attribute name would be csv_\"pos\" where pos is the position) \r\n- format C (JSON values):\r\n  {attribute:value, ..., attribute:value}\r\n- format D (XML values):\r\n  <record><attribute>value<\/attribute>...<attribute>value<\/attribute><\/record>  \r\n*\/\r\n\/*\r\n{\r\n  \"id\": \"Room1\",\r\n  \"type\": \"Room\",\r\n  \"temperature\": {\r\n    \"value\": 23,\r\n    \"type\": \"Float\"\r\n  },\r\n  \"pressure\": {\r\n    \"value\": 720,\r\n    \"type\": \"Integer\"\r\n  }\r\n}\r\n*\/\r\nfunction snap4cityParser(sensorID, protocol, value, selectedAttributes)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  if (protocol==\"ngsi\") \r\n   {  \r\n     var x=\"\";\r\n     \/\/value=JSON.parse(value); \r\n     for (x in value)\r\n\t {\r\n\t   if (x==\"id\") newId= value[x];\r\n\t   else if (x==\"type\") newType=value[x];\r\n\t   else attributes[x]=value[x];\r\n\t }\r\n   }\r\n  else{   \r\n\t  var f = \"\"; \/\/ identified format\r\n\t  value=value.trim();\r\n\t  var first = value.charAt(0);\r\n\t  switch (first)\r\n\t  {\r\n\t\tcase \"{\": \/\/ Format C\r\n\t\t\tattributes = parseJSON(value);\r\n\t\t\tf=\"JSON\";\r\n\t\t\tbreak;\r\n\t\tcase \"<\": \/\/ Format D\r\n\t\t\tattributes = parseXML(value);\r\n\t\t\tf=\"XML\";\r\n\t\t\tbreak;\r\n\t\tdefault: \/\/ Format A or B\r\n\t\t   attributes = parseCSV(value);\r\n\t\t   f=\"CSV\";\r\n\t  }\r\n   }  \r\n   if (selectedAttributes.length==0)\r\n   {         \r\n\t  return {\"id\": sensorID, \"source\": protocol, \"type\": newType, attributes};\r\n   }\r\n   else\r\n   {\r\n      for (x in attributes)\r\n\t  {\r\n\t    if (selectedAttributes.indexOf(x)==-1)  delete attributes[x];\r\n\t  }\r\n      return {\"id\": sensorID, \"source\": protocol, \"type\": newType, attributes};\r\n   }    \r\n}\r\n\r\nNumber.prototype.padLeft = function(base,chr){\r\n   var  len = (String(base || 10).length - String(this).length)+1;\r\n   return len > 0? new Array(len).join(chr || \'0\')+this : this;\r\n}\r\n\r\n\r\nfunction parseCSV(value)\r\n{\r\n  \/*\r\n  parse comma separated values \r\n  each value can assume the following formats:\r\n  format A (comma separated pair): attribute:value  \r\n  format B (comma separated basic value):  value\r\n  *\/\r\n    \r\n  \r\n  var delims = \",\"; \r\n  var properties = value.split(delims);\r\n  var attributes = {};\r\n  var format = \"A\";\r\n  var cv;\r\n  var pos=1;\r\n  for (i = 0; i < properties.length; i++)\r\n  {\r\n    var prop = properties[i].trim();\r\n    if (prop.indexOf(\":\")==-1 || (prop.indexOf(\":\")>0 && prop.indexOf(\":\")!=prop.lastIndexOf(\":\")))\r\n    { \/\/ condition is that \":\" do not occur or\r\n      \/\/ \":\"  occurs once in any prop and not in the first position\r\n        id =\"csv_\" + pos;\r\n        pos++;\r\n        val =properties[i].trim();\r\n        if (determineType(val)==\"date\")\r\n          {\r\n            var d = new Date(val);\r\n            val =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join(\'\/\')+\r\n                    \' \' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(\':\');\r\n\r\n          }\r\n          attributes[id]={\"type\": determineType(val),\"value\" : val};\r\n    }\r\n    else\r\n    {\r\n\t  cv= properties[i].split(\":\");\r\n\t  myid=cv[0].trim();\r\n          val=cv[1].trim();\r\n          var attr={};\r\n          if (determineType(val)==\"date\") \r\n          {\r\n            var d = new Date(val);\r\n            val =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join(\'\/\')+\r\n                    \' \' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(\':\');\r\n\r\n          }\r\n          attributes[myid]= {\"type\": determineType(val), \"value\":val};\r\n    }\r\n  }\r\n  \/\/ console.log(attributes);\r\n  return attributes;\r\n}\r\n\r\n\/*  this function should be completed *\/\r\nfunction parseXML(value)\r\n{\r\n    var parser = new DOMParser();\r\n    var xmlDoc = parser.parseFromString(value, \"text\/xml\");\r\n    \r\n    var element = xmlDoc.documentElement;\r\n    var elements = element.querySelectorAll(\"*\");\r\n    \r\n    var attributes = [];\r\n\r\n    for (var i = 0; i < elements.length; i++) {\r\n        var text = null;\r\n        if (elements[i].childNodes.length == 1 && elements[i].childNodes[0].nodeType == 3) \/\/if nodeType == text node\r\n        {\r\n            text = elements[i].textContent; \/\/get text of the element\r\n            var id =elements[i].tagName;\r\n            var val =text.trim();\r\n            \r\n             if (determineType(val)==\"date\") {\r\n                 val= dateThing(val);\r\n             }\r\n            attributes[id]= {\"type\": determineType(val), \"value\":val};\r\n            \r\n        }\r\n        \/\/console.log(\"TagName : \", id, \", value : \", val);\r\n        \r\n        \r\n    }\r\n    return attributes;\r\n    \r\n}\r\n\r\n\/*  this function should be completed *\/\r\nfunction parseJSON(value)\r\n{  try{\r\n   jsonvalue= JSON.parse(value);\r\n    var attributes = [];\r\n    \r\n    for (var key in jsonvalue){\r\n     \r\n        var id =key; \r\n        if (id==\"type\" || id==\"id\") continue; \/\/these are not attribute, we don\'t need them\r\n        var val =jsonvalue[id];\r\n        if(typeof(val)==\'object\') {\r\n            \r\n            jsonSubValue=val;\r\n            \r\n            for (var k in jsonSubValue){\r\n                if (k==\"type\" || k==\"id\") continue; \/\/these are not attribute, we don\'t need them\r\n                v= jsonSubValue[k];\r\n                \r\n                try{v=v.trim();} catch(err){}\r\n                if (determineType(v)== \"date\") {\r\n                    v= dateThing(v);\r\n                    }\r\n                attributes.push({\"name\":key ,\"type\": determineType(v),\"value\" : v});\r\n            }\r\n        }\r\n        else{\r\n            val= val.trim(); \r\n            if (determineType(val)== \"date\") {\r\n                 val= dateThing(val);\r\n             }\r\n            \r\n            attributes.push({\"name\":id ,\"type\": determineType(val),\"value\" : val});\r\n        }\r\n            \r\n    }\r\n    \r\n  return attributes;\r\n}\r\n catch(err){\r\n     return [];\r\n}\r\n}\r\n\r\n\r\nfunction validateFloat(strFloat) {\r\n    if (\/^(\\-|\\+)?([0-9]+(\\.[0-9]+)?|Infinity)$\/\r\n      .test(strFloat))\r\n      return true;\r\n  return false;\r\n}\r\n\r\nfunction validateInt(strInt) {\r\n    if (\/^(\\-|\\+)?([0-9]+)$\/\r\n      .test(strInt))\r\n      return true;\r\n  return false;\r\n}\r\n\r\n\/\/ YYYY\/MM\/DD or MM\/DD\/YYYY\r\nfunction validateDate(strDate) {\r\n\/\/  var t = \/^(?=.+([\\\/.-])..\\1)(?=.{10}$)(?:(\\d{4}).|)(\\d\\d).(\\d\\d)(?:.(\\d{4})|)$\/;\r\n\/\/  strDate.replace(t, function($, _, y, m, d, y2) {\r\n\/\/    $ = new Date(y = y || y2, m, d);\r\n\/\/    t = $.getFullYear() != y || $.getMonth() != m || $.getDate() != d;\r\n\/\/  });\r\n\/\/  return !t;\r\n   var mydate= Date.parse(strDate);\r\n   if (isNaN(mydate)) return false;\r\n   else return true; \r\n}\r\n\r\nfunction determineType(value)\r\n{\r\n  var selectorType= \"\";\r\n  if (validateInt(value)) {selectorType = \"integer\";}\r\n  else if (value.match(\"[A-Za-z][A-Za-z0-9]*\")) {selectorType = \"string\";}\r\n  else if (validateFloat(value)) {selectorType = \"float\";}\r\n  else if (validateDate(value)) {selectorType = \"date\";\r\n  }else {selectorType = \"object\";}\r\n  return selectorType;\r\n}\r\n\r\nfunction dateThing(value){\r\n    var d = new Date(value);\r\n            value =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join(\'\/\')+\r\n                    \' \' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(\':\');\r\n    return value;\r\n}\r\n msg.payload = snap4cityParser(\"" +
-                                    sensors[i] + "\", \"ngsi\", msg.payload, [" +
-                                    attributes_string + "] );\r\n return msg;\r\n\r\n\r\n",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      var xmlhRequest = global.get(\'xmlhRequest\');\r\n      var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n       request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n}\r\n snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 800,
@@ -3756,10 +3922,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "\r\n\r\n\/* determine type of value and extract the contained attributes according to the following formats \r\n- format A (comma separated pairs):\r\n  attribute:value, ...., attribute:value  \r\n- format B (comma separated basic values):\r\n  value, ..., value (in this case the attribute name would be csv_\"pos\" where pos is the position) \r\n- format C (JSON values):\r\n  {attribute:value, ..., attribute:value}\r\n- format D (XML values):\r\n  <record><attribute>value<\/attribute>...<attribute>value<\/attribute><\/record>  \r\n*\/\r\n\/*\r\n{\r\n  \"id\": \"Room1\",\r\n  \"type\": \"Room\",\r\n  \"temperature\": {\r\n    \"value\": 23,\r\n    \"type\": \"Float\"\r\n  },\r\n  \"pressure\": {\r\n    \"value\": 720,\r\n    \"type\": \"Integer\"\r\n  }\r\n}\r\n*\/\r\nfunction snap4cityParser(sensorID, protocol, value, selectedAttributes)\r\n{\r\n  console.log(\"I am here\");\r\n  if (selectedAttributes.length==0)\r\n      return [];\r\n  \r\n  var attributes=[];\r\n  used_values=[];\r\n  \r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  if (protocol== \"ngsi\") \r\n    \/\/if (false)\r\n   {  \r\n     var x=\"\";\r\n     \/\/value=JSON.parse(value);\r\n     value= value[0].attributes;\r\n\t \r\n     for (var i=0; i<value.length; i++) \/\/row is for example : {\"name\":\"latitude\",\"type\":\"float\",\"value\":\"45.453701\"}\r\n\t {\r\n\t   attributes.push(value[i]);\r\n\t   \r\n\t }\r\n   }\r\n  else{   \r\n      var f = \"\"; \/\/ identified format\r\n\t  value=value.trim();\r\n\t  var first = value.charAt(0);\r\n\t  switch (first)\r\n\t  {\r\n\t\tcase \"{\": \/\/ Format C\r\n\t\t\tattributes = parseJSON(value);\r\n\t\t\tf=\"JSON\";\r\n\t\t\tbreak;\r\n\t\tcase \"<\": \/\/ Format D\r\n\t\t\tattributes = parseXML(value);\r\n\t\t\tf=\"XML\";\r\n\t\t\tbreak;\r\n\t\tdefault: \/\/ Format A or B\r\n\t\t   attributes = parseCSV(value);\r\n\t\t   f=\"CSV\";\r\n\t  }\r\n   }  \r\n  \r\n    \r\n      \r\n    attributes.sort(function(a,b){\r\n                          if(a.name < b.name) return -1;\r\n                          else return 1;\r\n                      });\r\n    \r\n    \r\n\t\tvar exist=0;\r\n\t    for (var j=0; j< selectedAttributes.length; j++){\r\n            for (var i=0; i<attributes.length; i++)\r\n\t\t\t{\r\n\t\t\tif (selectedAttributes[j]== attributes[i].name){\r\n                used_values.push(attributes[i].value);\r\n\t\t\t\texist=1;\r\n                break;\r\n\t\t\t\t} \r\n        \r\n\t\t\t}\r\n          if(exist==0)\r\n\t\t\t  used_values.push(\"\");\r\n\t\t  \r\n\t\t  exist=0;\r\n          \r\n\t  }\r\n    \r\n    \r\n    \r\n \r\n    \r\n    return used_values;\r\n       \r\n}\r\n\r\nNumber.prototype.padLeft = function(base,chr){\r\n   var  len = (String(base || 10).length - String(this).length)+1;\r\n   return len > 0? new Array(len).join(chr || '0')+this : this;\r\n}\r\n\r\n\r\nfunction parseCSV(value)\r\n{\r\n  \/*\r\n  parse comma separated values \r\n  each value can assume the following formats:\r\n  format A (comma separated pair): attribute:value  \r\n  format B (comma separated basic value):  value\r\n  *\/\r\n    \r\n  \r\n  var delims = \",\"; \r\n  var properties = value.split(delims);\r\n  var attributes =[];\r\n  var format = \"A\";\r\n  var cv;\r\n  var pos=1;\r\n  for (i = 0; i < properties.length; i++)\r\n  {\r\n    var prop = properties[i].trim();\r\n    if (prop.indexOf(\":\")==-1 || (prop.indexOf(\":\")>0 && prop.indexOf(\":\")!=prop.lastIndexOf(\":\")))\r\n    { \/\/ condition is that \":\" do not occur or\r\n      \/\/ \":\"  occurs once in any prop and not in the first position\r\n        id =\"csv_\" + pos;\r\n        pos++;\r\n        val =properties[i].trim();\r\n        if (determineType(val)== \"date\")\r\n          {\r\n            var d = new Date(val);\r\n            val =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join('\/')+\r\n                    ' ' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(':');\r\n\r\n          }\r\n          attributes.push({\"name\":id ,\"type\": determineType(val),\"value\" : val});\r\n    }\r\n    else\r\n    {\r\n\t  cv= properties[i].split(\":\");\r\n\t  myid=cv[0].trim();\r\n          val=cv[1].trim();\r\n          var attr={};\r\n          if (determineType(val)== \"date\") \r\n          {\r\n            var d = new Date(val);\r\n            val =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join('\/')+\r\n                    ' ' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(':');\r\n\r\n          }\r\n         attributes.push({\"name\":myid ,\"type\": determineType(val),\"value\" : val});\r\n    }\r\n  }\r\n  \/\/ console.log(attributes);\r\n  return attributes;\r\n}\r\n\r\n\/*  this function should be completed *\/\r\nfunction parseXML(value)\r\n{\r\n    var parser = new DOMParser();\r\n    var xmlDoc = parser.parseFromString(value, \"text\/xml\");\r\n    \r\n    var element = xmlDoc.documentElement;\r\n    var elements = element.querySelectorAll(\"*\");\r\n    \r\n    var attributes = [];\r\n\r\n    for (var i = 0; i < elements.length; i++) {\r\n        var text = null;\r\n        if (elements[i].childNodes.length == 1 && elements[i].childNodes[0].nodeType == 3) \/\/if nodeType == text node\r\n        {\r\n            text = elements[i].textContent; \/\/get text of the element\r\n            var id =elements[i].tagName;\r\n            var val =text.trim();\r\n            \r\n             if (determineType(val)== \"date\") {\r\n                 val= dateThing(val);\r\n             }\r\n            attributes.push({\"name\":id ,\"type\": determineType(val),\"value\" : val});\r\n            \r\n        }\r\n \r\n        \r\n        \r\n    }\r\n    return attributes;\r\n    \r\n}\r\n\r\n\/*  this function should be completed *\/\r\nfunction parseJSON(value)\r\n{  try{\r\n    jsonvalue= JSON.parse(value);\r\n    var attributes = [];\r\n    \r\n    for (var key in jsonvalue){\r\n     \r\n        var id =key; \r\n        if (id==\"type\" || id==\"id\") continue; \/\/these are not attribute, we don't need them\r\n        var val =jsonvalue[id];\r\n        if(typeof(val)=='object') {\r\n            \r\n            jsonSubValue=val;\r\n            \r\n            for (var k in jsonSubValue){\r\n                if (k==\"type\" || k==\"id\") continue; \/\/these are not attribute, we don't need them\r\n                v= jsonSubValue[k];\r\n                \r\n                try{v=v.trim();} catch(err){}\r\n                if (determineType(v)== \"date\") {\r\n                    v= dateThing(v);\r\n                    }\r\n                attributes.push({\"name\":key ,\"type\": determineType(v),\"value\" : v});\r\n            }\r\n        }\r\n        else{\r\n            val= val.trim(); \r\n            if (determineType(val)== \"date\") {\r\n                 val= dateThing(val);\r\n             }\r\n            \r\n            attributes.push({\"name\":id ,\"type\": determineType(val),\"value\" : val});\r\n        }\r\n            \r\n    }\r\n    \r\n  return attributes;\r\n}\r\n catch(err){\r\n     return [];\r\n}\r\n}\r\n\r\n\r\nfunction validateFloat(strFloat) {\r\n    if (\/^(\\-|\\+)?([0-9]+(\\.[0-9]+)?|Infinity)$\/\r\n      .test(strFloat))\r\n      return true;\r\n  return false;\r\n}\r\n\r\nfunction validateInt(strInt) {\r\n    if (\/^(\\-|\\+)?([0-9]+)$\/\r\n      .test(strInt))\r\n      return true;\r\n  return false;\r\n}\r\n\r\n\/\/ YYYY\/MM\/DD or MM\/DD\/YYYY\r\nfunction validateDate(strDate) {\r\n\/\/  var t = \/^(?=.+([\\\/.-])..\\1)(?=.{10}$)(?:(\\d{4}).|)(\\d\\d).(\\d\\d)(?:.(\\d{4})|)$\/;\r\n\/\/  strDate.replace(t, function($, _, y, m, d, y2) {\r\n\/\/    $ = new Date(y = y || y2, m, d);\r\n\/\/    t = $.getFullYear() != y || $.getMonth() != m || $.getDate() != d;\r\n\/\/  });\r\n\/\/  return !t;\r\n   var mydate= Date.parse(strDate);\r\n   if (isNaN(mydate)) return false;\r\n   else return true; \r\n}\r\n\r\nfunction determineType(value)\r\n{\r\n  var selectorType= \"\";\r\n  if (validateInt(value)) {selectorType = \"integer\";}\r\n  else if (value.match(\"[A-Za-z][A-Za-z0-9]*\")) {selectorType = \"string\";}\r\n  else if (validateFloat(value)) {selectorType = \"float\";}\r\n  else if (validateDate(value)) {selectorType = \"date\";\r\n  }else {selectorType = \"object\";}\r\n  return selectorType;\r\n}\r\n\r\nfunction dateThing(value){\r\n    var d = new Date(value);\r\n            value =[ (d.getMonth()+1).padLeft(),\r\n                    d.getDate().padLeft(),\r\n                    d.getFullYear()].join('\/')+\r\n                    ' ' +\r\n                  [ d.getHours().padLeft(),\r\n                    d.getMinutes().padLeft(),\r\n                    d.getSeconds().padLeft()].join(':');\r\n    return value;\r\n}\r\n msg.payload = snap4cityParser(\"" +
-                                    sensors[i] + "\", \"ngsi\", msg.payload, [" +
-                                    attributes_string +
-                                    "] );\r\n\r\nvar msg4out = msg.payload.map(function (p) {\r\n    return {payload: p};\r\n});\r\nreturn msg4out;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      var xmlhRequest = global.get(\'xmlhRequest\');\r\n      var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n       request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n}\r\n snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
                                 "outputs": corresponding_out_ids.length,
                                 "noerr": 0,
                                 "x": 800,
@@ -3892,7 +4055,19 @@ RED.nodes.registerType('label',{
 
         oneditprepare: function () {
 
+           //release keycloak
+            var KEYCLOACK="https://www.snap4city.org/auth/realms/master/protocol/openid-connect/userinfo";
+            //test keycloak
+            //var KEYCLOACK="https://www.disit.org/auth/realms/master/protocol/openid-connect/userinfo";
+            
+            var username="";
+            var user_roles=[];
+            var role="manager";
+            var organization="";
+            var gpsCentreLatLng="";
+            
             var accessToken = "";
+            
             $.ajax({
                 url: "isThereLocalRefreshToken/",
                 type: "GET",
@@ -3942,6 +4117,49 @@ RED.nodes.registerType('label',{
                     }
                 }
             });
+            
+            if(accessToken!=""){
+                $.ajax({
+                            url: KEYCLOACK,
+                            type: "GET",
+                            async: false,
+                            headers:{
+                                Accept:"application/json" ,
+                                Authorization:"Bearer "+ accessToken,
+                                "Access-Control-Allow-Origin":"*"
+                            },
+                            success: function (_data) {
+                                if(_data.preferred_username!="" && _data.preferred_username!=undefined && _data.preferred_username!="undefined")
+                                    username= _data.preferred_username;
+                                else
+                                    username=_data.username;
+                                
+                                
+                                user_roles= _data.roles;
+                                
+                                for(var i=0; i<user_roles.length; i++){
+                                    if(user_roles[i].toLowerCase()=="rootadmin" ||
+                                      user_roles[i].toLowerCase()=="tooladmin"||
+                                      user_roles[i].toLowerCase()=="areamanager")
+                                        
+                                    {
+                                        role=user_roles[i];
+                                        break;
+                                    }
+                                    
+                                }
+                                
+                            }
+                        });
+                console.log("username: "+ username);
+                console.log("role: "+ role);
+                
+            }
+            
+            //***for testing uncomment this block
+            /*username="fatimaroot";
+            accessToken="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJRczF6Wko2REIyTlp0ajB3RlVHNlFfN2JwZGhuRnRFX1NMZFdHb29CSUFFIn0.eyJqdGkiOiI0Mjc1NWI3YS01NzA3LTQwNmItOTY2Zi01NzczZjNlNmQzZWQiLCJleHAiOjE1NjM5MjYyMTIsIm5iZiI6MCwiaWF0IjoxNTYzOTI0NzEyLCJpc3MiOiJodHRwOi8vd3d3LmRpc2l0Lm9yZy9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJwaHAtaW90LWRpcmVjdG9yeS10ZXN0Iiwic3ViIjoiNjQyMDllZmUtYTQwOC00MGM4LTk5Y2YtOGFmYjk4MTRlOTBhIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoicGhwLWlvdC1kaXJlY3RvcnktdGVzdCIsIm5vbmNlIjoiZDBiZWIzN2Y3ZmQyNmRlYWU4YWRmNDcxYzE5MmE2NTUiLCJhdXRoX3RpbWUiOjE1NjI2NzU5NDEsInNlc3Npb25fc3RhdGUiOiJiMjExMTU4Yi0xNTc5LTRiNTEtOWRmMi02NDUwOGQ5YjVkZDkiLCJhY3IiOiIwIiwiYWxsb3dlZC1vcmlnaW5zIjpbXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbInVtYV9hdXRob3JpemF0aW9uIiwiUm9vdEFkbWluIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwicm9sZXMiOlsidW1hX2F1dGhvcml6YXRpb24iLCJvZmZsaW5lX2FjY2VzcyIsIlJvb3RBZG1pbiJdLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJmYXRpbWFyb290IiwiZW1haWwiOiJhbmdlbG8uZGlmaW5vQGdtYWlsLmNvbSJ9.ICzrvGBdbm8E7_vQsYqj9oztpBuwqUSMBL8xC0u3kpTziVWt1t8UZ5VpTLKhPmyZo4wQQy1jEuwGGLj1ZwVnkTmeNIZMHRHnXd0PIBdCqdLR9JDlN-AS8VsqBnJyVntwqw4-oaYhS4TTdp2vxYwR30ZvillOf6NM7PDyLg39FR7oYos5scqauIwt5mqYhbJy6JtEqGP7IGacDQUcUONbC92ztWeg3zkn2L_YwPVbZTx8KrNzQ2T8CqfrMmPfARKum1Hspcgiyc1lvEbO6x4g7XUHE6I134bwGGYQdxjch4L6tmnULC9F0-Xv2IAGE_wClvCgHmpImRA3QVwd2AqqOw";
+            role="RootAdmin";*/
 
             $(".editor-tray").css("width", "700px");
             maxCanvasHeight = 0;
@@ -3959,8 +4177,11 @@ RED.nodes.registerType('label',{
                 console.log("couldn't get the canvas height: " + err);
             }
 
-            // serverURL= "https://www.snap4city.org/iotdirectorytest/api/device.php?"; //for testing
+             //serverURL= "https://www.snap4city.org/iotdirectorytest/api/device.php?"; //for testing
             serverURL = "https://iotdirectory.snap4city.org/api/device.php?"; //official
+            
+            //findOrg_url = "https://www.snap4city.org/iotdirectorytest/api/nodeRedConnection.php?" + "action=get_organization";
+            findOrg_url = "https://iotdirectory.snap4city.org/api/nodeRedConnection.php?" + "action=get_organization";
 
             openedTab = "Device-based-search";
             $("#deviceTabButton").simulate("click");
@@ -3985,7 +4206,7 @@ RED.nodes.registerType('label',{
             });
 
 
-            map = L.map('node-input-map').setView([43.78, 11.23], 10);
+            map = L.map('node-input-map').setView([43.78, 11.23], 10); //don't worry about the coordinate, will be updated once they are received
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
@@ -4017,6 +4238,15 @@ RED.nodes.registerType('label',{
             redIcon = new L.Icon({
 
                 iconUrl: 'https://www.snap4city.org/iotdirectorytest/markerPrivate.png',
+                iconSize: new L.Point(32, 32),
+                iconAnchor: new L.Point(16, 16),
+                popupAnchor: new L.Point(0, -18)
+
+            });
+            
+             pinkIcon = new L.Icon({
+
+                iconUrl: 'https://www.snap4city.org/iotdirectorytest/markerDelegated.png',
                 iconSize: new L.Point(32, 32),
                 iconAnchor: new L.Point(16, 16),
                 popupAnchor: new L.Point(0, -18)
@@ -5500,163 +5730,244 @@ RED.nodes.registerType('label',{
             //var jqxhr = $.getJSON( "http://159.149.129.184:3001/api/get-config-data", function(data) {
             //var jqxhr = $.getJSON( "https://iotdirectory.snap4city.org/management/get_data.php?action=get-config-data", function(data) {
 
-            //var accesstokenOut = "";
+            //var accesstoken = "";
             if (accessToken != "") {
                 console.log("ACCESS TOKEN: " + accessToken);
-                var accesstokenOut = accessToken;
+                var accesstoken = accessToken;
+                
                 try {
-                    console.log("in retrieving access token");
+                    console.log("in retrieving access tokennn");
                     console.log("this.id " + this.id);
 
                     //var accesstokenOut = "";
-                    /* $.ajax({
+                    //*** for testing comment this block, don't forget the ending brackets
+                     $.ajax({
                         url: "deviceregistration/" + this.id,
                         type: "GET",
                         async: false,
                         success: function (resp) {
                             console.log(resp);
-                            //accesstokenOut = resp.accessToken;
-                            //accesstokenOut = resp.refreshToken;
-                            accesstokenOut = resp.accessToken; */
+                            //accesstoken = resp.accessToken;
+                            //accesstoken = resp.refreshToken;
+                            accesstoken = resp.accessToken; 
+                            
+                            //**until here
 
-                    var url = serverURL + "action=get_config_data";
-
-                    if (typeof accesstokenOut != "undefined" && accesstokenOut != "" &&
-                        accesstokenOut != "undefined")
-                        url += "&nodered=yes&token=" + accesstokenOut;
-
-                    console.log("url");
-                    console.log(url);
-                    console.log("accesstokenOut: ");
-                    console.log(accesstokenOut);
-                    /* console.log("accesstokenOut: " + resp.accessToken);
-                    console.log("refreshtokenOut: " + resp.refreshToken); */
-
-                    var jqxhr = $.getJSON(url, function (data) {
-                            console.log("success");
-                            console.log(data);
-                        })
-                        .done(function (data) {
-                            console.log("second success");
-                            if (data.status == "ok") {
-
-                                data = data.content;
-                                allDataOut = data;
-                                // crea lista entiti principale
-                                node.configData = data;
-                                createNodeList();
-                                //crea dati per le select
-                                createRetrievePanel();
-                                // crea map
-                                drawMap();
-
-                                var marker_array = [];
-                                for (var k in data) {
-
-                                    lat = Number(data[k]["latitude"]); //45.4858914;
-                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    lng = Number(data[k]["longitude"]); //9.202094;
-                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    popup = "<b>" + data[k]['name'] + "</b><br>" + data[
-                                        k]['entityType'] + "<br>" + data[k]['kind'];
-                                    if (data[k]["visibility"] == "public") {
-
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: blueIcon
-                                        }).bindPopup(popup);
-                                    } else {
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: redIcon
-                                        }).bindPopup(popup);
-                                    }
-                                    marker_array.push(m);
-                                }
-
-                                var markersGroup = L.layerGroup(marker_array);
-                                markersGroup.addTo(map);
-
-                            } else {
-                                console.log(data.status);
+                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                accesstoken != "undefined")
+                            {
+                                findOrg_url += "&nodered=yes&token=" + accesstoken;
+                                findOrg_url +="&username="+username+"&loggedrole="+role;
                             }
 
-                        })
-                        .fail(function () {
-                            console.log("error");
-                        })
-                        .always(function () {
-                            console.log("complete");
-                        });
+                            console.log("findOrg_url");
+                            console.log(findOrg_url);
+
+                            var jqxhr = $.getJSON(findOrg_url, function (data) {
+                                    console.log("findOrg_url success");
+                                    console.log(data);
+                                })
+                                .done(function (data) {
+
+                                    if (data.status == "ok") {
+                                        console.log("findOrg_url second success");
+                                        organization = data.content;
+                                        info=data.info;
+                                        kbUrl=info.kbUrl;
+                                        gpsCentreLatLng=info.gpsCentreLatLng;
+                                        zoomLevel=info.zoomLevel;
+
+                                        if (gpsCentreLatLng!=""){
+                                            try{
+                                                var centerMapArr= gpsCentreLatLng.split(",",2);
+                                                var centerLat= parseFloat(centerMapArr[0].trim());
+                                                var centerLng= parseFloat(centerMapArr[1].trim());   
+                                                map.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
+                                                map2.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
+
+                                            }
+                                            catch(err){
+                                                console.log("error setting the map viewview");
+                                        }
+
+                                        }
+                                        console.log(organization);
+                                        console.log(kbUrl);
+                                        console.log(gpsCentreLatLng);
+                                        console.log(zoomLevel);
 
 
-                    var url_values = serverURL + "action=get_config_data_values";
-                    if (typeof accesstokenOut != "undefined" && accesstokenOut != "" &&
-                        accesstokenOut != "undefined")
-                        url_values += "&nodered=yes&token=" + accesstokenOut;
-
-                    console.log(url_values);
-                    var jqxhrValues = $.getJSON(url_values,
-                            function (data) {
-                                console.log("success");
-                                console.log(data);
-                            })
-                        .done(function (data) {
-                            if (data.status == "ok") {
-                                console.log("second success");
 
 
-                                data = data.content;
-                                allDataOut2 = data;
+                                        var url = serverURL + "action=get_config_data";
 
-                                // crea lista entiti principale
-                                node2.configData = data;
-                                createNodeList2();
-                                //crea dati per le select
-                                createRetrievePanel2();
-                                // crea map
-                                drawMap2();
+                                        if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                            accesstoken != "undefined")
+                                            {
+                                            url += "&nodered=yes&token=" + accesstoken;
+                                            url +="&username="+username+"&loggedrole="+role+"&organization="+organization;
+                                        }
 
-                                var marker_array = [];
-                                for (var k in data) {
+                                        console.log("url");
+                                        console.log(url);
 
-                                    lat = Number(data[k]["latitude"]); //45.4858914;
-                                    est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    lng = Number(data[k]["longitude"]); //9.202094;
-                                    est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                    popup = "<b>" + data[k]['device'] + "</b><br>" +
-                                        data[k]['value_type'];
-                                    if (data[k]["visibility"] == "private") {
+                                        /* console.log("accesstoken: " + resp.accessToken);
+                                        console.log("refreshtoken: " + resp.refreshToken); */
 
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: redIcon
-                                        }).bindPopup(popup);
+                                        var jqxhr = $.getJSON(url, function (data) {
+                                                console.log("success");
+                                                console.log(data);
+                                            })
+                                            .done(function (data) {
+                                                console.log("second success");
+                                                if (data.status == "ok") {
+
+                                                    data = data.content;
+                                                    allDataOut = data;
+                                                    // crea lista entiti principale
+                                                    node.configData = data;
+                                                    createNodeList();
+                                                    //crea dati per le select
+                                                    createRetrievePanel();
+                                                    // crea map
+                                                    drawMap();
+
+                                                    var marker_array = [];
+                                                    for (var k in data) {
+
+                                                        lat = Number(data[k]["latitude"]); //45.4858914;
+                                                        est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                        lng = Number(data[k]["longitude"]); //9.202094;
+                                                        est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                        popup = "<b>" + data[k]['name'] + "</b><br>" + data[
+                                                            k]['entityType'] + "<br>" + data[k]['kind'];
+                                                        if (data[k]["visibility"] == "public") {
+
+                                                            m = L.marker([est_lat, est_lng], {
+                                                                icon: blueIcon
+                                                            }).bindPopup(popup);
+                                                        } else if (data[k]["visibility"] == "MyOwnPublic" || data[k]["visibility"] == "MyOwnPrivate") {
+                                                            m = L.marker([est_lat, est_lng], {
+                                                                icon: redIcon
+                                                            }).bindPopup(popup);
+                                                        }else if (data[k]["visibility"] == "delegated") {
+                                                            m = L.marker([est_lat, est_lng], {
+                                                                icon: pinkIcon
+                                                            }).bindPopup(popup);
+                                                        }
+                                                        marker_array.push(m);
+                                                    }
+
+                                                    var markersGroup = L.layerGroup(marker_array);
+                                                    markersGroup.addTo(map);
+
+                                                } else {
+                                                    console.log(data.status);
+                                                }
+
+                                            })
+                                            .fail(function () {
+                                                console.log("error");
+                                            })
+                                            .always(function () {
+                                                console.log("complete");
+                                            });
+
+
+                                        var url_values = serverURL + "action=get_config_data_values";
+                                        if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                            accesstoken != "undefined")
+                                            {
+                                            url_values += "&nodered=yes&token=" + accesstoken;
+                                            url_values +="&username="+username+"&loggedrole="+role+"&organization="+organization;
+                                        }
+
+                                        console.log(url_values);
+                                        var jqxhrValues = $.getJSON(url_values,
+                                                function (data) {
+                                                    console.log("success");
+                                                    console.log(data);
+                                                })
+                                            .done(function (data) {
+                                                if (data.status == "ok") {
+                                                    console.log("second success");
+
+
+                                                    data = data.content;
+                                                    allDataOut2 = data;
+
+                                                    // crea lista entiti principale
+                                                    node2.configData = data;
+                                                    createNodeList2();
+                                                    //crea dati per le select
+                                                    createRetrievePanel2();
+                                                    // crea map
+                                                    drawMap2();
+
+                                                    var marker_array = [];
+                                                    for (var k in data) {
+
+                                                        lat = Number(data[k]["latitude"]); //45.4858914;
+                                                        est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                        lng = Number(data[k]["longitude"]); //9.202094;
+                                                        est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                        popup = "<b>" + data[k]['device'] + "</b><br>" +
+                                                            data[k]['value_type'];
+                                                        if (data[k]["visibility"] == "private") {
+
+                                                            m = L.marker([est_lat, est_lng], {
+                                                                icon: redIcon
+                                                            }).bindPopup(popup);
+                                                        }
+                                                        else if (data[k]["visibility"] == "delegated") {
+                                                            m = L.marker([est_lat, est_lng], {
+                                                                icon: pinkIcon
+                                                            }).bindPopup(popup);}
+                                                        else {
+                                                            m = L.marker([est_lat, est_lng], {
+                                                                icon: blueIcon
+                                                            }).bindPopup(popup);
+                                                        }
+
+                                                        marker_array.push(m);
+                                                    }
+
+                                                    var markersGroup = L.layerGroup(marker_array);
+                                                    markersGroup.addTo(map2);
+
+                                                }
+
+
+                                            })
+                                            .fail(function () {
+                                                console.log("error");
+                                            })
+                                            .always(function () {
+                                                console.log("complete");
+                                            });
+
+
                                     } else {
-                                        m = L.marker([est_lat, est_lng], {
-                                            icon: blueIcon
-                                        }).bindPopup(popup);
+                                        console.log(data.status);
+
                                     }
 
-                                    marker_array.push(m);
-                                }
 
-                                var markersGroup = L.layerGroup(marker_array);
-                                markersGroup.addTo(map2);
+                                })
+                                .fail(function () {
+                                    console.log("error");
+                                })
+                                .always(function () {
+                                    console.log("complete");
+                                });
 
-                            }
-
-
-                        })
-                        .fail(function () {
-                            console.log("error");
-                        })
-                        .always(function () {
-                            console.log("complete");
-                        });
-                    /* } 
-                 }); */
-
-                } catch (err) {
+                        }
+                     }); 
+                }   
+                
+                catch (err) {
                     console.log("error creating the token " + err);
-                    accesstokenOut = "";
+                    accesstoken = "";
                 }
 
             } else {
@@ -7828,6 +8139,7 @@ RED.nodes.registerType('label',{
 </script>
 
 <script>
+   
     function openTab(evt, cityName) {
         openedTab = cityName;
 
@@ -7849,6 +8161,8 @@ RED.nodes.registerType('label',{
             window.node_input_map_2.invalidateSize(true);
         };
     }
+    
+    
 </script>
 
 <script type="text/x-red" data-help-name="iot-directory-in">

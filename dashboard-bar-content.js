@@ -77,7 +77,8 @@ module.exports = function (RED) {
                 appId: uid,
                 user: node.username,
                 flowId: node.z,
-                flowName: node.flowName
+                flowName: node.flowName,
+                accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
             };
 
             setTimeout(function () {
@@ -242,7 +243,8 @@ module.exports = function (RED) {
                 user: node.username,
                 appId: uid,
                 flowId: node.z,
-                flowName: node.flowName
+                flowName: node.flowName,
+                accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
             };
 
             try {

@@ -1,0 +1,258 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/x-red" data-template-name="point-within-polygon">
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pointlatitude">Point Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-pointlatitude" placeholder="Source Latitude">
+    </div>
+    <div class="form-row">
+        <label for="node-input-pointlongitude">Point Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-pointlongitude" placeholder="Source Longitude">
+    </div>
+    <div class="form-row">
+        <label for="node-input-polygon">Polygon</label>
+        <input type="text" autocomplete="off" id="node-input-polygon" placeholder="Polygon" disabled>
+    </div>
+    <div class="form-row">
+        <link rel="stylesheet" href="s4c/css/leaflet.css" />
+        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
+        <div id="node-input-map" style="width: 100%; height: 300px"></div>
+    </div>
+</script>
+
+<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
+
+<script type="text/javascript">
+    RED.nodes.registerType('point-within-polygon', {
+        category: 'S4CUtility',
+        color: '#E9967A',
+        defaults: {
+            name: {
+                value: ""
+            },
+            polygon: {
+                value: "",
+                required: false
+            },
+            pointlatitude: {
+                required: false,
+                validate: RED.validators.number()
+            },
+            pointlongitude: {
+                required: false,
+                validate: RED.validators.number()
+            },
+        },
+        outputs: 1,
+        inputs: 1,
+        outputLabels: ["result"],
+        icon: "marker.png",
+        label: function () {
+            return this.name || "point-within-polygon";
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
+            node = this;
+            map = L.map('node-input-map').setView([43.78, 11.23], 9);
+            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            window.node_input_map = map;
+
+            var mapLayers = {};
+
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            var editControl = new L.Control.Draw({
+                draw: false,
+                edit: {
+                    featureGroup: drawnItems
+                }
+            });
+            map.addControl(editControl);
+
+            drawControl = new L.Control.Draw({
+                draw: {
+                    position: 'topleft',
+                    polyline: false,
+                    marker: false,
+                    circlemarker: false,
+                    circle: false
+                }
+            });
+            map.addControl(drawControl);
+
+            L.control.layers(mapLayers, {
+                'drawlayer': drawnItems
+            }, {
+                collapsed: true
+            }).addTo(map);
+
+            map.on(L.Draw.Event.CREATED, function (e) {
+                var fence = e.layer;
+                fence.nodeID = node.id;
+                if (drawnItems.hasLayer(fence) == false) {
+                    drawnItems.addLayer(fence);
+                }
+
+                drawControl.remove();
+
+                polygons = {};
+
+                drawnItems.eachLayer(function (layer) {
+                    polygons[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                $("#node-input-polygon").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
+                    polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
+                    /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
+                    /&/g, ","));
+            });
+
+            map.on('draw:edited', function (e) {
+                var fences = e.layers;
+                fences.eachLayer(function (fence) {
+                    fence.shape = "geofence";
+                    if (drawnItems.hasLayer(fence) == false) {
+                        drawnItems.addLayer(fence);
+                    }
+                });
+
+                polygons = {};
+
+                drawnItems.eachLayer(function (layer) {
+                    polygons[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                $("#node-input-polygon").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
+                    polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
+                    /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
+                    /&/g, ","));
+            });
+
+            map.on('draw:deleted', function (e) {
+                drawControl.addTo(map);
+                $("#node-input-polygon").val("");
+            });
+
+            $.ajax({
+                url: "s4c/json/categories.json",
+                async: false,
+                cache: false,
+                timeout: 2000,
+                dataType: "json",
+                success: function (data) {
+                    $("#node-input-fancytree").fancytree({
+                        source: data,
+                        extensions: ["glyph", "filter"],
+                        checkbox: true,
+                        imagePath: "s4c/img/",
+                        selectMode: 3,
+                        clickFolderMode: 2,
+                        click: function (event, data) {
+                            if (!data.node.folder) {
+                                data.node.toggleSelected();
+                                selectCategories();
+                                return false;
+                            }
+                        },
+                        glyph: {
+                            map: {
+                                checkbox: "fa fa-square",
+                                checkboxSelected: "fa fa-check-square",
+                                checkboxUnknown: "fa fa-share-square"
+                            }
+                        },
+                        filter: {
+                            autoApply: false, // Re-apply last filter if lazy data is loaded
+                            counter: false, // Show a badge with number of matching child nodes near parent icons
+                            fuzzy: false, // Match single characters in order, e.g. 'fb' will match 'FooBar'
+                            leavesOnly: true,
+                            highlight: false, // Highlight matches by wrapping inside <mark> tags
+                            nodata: "No services",
+                            mode: "hide" // Grayout unmatched nodes (pass "hide" to remove unmatched node instead)
+                        }
+                    });
+
+                    $("span.fancytree-checkbox").css("font-size", "30px").css("margin-top",
+                        "5px").css("margin-right", "5px");
+                    $("img.fancytree-icon").css("font-size", "35px");
+
+                    $("#node-input-fancytree").on("click", function (event, data) {
+                        selectCategories();
+                    });
+                },
+                error: function (data) {
+                    console.log(data);
+                }
+            });
+
+        },
+        oneditresize: function () {
+            if (window.node_input_map) {
+                window.node_input_map.invalidateSize(true);
+            }
+        }
+    });
+</script>
+
+
+<script type="text/x-red" data-help-name="point-within-polygon">
+    <p>It allows to check if a given point is inside a predetermined polygon.</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>polygon
+            <span class="property-type">string</span>
+        </dt>
+        <dd> “&lt;WKT_string>” for a geographic path described as Well Known Text</dd>
+        <dt>pointlatitude
+            <span class="property-type">string</span>
+        </dt>
+        <dd> latitude of the point to check</dd>
+        <dt>pointlongitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> longitude of the point to check</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+        true if the point is inside the polygon area, false otherwise
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+        in either part, an error is generated for the necessary parameters.</p>
+
+</script>
