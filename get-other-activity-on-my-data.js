@@ -29,9 +29,10 @@ module.exports = function (RED) {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
 
-                console.log(encodeURI(uri + "?sourceRequest=iotapp&delegated=true" ));
-                xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp&delegated=true" + "&accessToken=" + accessToken), true);
+                console.log(encodeURI(uri + "?sourceRequest=iotapp&delegated=true"));
+                xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp&delegated=true"), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
+                xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                 xmlHttp.onload = function (e) {
                     if (xmlHttp.readyState === 4) {
                         if (xmlHttp.status === 200) {
@@ -47,12 +48,14 @@ module.exports = function (RED) {
                             s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "MyData", uri, "RX");
                             node.send(msg);
                         } else {
-                            console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                            console.error(xmlHttp.statusText);
+                            node.error(xmlHttp.responseText);
                         }
                     }
                 };
                 xmlHttp.onerror = function (e) {
-                    console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                    console.error(xmlHttp.statusText);
+                    node.error(xmlHttp.responseText);
                 };
                 xmlHttp.send(null);
 

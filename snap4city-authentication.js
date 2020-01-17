@@ -104,14 +104,14 @@ module.exports = function (RED) {
             var expiresTimestamp = node.credentials.expiresTimestamp;
             var refreshToken = node.credentials.refreshToken;
             if (typeof refreshToken == "undefined" || typeof expiresTimestamp == "undefined" || new Date().getTime() > expiresTimestamp) {
-                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=password&username=" + node.credentials.user + "&password=" + node.credentials.password;
+                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=password&username=" + node.credentials.user + "&password=" + encodeURIComponent(node.credentials.password);
             } else {
                 params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             }
             var response = "";
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(url));
+            console.log("Refresh token from:"+encodeURI(url));
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             xmlHttp.send(params);
@@ -130,7 +130,7 @@ module.exports = function (RED) {
                     if (response.refresh_expires_in != null) {
                         node.credentials.expiresTimestamp = (new Date().getTime()) + response.refresh_expires_in * 1000;
                     }
-                } catch (e) {}
+                } catch (e) {console.log(e);}
 
                 if (response != "") {
                     if (response.access_token != null) {

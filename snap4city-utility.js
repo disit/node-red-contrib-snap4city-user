@@ -48,7 +48,11 @@ module.exports = {
         }
     },
 
-    retrieveAccessToken: function (RED, node, authentication, uid) {
+	retrieveAccessToken: function (RED, node, authentication, uid) {
+		return retrieveAccessToken(RED, node, authentication, uid, true);
+	},
+
+    retrieveAccessToken: function (RED, node, authentication, uid, fillStatus) {
         var fs = require('fs');
         var refreshToken = "";
         var response = "";
@@ -58,7 +62,7 @@ module.exports = {
             var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(url));
+            console.log("Retrieve token from:"+encodeURI(url));
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             xmlHttp.send(params);
@@ -77,14 +81,14 @@ module.exports = {
                 if (node.s4cAuth != null) {
                     accessToken = node.s4cAuth.refreshTokenGetAccessToken(uid);
                     if (accessToken != "") {
-                        node.status({
+                        if (fillStatus) node.status({
                             fill: "green",
                             shape: "dot",
                             text: "Authenticaton Ok"
                         });
                         return accessToken;
                     } else {
-                        node.status({
+                        if (fillStatus) node.status({
                             fill: "red",
                             shape: "dot",
                             text: "Authentication Problem"

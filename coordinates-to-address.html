@@ -14,16 +14,13 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/javascript">
-    RED.nodes.registerType('value-type-search-near-marker', {
-        category: 'S4CSearch',
-        color: '#D8BFD8',
+
+    RED.nodes.registerType('coordinates-to-address', {
+        category: 'S4CUtility',
+        color: '#E9967A',
         defaults: {
             name: {
                 value: ""
-            },
-            authentication: {
-                type: "snap4city-authentication",
-                required: false
             },
             latitude: {
                 value: 0.0,
@@ -34,46 +31,14 @@
                 value: 0.0,
                 required: false,
                 validate: RED.validators.number()
-            },
-            valuetype: {
-                value: "",
-                required: false
-            },
-            maxdists: {
-                value: 1,
-                required: false,
-                validate: RED.validators.number()
-            },
-            maxresults: {
-                value: 100,
-                required: false,
-                validate: RED.validators.number()
             }
         },
-        oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
-        },
-        oneditresize: function () {
-            if ($("#node-input-authentication").children().length > 1) {
-                $("#node-input-authentication option[value='_ADD_']").remove();
-            }
-        },
-        outputs: 2,
+        outputs: 1,
         inputs: 1,
-        outputLabels: ["service uri array", "geojson result"],
-        icon: "white-globe.png",
+        outputLabels: ["route"],
+        icon: "marker.png",
         label: function () {
-            return this.name || "value-type-search-near-marker";
+            return this.name || "coordinates-to-address";
         },
         oneditprepare: function () {
             $.ajax({
@@ -87,6 +52,7 @@
                 dataType: "script"
             });
             node = this;
+
             map = L.map('node-input-map').setView([43.78, 11.23], 9);
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -127,8 +93,8 @@
             L.control.layers(mapLayers, {
                 'drawlayer': drawnItems
             }, {
-                collapsed: true
-            }).addTo(map);
+                    collapsed: true
+                }).addTo(map);
 
             map.on(L.Draw.Event.CREATED, function (e) {
                 var fence = e.layer;
@@ -147,6 +113,7 @@
 
                 $("#node-input-latitude").val(markers[node.id].geometry.coordinates[1]);
                 $("#node-input-longitude").val(markers[node.id].geometry.coordinates[0]);
+
             });
 
             map.on('draw:edited', function (e) {
@@ -166,6 +133,8 @@
 
                 $("#node-input-latitude").val(markers[node.id].geometry.coordinates[1]);
                 $("#node-input-longitude").val(markers[node.id].geometry.coordinates[0]);
+
+    
             });
 
             map.on('draw:deleted', function (e) {
@@ -174,24 +143,7 @@
                 $("#node-input-longitude").val(0);
             });
 
-            $("#node-input-valuetype").empty();
-            $.ajax({
-                url: "https://www.disit.org/superservicemap/api/v1/value_type/",
-                type: "GET",
-                async: false,
-                dataType: "json",
-                success: function (data) {
-                    for (var i = 0; i < data.length; i++) {
-                        $("<option value=\"" + data[i].value_type + "\">" + data[i].value_type +
-                            " (" + data[i].value_unit + ")</option>").appendTo($(
-                                "#node-input-valuetype"));
-                    }
-                    $("#node-input-valuetype").val("");
-                },
-                error: function (err) {
-                    console.log(err);
-                }
-            });
+            
 
         },
         oneditresize: function () {
@@ -202,50 +154,10 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="value-type-search-near-marker">
-    <div class="form-row" id="rowAuthentication">
-        <label for="node-input-authentication">Authentication</label>
-        <input type="text" id="node-input-authentication">
-    </div>
-    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
-        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
-        <a href="https://www.snap4city.org"
-            target="_blank">here</a>.
-    </div>
+<script type="text/x-red" data-template-name="coordinates-to-address">
     <div class="form-row">
         <label for="node-input-name">Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-maxdists">Max Distance</label>
-        <select id="node-input-maxdists">
-            <option value="0.1">100 Meters</option>
-            <option value="0.2">200 Meters</option>
-            <option value="0.5">500 Meters</option>
-            <option value="1">1 KMeters</option>
-            <option value="2">2 KMeters</option>
-            <option value="5">5 KMeters</option>
-            <option value="10">10 KMeters</option>
-            <option value="20">20 KMeters</option>
-            <option value="50">50 KMeters</option>
-            <option value="0">All</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-maxresults">Max Results</label>
-        <select id="node-input-maxresults">
-            <option value="100">100</option>
-            <option value="200">200</option>
-            <option value="500">500</option>
-            <option value="1000">1000</option>
-            <option value="2000">2000</option>
-            <option value="0">All</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-valuetype">Value Type</label>
-        <select id="node-input-valuetype">
-        </select>
     </div>
     <div class="form-row">
         <label for="node-input-latitude">Latitude</label>
@@ -262,9 +174,8 @@
     </div>
 </script>
 
-<script type="text/x-red" data-help-name="value-type-search-near-marker">
-    <p>It provides a list of the public transport routes that have a stop in a specified area.
-    </p>
+<script type="text/x-red" data-help-name="coordinates-to-address">
+    <p>It allows to retrieve address information for the GPS point inserted.</p>
 
     <h3>Inputs</h3>
     A JSON with these parameters:
@@ -273,41 +184,14 @@
         <dt>latitude
             <span class="property-type">number</span>
         </dt>
-        <dd> latitude of a GPS position</dd>
+        <dd> latitude of the point</dd>
         <dt>longitude
             <span class="property-type">number</span>
         </dt>
-        <dd> longitude of a GPS position</dd>
-        <dt>valuetype
-            <span class="property-type">string</span>
-        </dt>
-        <dd> the value type registered by sensors that are searched
-        </dd>
-        <dt>maxdistance
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum distance from the GPS position of the services to be retrieved, expressed in Km (0.1 is used if parameter
-            is missing) if it is equal to “inside” it searches for services with a WKT geometry that contains the specified
-            GPS position (e.g a park)</dd>
-        <dt>maxresults
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum number of results to be returned (if parameter is missing 100 is assumed), if it is 0 all results are returned</dd>
+        <dd> longitude of the point</dd>
     </dl>
-
     <h3>Outputs</h3>
-    <ol class="node-ports">
-        <li>ServiceUri Array
-            <dl class="message-properties">
-                <dd> Returns an array containing the servicesUri of each service found</dd>
-            </dl>
-        </li>
-        <li> All services together
-            <dl class="message-properties">
-                <dd> It returns the services merge in Results section</dd>
-            </dl>
-        </li>
-    </ol>
+        A JSON containing the information of the address
 
     <h3>Details</h3>
     <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.

@@ -33,8 +33,9 @@ module.exports = function (RED) {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
                 console.log(encodeURI(uri + "?accessToken=" + accessToken));
-                xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken), true);
+                xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp"), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
+                xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                 console.log(JSON.stringify({
                     "dataTime": Date.now(),
                     "variableName": variableName,
@@ -59,12 +60,14 @@ module.exports = function (RED) {
                             s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "MyData", uri, "TX");
                             node.send(msg);
                         } else {
-                            console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                            console.error(xmlHttp.statusText);
+                            node.error(xmlHttp.responseText);
                         }
                     }
                 };
                 xmlHttp.onerror = function (e) {
-                    console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                    console.error(xmlHttp.statusText);
+                    node.error(xmlHttp.responseText);
                 };
                 try {
                     xmlHttp.send(JSON.stringify({

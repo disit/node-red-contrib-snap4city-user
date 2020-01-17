@@ -53,6 +53,16 @@
 //////////////////////////////////////////////////// // ORION CONTEXT BROKER SUBSCRIBE NODE
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="fiware orion in">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+	
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -62,9 +72,6 @@
 		<label for="node-input-tls">
 			<i class="fa fa-cloud"></i>Certificates</label>
 		<input type="text" id="node-input-tls">
-	</div>
-	<div class="form-tips"  id="tipAuthentication" style="max-width: none">
-		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
 	</div>
 	<div class="form-row">
 		<label for="node-input-entype">
@@ -201,6 +208,15 @@
 ////////////////////////////////////////////////////// //ORION CONTEXT BROKER QUERY NODE //
 //////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="fiware orion">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
 
 	<div class="form-row">
 		<label for="node-input-service">
@@ -211,9 +227,6 @@
 		<label for="node-input-tls">
 			<i class="fa fa-cloud"></i>Certificates</label>
 		<input type="text" id="node-input-tls">
-	</div>
-	<div class="form-tips"  id="tipAuthentication" style="max-width: none">
-		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
 	</div>
 	<div class="form-row">
 		<label for="node-input-entype">
@@ -321,10 +334,18 @@
 
 </script>
 
-////////////////////////////////////////////////////////////////////////// //SIMPLE ORION CONTEXT BROKER CREATE NODE
-(currently used to test)
-// //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// //SIMPLE ORION CONTEXT BROKER UPDATE NODE //
+//////////////////////////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-test">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
 
 	<div class="form-row">
 		<label for="node-input-service">
@@ -337,11 +358,6 @@
 			<i class="fa fa-cloud"></i>Certificates</label>
 		<input type="text" id="node-input-tls">
 	</div>
-
-	<div class="form-tips"  id="tipAuthentication" style="max-width: none">
-		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
-	</div>
-
 	<div class="form-row">
 		<label for="node-input-entype">
 			<i class="fa fa-globe"></i>
@@ -417,6 +433,15 @@
 </script>
 
 <script type="text/x-red" data-template-name="fiware-orion-out">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
 
 	<div class="form-row">
 		<label for="node-input-service">
@@ -429,11 +454,6 @@
 			<i class="fa fa-cloud"></i>Certificates</label>
 		<input type="text" id="node-input-tls">
 	</div>
-
-	<div class="form-tips"  id="tipAuthentication" style="max-width: none">
-		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
-	</div>
-
 	<div class="form-row">
 		<label for="node-input-entype">
 			<i class="fa fa-globe"></i>
@@ -492,100 +512,150 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="fiware-orion-out"></script>
-
-<script type="text/x-red" data-help-name="orion-test"></script>
+<!-- Orion Out -->
+<script type="text/x-red" data-help-name="fiware-orion-out">
+	<p>Provides a node for sending generic json payload to Fiware Orion context broker.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)
+		</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI)
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (optional)</dd>
+		<dt>Device NameID
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional)</dd>		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional)</dd>
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) 
+		the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+	
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the payload to send to the Fiware Orion context broker. Can be:
+		<ul>
+			<li>the complete contextElements (not an array):
+				<code>
+					msg.payload = { "id": "angelo-mydevice001", "type": "test-device", "attributes": [{ "name": "temperatura", "value": "8", "type": "float" }] };
+				</code></br>
+				NOTE: if msg.payload.type and msg.payload.id are not present, the "Device type" and "Device NameID" has to be specified in the Configuration section (<b>mandatory</b>)</li>
+			<li>the simple attributes (an array)
+				<code>
+					msg.payload = [{ "name": "temperatura", "value": "12", "type": "float" }];
+				</code></br>
+				NOTE: the "Device type" and "Device NameID" has to be specified in the Configuration section (<b>mandatory</b>)</li>
+		</ul>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node receive a JSON as described in the Inputs section and send a message to the Fiware Broker context broker based on the specified Configuration.
+			If the values are not present in the input JSON an error is generated.</p>
+	</dl>
+</script>
 
 <script type="text/x-red" data-help-name="orion-service"></script>
 
-<script type="text/x-red" data-help-name="fiware orion in">
-	<p>Provides a node subscribing on Fiware Orion context broker and listening for the changes.</p>
+<!-- Update -->
+<script type="text/x-red" data-help-name="orion-test">
+	<p>Provides a node for sending specific data to Fiware Orion context broker.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+			The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI)
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>)</dd>
+		
+		<dt>Device NameID
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (<b>mandatory</b>)</dd>		
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</code></dd>
 
-	<ul>
-		<li>
-			<code>url</code>, used as the context broker url of the request. Url shouldn't contain port</li>
-		<li>
-			<code>port</code>, used as the url port.</li>
-		<li>
-			<code>throttle</code>, is used to specify a minimum inter-notification arrival time, default value 5 seconds</li>
-		<li>
-			<code>entity type</code>, if set, should be context element entity type. If not specified, will search for all types</li>
-		<li>
-			<code>entity id</code>, if set, should be context element entity ID. If not specified, will search for all IDs</li>
-		<li>
-			<code>is pattern</code>, whether entity ID is pattern, false by default</li>
-		<li>
-			<code>duration</code>time untill subscription will expire</li>
-		<li>
-			<code>attributes</code>, a comma separated list of context element attributes to be filtered and returned. If not specified,
-			will return all</li>
-		<li>
-			<code>condvalues</code>, the "triggering attributes", i.e. attributes that upon change due to Update context elements trigger
-			the notification.</li>
-		<li>
-			<code>includeattr</code>, include all element attributes in the output, by default
-			<code>true</code>
-		</li>
-		<li>
-			<code>credentials</code>, include authorization credentials: user and password</li>
-	</ul>
-	<p>
-		The output message contains the following properties:
-		<ul>
-			<li>
-				<code>payload</code> containing list of changed elements</li>
-			<li>
-				<code>statusCode</code> is the status code, or the error code if the subscription processing failed</li>
-		</ul>
-</script>
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</code></dd>
 
-<script type="text/x-red" data-help-name="fiware orion">
-	<p>Provides a node for making requests to Fiware Orion context broker.</p>
-	<p>The URL and port can be configured in the node, if they are left blank they should be set in an incoming message on
-		<code>msg.url</code> and
-		<code>msg.port</code>
-	</p>
-	<p>Orion auth. credentials must be configured in the node, if left blank should be set in incoming message under
-		<code>msg.credentials.user</code> and
-		<code>msg.credentials.password</code> or in case using access token auth
-		<code>msg.credentials.token</code>
-	</p>
-	<ul>
-		<li>
-			<code>url</code>, used as the context broker url of the request. Url shouldn't contain port</li>
-		<li>
-			<code>port</code>, used as the url port.</li>
-		<li>
-			<code>entype</code>, if set, should be context element entity type. If not specified, will search for all types</li>
-		<li>
-			<code>enid</code>, if set, should be context element entity ID. If not specified, will search for all IDs</li>
-		<li>
-			<code>ispattern</code>, whether ID is pattern, false by default</li>
-		<li>
-			<code>attributes</code>, a comma separated list of context element attributes to be filtered and returned. If not specified,
-			will return all elements</li>
-		<li>
-			<code>rtype</code>, filter type. Available filters:
-			<code>FIWARE::StringQuery</code>,
-			<code>FIWARE::Filter::Existence</code> and
-			<code>FIWARE::Filter::Not::Existence</code>
-		</li>
-		<li>
-			<code>rvalue</code>, filter value, relevant only only for
-			<code>StringQuery</code> filter type, as
-			<code>Existence</code> filters use default
-			<code>"entity::type"</code>
-		</li>
-		<li>
-			<code>limit</code>, limit number of returned elements</li>
-		<li>
-			<code>includeattr</code>, include all element attributes in the output, by default
-			<code>true</code>
-		</li>
-		<li>
-			<code>credentials</code>, include authorization credentials, access token or user and password</li>
-	</ul>
-	<p>
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>Attribute key
+			<span class="property-type">string</span>
+		</dt>
+		<dd>name of the sensor to update (<b>mandatory</b>)</dd>
+		
+		<dt>Attribute key
+			<span class="property-type">string</span>
+		</dt>
+		<dd>new value of the sensor to update (<b>mandatory</b>)</dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+	
+	<h3>Output</h3>
+	<dl class="message-properties">
 		The output message contains the following properties:
 		<ul>
 			<li>
@@ -593,6 +663,203 @@
 			<li>
 				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
 		</ul>
+	</dl>
+</script>
+
+<!-- Subscribe -->
+<script type="text/x-red" data-help-name="fiware orion in">
+	<p>Provides a node for subscribing on Fiware Orion context broker and listening changes.</p>
+
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+			The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>.
+		</dd>
+	
+		<dt>Device type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>)</dd>
+		
+		<dt>Device NameID
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (<b>mandatory</b>)</dd>				
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>is pattern
+			<span class="property-type">boolean</span>
+		</dt>
+		<dd>Specify whether entity ID is pattern, default is false (optional)</dd>
+
+		<dt>attributes
+			<span class="property-type">string</span>
+		</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all (optional)</dd>
+			
+		<dt>condvalues
+			<span class="property-type">string</span>
+		</dt>
+		<dd>the "triggering attributes" (attributes that upon change due to Update context elements trigger the notification) (optional)</dd>
+
+		<dt>includeattr
+			<span class="property-type">string</span>
+		</dt>
+		<dd>include all element attributes in the output, default is true (optional)</code>
+
+		<dt>throttle
+			<span class="property-type">multiple choice</span>
+		</dt>
+		<dd>used to specify a minimum inter-notification arrival time, default value 5 seconds (<b>mandatory</b>)</dd>
+
+		<dt>duration
+			<span class="property-type">multiple choice</span>
+		</dt>
+		<dd>time until subscription will expire (<b>mandatory</b>)</dd>
+		
+		<dt>Find node-red routable hostname automatically
+			<span class="property-type">boolean</span>
+		</dt>
+		<dd>Automatic route the hostname (optional)</dd>
+		
+		<dt>node-red hostname
+			<span class="property-type">string</span>
+		</dt>
+		<dd>name of the host this nodered is reacheable (optional)</dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> is the body of the response containing list of requested elements</li>
+			<li>
+				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+		</ul>
+	</dl>
+</script>
+
+<!-- Query -->
+<script type="text/x-red" data-help-name="fiware orion">
+	<p>Provides a node for making requests to Fiware Orion context broker.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+			The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI)</code>
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>). It can be passed in <code>msg.enid</code></dd>
+		
+		<dt>Device NameID
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional). It can be passed in <code>msg.entype</code></dd>
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.userk1</code></dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.passk2</code></dd>
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>attributes</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all elements (optional)</dd>
+
+		<dt>limit
+			<span class="property-type">integer</span>
+		</dt>
+		<dd>limit number of returned elements (optional). It can be passed in <code>msg.limit</code></dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the Configuration. Can be:
+				<code>
+					msg = {"enid" : "angelo-mydevice001","entype": "test-device"};
+				</code>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node (optionally) can receive a JSON as described in the Inputs section and send a query message to the Fiware Broker context broker based on the specified Configuration.
+			The Configuration specified in the Input JSON are considered just if <i>not</i> insert the UI</p>
+	</dl>
+
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> is the body of the response containing list of requested elements</li>
+			<li>
+				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+		</ul>
+	</dl>
 </script>
 
 <script type="text/javascript">
@@ -602,6 +869,10 @@
 			defaults: {
 				name: {
 					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
 				},
 				url: {
 					value: "broker1.snap4city.org",
@@ -666,6 +937,10 @@
 				name: {
 					value: ""
 				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},
 				service: {
 					type: "orion-service",
 					required: true
@@ -724,7 +999,14 @@
 				if (this.name) {
 					return this.name;
 				} else {
-					return "Fiware Orion";
+					return "fiware orion subscribe v1";
+				}
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion subscribe v1";
 				}
 			},
 			labelStyle: function () {
@@ -737,6 +1019,7 @@
 					async: false,
 					success: function (resp) {
 						if (resp.result) {
+							$("#rowAuthentication").hide();
 							$("#tipAuthentication").hide();
 						}
 					}
@@ -753,7 +1036,12 @@
 						$(".node-input-noderedhost-row").show();
 					}
 				});
-			}
+			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+            }
+        },
 		});
 
 		RED.nodes.registerType('fiware orion', {
@@ -762,6 +1050,10 @@
 			defaults: {
 				name: {
 					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
 				},
 				service: {
 					type: "orion-service",
@@ -810,24 +1102,30 @@
 			outputs: 1,
 			icon: "orioncb.png",
 			label: function () {
-				return this.name || "Fiware Orion Query";
+				return this.name || "fiware orion query v1";
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion query v1";
+				}
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";
 			},
 			oneditprepare: function () {
-
 				$.ajax({
 					url: "isThereLocalRefreshToken/",
 					type: "GET",
 					async: false,
 					success: function (resp) {
 						if (resp.result) {
+							$("#rowAuthentication").hide();
 							$("#tipAuthentication").hide();
 						}
 					}
 				});
-
 				if (this.rtype || this.rvalue) {
 					$('#node-input-useFiltering').prop('checked', true);
 					$(".node-input-rtype-row").show();
@@ -873,15 +1171,24 @@
 						$(".node-input-rvalue-row").hide();
 					}
 				});
-			}
+			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+            }
+        },
 		});
 		RED.nodes.registerType('orion-test', {
 			category: 'S4CIoT',
-			color: "rgb(42, 231, 42)",
+			color: "rgb(231, 231, 174)",
 			defaults: {
 				name: {
 					value: ""
 				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},				
 				service: {
 					type: "orion-service",
 					required: true
@@ -925,13 +1232,26 @@
 					async: false,
 					success: function (resp) {
 						if (resp.result) {
+							$("#rowAuthentication").hide();
 							$("#tipAuthentication").hide();
 						}
 					}
 				});
 			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+				}
+			},
 			label: function () {
-				return this.name || "Fiware Orion Test";
+				return this.name || "fiware orion update v1";
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion update v1";
+				}
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";
@@ -940,10 +1260,14 @@
 
 		RED.nodes.registerType('fiware-orion-out', {
 			category: 'S4CIoT',
-			color: "rgb(231, 231, 174)",
+			color: "rgb(42, 231, 42)",
 			defaults: {
 				name: {
 					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
 				},
 				tls: {
 					type: "tls-config",
@@ -982,13 +1306,26 @@
 					async: false,
 					success: function (resp) {
 						if (resp.result) {
+							$("#rowAuthentication").hide();
 							$("#tipAuthentication").hide();
 						}
 					}
 				});
 			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+				}
+			},
 			label: function () {
-				return this.name || "fiware-orion-out";
+				return this.name || "fiware orion out v1";
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion out v1";
+				}
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";

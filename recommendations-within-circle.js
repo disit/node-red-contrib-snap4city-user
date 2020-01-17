@@ -31,7 +31,7 @@ module.exports = function (RED) {
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             console.log(encodeURI(uri + "?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
-            xmlHttp.open("GET", encodeURI(uri + "?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
+            xmlHttp.open("GET", encodeURI(uri + "?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")   + "&appID=iotapp"), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {

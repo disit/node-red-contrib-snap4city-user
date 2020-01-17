@@ -13,6 +13,31 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/javascript">
+    RED.nodes.registerType('event-log', {
+        category: 'S4CLogDev',
+        color: '#C0C0C0',
+        defaults: {
+            name: {
+                value: ""
+            },
+            modcom: {
+                required: true
+            },
+            motivation: {
+                required: true
+            }
+        },
+        outputs: 2,
+        inputs: 1,
+        outputLabels: ["original message", "log result"],
+        icon: "debug.png",
+        label: function () {
+            return this.name || "event-log";
+        }
+    });
+</script>
+
 <script type="text/x-red" data-template-name="event-log">
     <div class="form-row">
         <label for="node-input-name">Name</label>
@@ -41,32 +66,6 @@
         </select>
     </div>
 </script>
-
-<script type="text/javascript">
-    RED.nodes.registerType('event-log', {
-        category: 'S4CLogDev',
-        color: '#C0C0C0',
-        defaults: {
-            name: {
-                value: ""
-            },
-            modcom: {
-                required: true
-            },
-            motivation: {
-                required: true
-            }
-        },
-        outputs: 2,
-        inputs: 1,
-        outputLabels: ["original message", "log result"],
-        icon: "debug.png",
-        label: function () {
-            return this.name || "event-log";
-        }
-    });
-</script>
-
 
 <script type="text/x-red" data-help-name="event-log">
     <p>API-GET per logging event-driven su Snap4City-Rsyslog-SERVER:</p>

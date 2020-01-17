@@ -14,6 +14,15 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/x-red" data-template-name="full-text-search-within-polygon">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
     <div class="form-row">
         <label for="node-input-name">Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
@@ -50,7 +59,7 @@
     <div class="form-row">
         <link rel="stylesheet" href="s4c/css/leaflet.css" />
         <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
-        <div id="node-input-map" style="width: 100%; height: 300px"></div>
+        <div id="node-input-map" style="width: 80%; height: 300px"></div>
     </div>
 </script>
 
@@ -105,9 +114,6 @@
 
 </script>
 
-<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
-<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
-
 <script type="text/javascript">
     RED.nodes.registerType('full-text-search-within-polygon', {
         category: 'S4CSearch',
@@ -115,6 +121,10 @@
         defaults: {
             name: {
                 value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
             },
             polygon: {
                 value: "",
@@ -132,6 +142,24 @@
             lang: {
                 value: "",
                 required: false
+            }
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
             }
         },
         outputs: 2,
@@ -206,8 +234,8 @@
 
                 $("#node-input-polygon").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
                     polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
-                    /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
-                    /&/g, ","));
+                        /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
+                            /&/g, ","));
             });
 
             map.on('draw:edited', function (e) {
@@ -227,8 +255,8 @@
 
                 $("#node-input-polygon").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
                     polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
-                    /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
-                    /&/g, ","));
+                        /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
+                            /&/g, ","));
             });
 
             map.on('draw:deleted', function (e) {

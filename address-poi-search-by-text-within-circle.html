@@ -13,101 +13,6 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
-<script type="text/x-red" data-template-name="address-poi-search-by-text-within-circle">
-    <div class="form-row">
-        <label for="node-input-name">Name</label>
-        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-search">Search Text</label>
-        <input type="text" autocomplete="off" id="node-input-search" placeholder="Search Text">
-    </div>
-    <div class="form-row">
-        <label for="node-input-maxresults">Max Results</label>
-        <select id="node-input-maxresults">
-            <option value="100">100</option>
-            <option value="200">200</option>
-            <option value="500">500</option>
-            <option value="1000">1000</option>
-            <option value="2000">2000</option>
-            <option value="0">All</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-latitude">Latitude</label>
-        <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
-    </div>
-    <div class="form-row">
-        <label for="node-input-longitude">Longitude</label>
-        <input type="text" autocomplete="off" id="node-input-longitude" placeholder="Longitude" disabled>
-    </div>
-    <div class="form-row">
-        <label for="node-input-maxdists">Max Distance</label>
-        <input type="text" autocomplete="off" id="node-input-maxdists" placeholder="Max Distance" disabled>
-    </div>
-    <div class="form-row">
-        <link rel="stylesheet" href="s4c/css/leaflet.css" />
-        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
-        <div id="node-input-map" style="width: 100%; height: 300px"></div>
-    </div>
-</script>
-
-<script type="text/x-red" data-help-name="address-poi-search-by-text-within-circle">
-    <p>it allows to retrieve a list of street addresses and service names based on a text search. The search may be filtered
-        excluding POIs and to be within a maximum distance from a GPS position.</p>
-
-    <h3>Inputs</h3>
-    A JSON with these parameters:
-
-    <dl class="message-properties">
-        <dt>search
-            <span class="property-type">string</span>
-        </dt>
-        <dd> the keywords separated with spaces that have to match with any textual description associated with an entity.</dd>
-        <dt>latitude
-            <span class="property-type">number</span>
-        </dt>
-        <dd> latitude of a GPS position</dd>
-        <dt>longitude
-            <span class="property-type">number</span>
-        </dt>
-        <dd> longitude of a GPS position</dd>
-        <dt>maxdistance
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum distance from the GPS position of the services to be retrieved, expressed in Km (0.1 is used if parameter
-            is missing) if it is equal to “inside” it searches for services with a WKT geometry that contains the specified
-            GPS position (e.g a park)</dd>
-        <dt>maxresults
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum number of results to be returned (if parameter is missing 100 is assumed), if it is 0 all results are returned</dd>
-    </dl>
-
-    <h3>Outputs</h3>
-    <ol class="node-ports">
-        <li>ServiceUri Array
-            <dl class="message-properties">
-                <dd> Returns an array containing the servicesUri of each service found</dd>
-            </dl>
-        </li>
-        <li>GeoJSON Results
-            <dl class="message-properties">
-                <dd> A GeoJSON FeatureCollection object with the matching objects</dd>
-            </dl>
-        </li>
-    </ol>
-
-    <h3>Details</h3>
-    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
-        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
-        in either part, an error is generated for the necessary parameters.</p>
-
-</script>
-
-<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
-<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
-
 <script type="text/javascript">
     RED.nodes.registerType('address-poi-search-by-text-within-circle', {
         category: 'S4CSearch',
@@ -115,6 +20,10 @@
         defaults: {
             name: {
                 value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
             },
             latitude: {
                 value: 0.0,
@@ -143,6 +52,24 @@
             lang: {
                 value: "",
                 required: false
+            }
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
             }
         },
         outputs: 2,

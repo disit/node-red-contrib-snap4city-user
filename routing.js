@@ -15,48 +15,43 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function FullTextSearchWithinPolygon(config) {
+    function Routing(config) {
         var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
-        var msgs = [{}, {}];
         node.on('input', function (msg) {
             var uri = "https://www.disit.org/superservicemap/api/v1/";
-            var polygon = (msg.payload.polygon ? msg.payload.polygon : config.polygon);
-            var search = (msg.payload.search ? msg.payload.search : config.search);
-            var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);
-            var language = (msg.payload.lang ? msg.payload.lang : config.lang);
+            var startLatitude = (msg.payload.startlatitude ? msg.payload.startlatitude : config.startlatitude);
+            var startLongitude = (msg.payload.startlongitude ? msg.payload.startlongitude : config.startlongitude);
+            var endLatitude = (msg.payload.endlatitude ? msg.payload.endlatitude : config.endlatitude);
+            var endLongitude = (msg.payload.endlongitude ? msg.payload.endlongitude : config.endlongitude);
+            var routeType = (msg.payload.routetype ? msg.payload.routetype : config.routetype);
+            var tmpDate = (msg.payload.startdatetime ? msg.payload.startdatetime : config.startdatetime);
+            var startDatetime = "";
             var uid = s4cUtility.retrieveAppID(RED);
+            if (tmpDate){
+                startDatetime = new Date(tmpDate).toISOString();
+            } else {
+                startDatetime = new Date().toISOString();
+            }
             var inPayload = msg.payload;
             var accessToken = "";
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri + "?search=" + search + "&selection=wkt:" + polygon + "&maxResults=" + maxResults + "&format=json" + "&lang=" + language + "&geometry=true" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
-            xmlHttp.open("GET", encodeURI(uri + "?search=" + search + "&selection=wkt:" + polygon + "&maxResults=" + maxResults + "&format=json" + "&lang=" + language + "&geometry=true" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")  + "&appID=iotapp"), true); // false for synchronous request
-            if (typeof accessToken != "undefined" && accessToken != "") {
-                xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-            }
+            console.log(encodeURI(uri + "shortestpath/?source=" + startLatitude + ";" + startLongitude + "&destination=" + endLatitude + ";" + endLongitude + "&routeType=" + routeType + "&startDatetime=" + startDatetime + "&format=json"));
+            xmlHttp.open("GET", encodeURI(uri + "shortestpath/?source=" + startLatitude + ";" + startLongitude + "&destination=" + endLatitude + ";" + endLongitude + "&routeType=" + routeType + "&startDatetime=" + startDatetime + "&format=json"), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
                         if (xmlHttp.responseText != "") {
                             var response = JSON.parse(xmlHttp.responseText);
-                            var serviceUriArray = [];
-                            if (typeof response.features != "undefined") {
-                                for (var i = 0; i < response.features.length; i++) {
-                                    serviceUriArray.push(response.features[i].properties.serviceUri);
-                                }
-                            }
-                            msgs[0].payload = serviceUriArray;
-                            msgs[1].payload = response;
-
+                            msg.payload = response;
                         } else {
-                            msgs[0].payload = JSON.parse("{\"status\": \"error\"}");
-                            msgs[1].payload = JSON.parse("{\"status\": \"error\"}");
+                            msg.payload = JSON.parse("{\"status\": \"error\"}");
                         }
-                        s4cUtility.eventLog(RED, inPayload, msgs, config, "Node-Red", "ASCAPI", uri, "RX");
-                        node.send(msgs);
+                        s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
+                        node.send(msg);
                     } else {
                         console.error(xmlHttp.statusText);
                         node.error(xmlHttp.responseText);
@@ -70,7 +65,7 @@ module.exports = function (RED) {
             xmlHttp.send(null);
         });
     }
-    RED.nodes.registerType("full-text-search-within-polygon", FullTextSearchWithinPolygon);
+    RED.nodes.registerType("routing", Routing);
 
     RED.httpAdmin.get('/s4c/js/*', function (req, res) {
         var options = {
@@ -84,24 +79,6 @@ module.exports = function (RED) {
     RED.httpAdmin.get('/s4c/css/*', function (req, res) {
         var options = {
             root: __dirname + '/lib/css/',
-            dotfiles: 'deny'
-        };
-
-        res.sendFile(req.params[0], options);
-    });
-
-    RED.httpAdmin.get('/s4c/json/*', function (req, res) {
-        var options = {
-            root: __dirname + '/lib/json/',
-            dotfiles: 'deny'
-        };
-
-        res.sendFile(req.params[0], options);
-    });
-
-    RED.httpAdmin.get('/s4c/img/*', function (req, res) {
-        var options = {
-            root: __dirname + '/lib/img/',
             dotfiles: 'deny'
         };
 

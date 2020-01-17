@@ -1,0 +1,516 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/x-red" data-template-name="routing">
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-routetype">Type of Transportation</label>
+        <select id="node-input-routetype">
+            <option value="car">Car</option>
+            <option value="public_transport">Public</option>
+            <option value="foot_shortest">Foot Shortest</option>
+            <option value="foot_quiet">Foot Quiet</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-startdatetime">Start Date Time</label>
+        <input type="datetime-local" autocomplete="off" id="node-input-startdatetime">
+    </div>
+    <div class="form-row">
+        <label for="node-input-startpoint">Start Point</label>
+        <input type="text" autocomplete="off" id="node-input-startpoint" placeholder="Start Point" disabled>
+    </div>
+    <div class="form-row">
+        <label for="node-input-startlatitude">Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-startlatitude" placeholder="Latitude" disabled>
+    </div>
+    <div class="form-row">
+        <label for="node-input-startlongitude">Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-startlongitude" placeholder="Longitude" disabled>
+    </div>
+    <div class="form-row">
+        <link rel="stylesheet" href="s4c/css/leaflet.css" />
+        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
+        <div id="node-input-startmap" style="width: 100%; height: 300px"></div>
+    </div>
+    <div class="form-row">
+        <label for="node-input-endpoint">End Point</label>
+        <input type="text" autocomplete="off" id="node-input-endpoint" placeholder="End Point" disabled>
+    </div>
+    <div class="form-row">
+        <label for="node-input-endlatitude">End Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-endlatitude" placeholder="Latitude" disabled>
+    </div>
+    <div class="form-row">
+        <label for="node-input-endlongitude">End Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-endlongitude" placeholder="Longitude" disabled>
+    </div>
+    <div class="form-row">
+        <link rel="stylesheet" href="s4c/css/leaflet.css" />
+        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
+        <div id="node-input-endmap" style="width: 100%; height: 300px"></div>
+    </div>
+</script>
+
+
+<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
+<!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
+
+<script type="text/javascript">
+
+    RED.nodes.registerType('routing', {
+        category: 'S4CUtility',
+        color: '#E9967A',
+        defaults: {
+            name: {
+                value: ""
+            },
+            routetype: {
+                value: "car"
+            },
+            startdatetime: {
+                value:  ""
+            },
+            startpoint: {
+                value: ""
+            },
+            startlatitude: {
+                value: 0.0,
+                required: false,
+                validate: RED.validators.number()
+            },
+            startlongitude: {
+                value: 0.0,
+                required: false,
+                validate: RED.validators.number()
+            },
+            endpoint: {
+                value: ""
+            },
+            endlatitude: {
+                value: 0.0,
+                required: false,
+                validate: RED.validators.number()
+            },
+            endlongitude: {
+                value: 0.0,
+                required: false,
+                validate: RED.validators.number()
+            }
+        },
+        outputs: 1,
+        inputs: 1,
+        outputLabels: ["route"],
+        icon: "marker.png",
+        label: function () {
+            return this.name || "routing";
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
+            node = this;
+
+            //////////////Start MAP
+            startMap = L.map('node-input-startmap').setView([43.78, 11.23], 9);
+            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(startMap);
+            window.node_input_startmap = startMap;
+
+            var startMapLayers = {};
+
+            startDrawnItems = new L.FeatureGroup();
+            startMap.addLayer(startDrawnItems);
+
+            var startEditControl = new L.Control.Draw({
+                draw: false,
+                edit: {
+                    featureGroup: startDrawnItems
+                }
+            });
+            startMap.addControl(startEditControl);
+
+            startDrawControl = new L.Control.Draw({
+                draw: {
+                    position: 'topleft',
+                    polyline: false,
+                    marker: {
+                        icon: new L.DivIcon({
+                            iconSize: new L.Point(8, 8),
+                            className: 'leaflet-div-icon leaflet-editing-icon test'
+                        })
+                    },
+                    circlemarker: false,
+                    circle: false,
+                    polygon: false,
+                    rectangle: false
+                }
+            });
+            startMap.addControl(startDrawControl);
+
+            L.control.layers(startMapLayers, {
+                'drawlayer': startDrawnItems
+            }, {
+                    collapsed: true
+                }).addTo(startMap);
+
+            startMap.on(L.Draw.Event.CREATED, function (e) {
+                var fence = e.layer;
+                fence.nodeID = node.id;
+                if (startDrawnItems.hasLayer(fence) == false) {
+                    startDrawnItems.addLayer(fence);
+                }
+
+                startDrawControl.remove();
+
+                markers = {};
+
+                startDrawnItems.eachLayer(function (layer) {
+                    markers[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                
+
+
+                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                $.ajax({
+                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    timeout: 10000,
+                    method: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        $.ajax({
+                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            timeout: 10000,
+                            method: "GET",
+                            dataType: "json",
+                            success: function (response) {
+                                $("#node-input-startlatitude").val(response.Service.features[0].geometry.coordinates[1]);
+                                $("#node-input-startlongitude").val(response.Service.features[0].geometry.coordinates[0]);
+                                $("#node-input-startpoint").val(response.Service.features[0].properties.name + " " + response.Service.features[0].properties.city);
+                            },
+                            error: function (error) {
+                                if (errorCallback != null) {
+                                    errorCallback(error);
+                                }
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        if (errorCallback != null) {
+                            errorCallback(error);
+                        }
+                    }
+                });
+            });
+
+            startMap.on('draw:edited', function (e) {
+                var fences = e.layers;
+                fences.eachLayer(function (fence) {
+                    fence.shape = "geofence";
+                    if (startDrawnItems.hasLayer(fence) == false) {
+                        startDrawnItems.addLayer(fence);
+                    }
+                });
+
+                markers = {};
+
+                startDrawnItems.eachLayer(function (layer) {
+                    markers[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                $.ajax({
+                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    timeout: 10000,
+                    method: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        $.ajax({
+                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            timeout: 10000,
+                            method: "GET",
+                            dataType: "json",
+                            success: function (response) {
+                                $("#node-input-startlatitude").val(response.Service.features[0].geometry.coordinates[1]);
+                                $("#node-input-startlongitude").val(response.Service.features[0].geometry.coordinates[0]);
+                                $("#node-input-startpoint").val(response.Service.features[0].properties.name + " " + response.Service.features[0].properties.city);
+                            },
+                            error: function (error) {
+                                if (errorCallback != null) {
+                                    errorCallback(error);
+                                }
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        if (errorCallback != null) {
+                            errorCallback(error);
+                        }
+                    }
+                });
+            });
+
+            startMap.on('draw:deleted', function (e) {
+                startDrawControl.addTo(startMap);
+                $("#node-input-startlatitude").val(0);
+                $("#node-input-startlongitude").val(0);
+                $("#node-input-startpoint").val("");
+            });
+
+            //////////////END MAP
+
+            endMap = L.map('node-input-endmap').setView([43.78, 11.23], 9);
+            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(endMap);
+            window.node_input_endmap = endMap;
+
+            var endMapLayers = {};
+
+            endDrawnItems = new L.FeatureGroup();
+            endMap.addLayer(endDrawnItems);
+
+            var endEditControl = new L.Control.Draw({
+                draw: false,
+                edit: {
+                    featureGroup: endDrawnItems
+                }
+            });
+            endMap.addControl(endEditControl);
+
+            endDrawControl = new L.Control.Draw({
+                draw: {
+                    position: 'topleft',
+                    polyline: false,
+                    marker: {
+                        icon: new L.DivIcon({
+                            iconSize: new L.Point(8, 8),
+                            className: 'leaflet-div-icon leaflet-editing-icon test'
+                        })
+                    },
+                    circlemarker: false,
+                    circle: false,
+                    polygon: false,
+                    rectangle: false
+                }
+            });
+            endMap.addControl(endDrawControl);
+
+            L.control.layers(endMapLayers, {
+                'drawlayer': endDrawnItems
+            }, {
+                    collapsed: true
+                }).addTo(endMap);
+
+            endMap.on(L.Draw.Event.CREATED, function (e) {
+                var fence = e.layer;
+                fence.nodeID = node.id;
+                if (endDrawnItems.hasLayer(fence) == false) {
+                    endDrawnItems.addLayer(fence);
+                }
+
+                endDrawControl.remove();
+
+                markers = {};
+
+                endDrawnItems.eachLayer(function (layer) {
+                    markers[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                $.ajax({
+                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    timeout: 10000,
+                    method: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        $.ajax({
+                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            timeout: 10000,
+                            method: "GET",
+                            dataType: "json",
+                            success: function (response) {
+                                $("#node-input-endlatitude").val(response.Service.features[0].geometry.coordinates[1]);
+                                $("#node-input-endlongitude").val(response.Service.features[0].geometry.coordinates[0]);
+                                $("#node-input-endpoint").val(response.Service.features[0].properties.name + " " + response.Service.features[0].properties.city);
+                            },
+                            error: function (error) {
+                                if (errorCallback != null) {
+                                    errorCallback(error);
+                                }
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        if (errorCallback != null) {
+                            errorCallback(error);
+                        }
+                    }
+                });
+            });
+
+            endMap.on('draw:edited', function (e) {
+                var fences = e.layers;
+                fences.eachLayer(function (fence) {
+                    fence.shape = "geofence";
+                    if (endDrawnItems.hasLayer(fence) == false) {
+                        endDrawnItems.addLayer(fence);
+                    }
+                });
+
+                markers = {};
+
+                endDrawnItems.eachLayer(function (layer) {
+                    markers[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                $.ajax({
+                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    timeout: 10000,
+                    method: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        $.ajax({
+                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            timeout: 10000,
+                            method: "GET",
+                            dataType: "json",
+                            success: function (response) {
+                                $("#node-input-endlatitude").val(response.Service.features[0].geometry.coordinates[1]);
+                                $("#node-input-endlongitude").val(response.Service.features[0].geometry.coordinates[0]);
+                                $("#node-input-endpoint").val(response.Service.features[0].properties.name + " " + response.Service.features[0].properties.city);
+                            },
+                            error: function (error) {
+                                if (errorCallback != null) {
+                                    errorCallback(error);
+                                }
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        if (errorCallback != null) {
+                            errorCallback(error);
+                        }
+                    }
+                });
+            });
+
+            endMap.on('draw:deleted', function (e) {
+                endDrawControl.addTo(endMap);
+                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                $.ajax({
+                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    timeout: 10000,
+                    method: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        $.ajax({
+                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            timeout: 10000,
+                            method: "GET",
+                            dataType: "json",
+                            success: function (response) {
+                                $("#node-input-endlatitude").val(response.Service.features[0].geometry.coordinates[1]);
+                                $("#node-input-endlongitude").val(response.Service.features[0].geometry.coordinates[0]);
+                                $("#node-input-endpoint").val(response.Service.features[0].properties.name + " " + response.Service.features[0].properties.city);
+                            },
+                            error: function (error) {
+                                if (errorCallback != null) {
+                                    errorCallback(error);
+                                }
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        if (errorCallback != null) {
+                            errorCallback(error);
+                        }
+                    }
+                });
+            });
+
+        },
+        oneditresize: function () {
+            if (window.node_input_startmap) {
+                window.node_input_startmap.invalidateSize(true);
+            }
+            if (window.node_input_endmap) {
+                window.node_input_endmap.invalidateSize(true);
+            }
+        }
+    });
+</script>
+
+
+<script type="text/x-red" data-help-name="routing">
+    <p>It allows to retrieve routing information between the start point and the end point.</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>routingtype
+            <span class="property-type">string</span>
+        </dt>
+        <dd> type of transportation: car, public_transport, foot_quiet, foot_shortest</dd>
+        <dt>startdatetime
+            <span class="property-type">date</span>
+        </dt>
+        <dd> date and time of the journey</dd>
+        <dt>startlatitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> latitude of start point</dd>
+        <dt>startlongitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> longitude of start point</dd>
+        <dt>endlatitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> latitude of end point</dd>
+        <dt>endlongitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> longitude of end point</dd>
+    </dl>
+    <h3>Outputs</h3>
+        A JSON containing the information of the routing
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+        in either part, an error is generated for the necessary parameters.</p>
+
+</script>

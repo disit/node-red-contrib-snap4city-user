@@ -15,29 +15,30 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function TplAgencies(config) {
+    function CoordinatesToAddress(config) {
         var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
         node.on('input', function (msg) {
-            var uri = "https://www.disit.org/superservicemap/api/v1/tpl/agencies/";
+            var uri = "https://www.disit.org/superservicemap/api/v1/";
+            var latitude = (msg.payload.latitude ? msg.payload.latitude : config.latitude);
+            var longitude = (msg.payload.longitude ? msg.payload.longitude : config.longitude);
             var uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
             var accessToken = "";
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri));
-            xmlHttp.open("GET", encodeURI(uri  + (typeof accessToken != "undefined" && accessToken != "" ? "?accessToken=" + accessToken : "")), true); // false for synchronous request
-
-
+            console.log(encodeURI(uri + "location/?position=" + latitude + ";" + longitude));
+            xmlHttp.open("GET", encodeURI(uri + "location/?position=" + latitude + ";" + longitude), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
                         if (xmlHttp.responseText != "") {
-                            msg.payload = JSON.parse(xmlHttp.responseText).Agencies;
+                            var response = JSON.parse(xmlHttp.responseText);
+                            msg.payload = response;
                         } else {
-                            msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
+                            msg.payload = JSON.parse("{\"status\": \"error\"}");
                         }
                         s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msg);
@@ -54,5 +55,23 @@ module.exports = function (RED) {
             xmlHttp.send(null);
         });
     }
-    RED.nodes.registerType("tpl-agencies", TplAgencies);
+    RED.nodes.registerType("coordinates-to-address", CoordinatesToAddress);
+
+    RED.httpAdmin.get('/s4c/js/*', function (req, res) {
+        var options = {
+            root: __dirname + '/lib/js/',
+            dotfiles: 'deny'
+        };
+
+        res.sendFile(req.params[0], options);
+    });
+
+    RED.httpAdmin.get('/s4c/css/*', function (req, res) {
+        var options = {
+            root: __dirname + '/lib/css/',
+            dotfiles: 'deny'
+        };
+
+        res.sendFile(req.params[0], options);
+    });
 }

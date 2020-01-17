@@ -21,9 +21,31 @@
             name: {
                 value: ""
             },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
             stop: {
                 value: "",
                 required: false
+            }
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
             }
         },
         outputs: 1,
@@ -67,7 +89,7 @@
                             for (var i = 0; i < lines.length; i++) {
                                 $("<option value=\"" + lines[i].uri + "\">" + lines[i].shortName +
                                     ": " + lines[i].longName + "</option>").appendTo(
-                                    $("#node-input-line"));
+                                        $("#node-input-line"));
                             }
                             $("#node-input-line").val("");
                         },
@@ -91,9 +113,9 @@
                             var routes = data.BusRoutes;
                             for (var i = 0; i < routes.length; i++) {
                                 $("<option value=\"" + routes[i].route + "\">" + routes[
-                                        i].line + ": " + routes[i].firstBusStop +
+                                    i].line + ": " + routes[i].firstBusStop +
                                     " - " + routes[i].lastBusStop + "</option>").appendTo(
-                                    $("#node-input-route"));
+                                        $("#node-input-route"));
                             }
                             $("#node-input-route").val("");
                         },
@@ -117,7 +139,7 @@
                             var stops = data.BusStops.features;
                             for (var i = 0; i < stops.length; i++) {
                                 $("<option value=\"" + stops[i].properties.serviceUri +
-                                        "\">" + stops[i].properties.name + "</option>")
+                                    "\">" + stops[i].properties.name + "</option>")
                                     .appendTo($("#node-input-stop"));
                             }
                             $("#node-input-stop").val("");
@@ -133,6 +155,15 @@
 </script>
 
 <script type="text/x-red" data-template-name="tpl-stop-timeline">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
     <div class="form-row">
         <label for="node-input-name">Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">

@@ -13,16 +13,49 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/x-red" data-template-name="heatmap-picker">
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-heatmapname">Heatmap Name</label>
+        <input type="text" autocomplete="off" id="node-input-heatmapname" placeholder="Heatmap Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-datetime">Date Time</label>
+        <input type="datetime-local" autocomplete="off" id="node-input-datetime">
+    </div>
+    <div class="form-row">
+        <label for="node-input-latitude">Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
+    </div>
+    <div class="form-row">
+        <label for="node-input-longitude">Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-longitude" placeholder="Longitude" disabled>
+    </div>
+    <div class="form-row">
+        <link rel="stylesheet" href="s4c/css/leaflet.css" />
+        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
+        <div id="node-input-map" style="width: 80%; height: 300px"></div>
+    </div>
+</script>
+
 <script type="text/javascript">
-    RED.nodes.registerType('address-search-near-marker', {
-        category: 'S4CSearch',
-        color: '#FFCC66',
+
+    RED.nodes.registerType('heatmap-picker', {
+        category: 'S4CUtility',
+        color: '#E9967A',
         defaults: {
             name: {
                 value: ""
             },
-            authentication: {
-                type: "snap4city-authentication",
+            heatmapname: {
+                value: "",
+                required: false
+            },
+            datetime: {
+                value: "",
                 required: false
             },
             latitude: {
@@ -36,30 +69,12 @@
                 validate: RED.validators.number()
             }
         },
-        oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
-        },
-        oneditresize: function () {
-            if ($("#node-input-authentication").children().length > 1) {
-                $("#node-input-authentication option[value='_ADD_']").remove();
-            }
-        },
         outputs: 1,
         inputs: 1,
-        outputLabels: ["address information"],
-        icon: "white-globe.png",
+        outputLabels: ["value of the heatmap"],
+        icon: "marker.png",
         label: function () {
-            return this.name || "address-search-near-marker";
+            return this.name || "heatmap-picker";
         },
         oneditprepare: function () {
             $.ajax({
@@ -159,7 +174,6 @@
                 $("#node-input-latitude").val(0);
                 $("#node-input-longitude").val(0);
             });
-
         },
         oneditresize: function () {
             if (window.node_input_map) {
@@ -169,65 +183,33 @@
     });
 </script>
 
-<script type="text/x-red" data-template-name="address-search-near-marker">
-    <div class="form-row" id="rowAuthentication">
-        <label for="node-input-authentication">Authentication</label>
-        <input type="text" id="node-input-authentication">
-    </div>
-    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
-        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
-        <a href="https://www.snap4city.org"
-            target="_blank">here</a>.
-    </div>
-    <div class="form-row">
-        <label for="node-input-name">Name</label>
-        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-latitude">Latitude</label>
-        <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
-    </div>
-    <div class="form-row">
-        <label for="node-input-longitude">Longitude</label>
-        <input type="text" autocomplete="off" id="node-input-longitude" placeholder="Longitude" disabled>
-    </div>
-    <div class="form-row">
-        <link rel="stylesheet" href="s4c/css/leaflet.css" />
-        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
-        <div id="node-input-map" style="width: 80%; height: 300px"></div>
-    </div>
-</script>
 
-<script type="text/x-red" data-help-name="address-search-near-marker">
-    <p>it allows to retrieve the complete address (municipality, street and civic number) given the GPS position. It may also
-        provide a list of services or public transport lines intersecting with the provided GPS position.
-    </p>
+<script type="text/x-red" data-help-name="heatmap-picker">
+    <p>It allows to retrieve heatmap value information on the coordinates.</p>
 
     <h3>Inputs</h3>
     A JSON with these parameters:
 
     <dl class="message-properties">
+        <dt>heatmapname
+            <span class="property-type">string</span>
+        </dt>
+        <dd> the name of the heatmap</dd>
         <dt>latitude
             <span class="property-type">number</span>
         </dt>
-        <dd> latitude of a GPS position</dd>
+        <dd> latitude of the GPS point</dd>
         <dt>longitude
             <span class="property-type">number</span>
         </dt>
-        <dd> longitude of a GPS position</dd>
+        <dd> longitude of the GPS point</dd>
     </dl>
-
     <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dd> A JSON object with properties: • address: the street name. • number: the civic number. • addressUri: the URI identifying
-            the civic number in the road graph. • municipality: the estimated municipality (it may not work properly on the
-            municipalities borders) • municipalityUri: the URI identifying the municipality in the road graph.
-        </dd>
-    </dl>
+        A JSON containing the information of the heatmap
 
     <h3>Details</h3>
     <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
         If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
         in either part, an error is generated for the necessary parameters.</p>
-    </p>
+
 </script>

@@ -22,7 +22,7 @@ module.exports = function (RED) {
         node.kpiId = config.kpiId.split("-")[0];
         node.kpiValueName = config.kpiId.split("-")[1];
         node.kpiDataType = config.kpiId.split("-")[2];
-        
+
 
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
@@ -40,8 +40,9 @@ module.exports = function (RED) {
                     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                     var xmlHttp = new XMLHttpRequest();
                     console.log(encodeURI(uri + "?sourceRequest=iotapp"));
-                    xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp&accessToken=" + accessToken), true);
+                    xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp" + (typeof uid != "undefined" && uid != "" ? "&sourceId=" + uid : "")), true);
                     xmlHttp.setRequestHeader("Content-Type", "application/json");
+                    xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                     xmlHttp.onload = function (e) {
                         if (xmlHttp.readyState === 4) {
                             if (xmlHttp.status === 200) {

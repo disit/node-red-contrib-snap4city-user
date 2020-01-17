@@ -14,6 +14,15 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/x-red" data-template-name="service-search-along-path">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
     <div class="form-row">
         <label for="node-input-name">Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
@@ -46,7 +55,7 @@
     <div class="form-row">
         <link rel="stylesheet" href="s4c/css/leaflet.css" />
         <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
-        <div id="node-input-map" style="width: 100%; height: 300px"></div>
+        <div id="node-input-map" style="width: 80%; height: 300px"></div>
     </div>
     <div class="form-row">
         <label for="node-input-categories">Categories</label>
@@ -58,16 +67,65 @@
             <button onclick="$('#filterCategories').val('');filterMenu();selectCategories();">
                 <i class="fa fa-trash"></i>
             </button>
-            <input id="filterCategories" name="search" onkeyup="filterMenu();" style="width:90%;" placeholder="Filter Categories...">
+            <input id="filterCategories" name="search" onkeyup="filterMenu();" style="width:80%;" placeholder="Filter Categories...">
 
         </div>
-        <div id="node-input-fancytree" style="width: 100%; height: 400px"></div>
+        <div id="node-input-fancytree" style="width: 80%; height: 400px"></div>
     </div>
 </script>
 
-<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
-<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
-<!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
+
+<script type="text/x-red" data-help-name="service-search-along-path">
+    <p>It allows to retrieve the set of services that are near a given GPS position. The services can be filtered as belonging
+        to specific categories (e.g. Accommodation, Hotel, Restaurant etc). It can also be used to find services that have
+        a WKT spatial description that contains a specific GPS position.</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>path
+            <span class="property-type">string</span>
+        </dt>
+        <dd> “&lt;WKT_string>” for a geographic path described as Well Known Text</dd>
+        <dt>categories
+            <span class="property-type">string</span>
+        </dt>
+        <dd> the list of categories of the services to be retrieved separated with semicolon, if omitted all kinds of services
+            are returned. It can contain macro categories or categories, if a macro category is specified all categories
+            in the macro category are used. The complete list of categories and macro categories can be retrieved on servicemap.disit.org</dd>
+        <dt>maxresults
+            <span class="property-type">number</span>
+        </dt>
+        <dd> maximum number of results to be returned (if parameter is missing 100 is assumed), if it is 0 all results are returned</dd>
+        <dt>lang
+            <span class="property-type">string</span>
+        </dt>
+        <dd> ISO 2 chars language code (e.g. “it”, “en”, “fr”, “de”, “es”) to be used for returned descriptions if available in
+            multiple languages. Currently for languages other than “it” and “en” it returns “en” descriptions. (if parameter
+            is missing “en” is assumed)</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li>ServiceUri Array
+            <dl class="message-properties">
+                <dd> Returns an array containing the servicesUri of each service found</dd>
+            </dl>
+        </li>
+        <li> All services together
+            <dl class="message-properties">
+                <dd> It returns the services merge in Results section</dd>
+            </dl>
+        </li>
+    </ol>
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+        in either part, an error is generated for the necessary parameters.</p>
+
+</script>
 
 <script type="text/javascript">
     $.ajax({
@@ -113,6 +171,10 @@
             name: {
                 value: ""
             },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
             path: {
                 value: "",
                 required: false
@@ -129,6 +191,24 @@
             lang: {
                 value: "",
                 required: false
+            }
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
             }
         },
         outputs: 2,
@@ -204,8 +284,8 @@
 
                 $("#node-input-path").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
                     polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
-                    /,/g, " ").replace(/\[\[/g, "(").replace(/\]\]/g, ")").replace(/&/g,
-                    ","));
+                        /,/g, " ").replace(/\[\[/g, "(").replace(/\]\]/g, ")").replace(/&/g,
+                            ","));
             });
 
             map.on('draw:edited', function (e) {
@@ -225,8 +305,8 @@
 
                 $("#node-input-path").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
                     polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
-                    /,/g, " ").replace(/\[\[/g, "(").replace(/\]\]/g, ")").replace(/&/g,
-                    ","));
+                        /,/g, " ").replace(/\[\[/g, "(").replace(/\]\]/g, ")").replace(/&/g,
+                            ","));
             });
 
             map.on('draw:deleted', function (e) {
@@ -293,57 +373,4 @@
             }
         }
     });
-</script>
-
-
-<script type="text/x-red" data-help-name="service-search-along-path">
-    <p>It allows to retrieve the set of services that are near a given GPS position. The services can be filtered as belonging
-        to specific categories (e.g. Accommodation, Hotel, Restaurant etc). It can also be used to find services that have
-        a WKT spatial description that contains a specific GPS position.</p>
-
-    <h3>Inputs</h3>
-    A JSON with these parameters:
-
-    <dl class="message-properties">
-        <dt>path
-            <span class="property-type">string</span>
-        </dt>
-        <dd> “&lt;WKT_string>” for a geographic path described as Well Known Text</dd>
-        <dt>categories
-            <span class="property-type">string</span>
-        </dt>
-        <dd> the list of categories of the services to be retrieved separated with semicolon, if omitted all kinds of services
-            are returned. It can contain macro categories or categories, if a macro category is specified all categories
-            in the macro category are used. The complete list of categories and macro categories can be retrieved on servicemap.disit.org</dd>
-        <dt>maxresults
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum number of results to be returned (if parameter is missing 100 is assumed), if it is 0 all results are returned</dd>
-        <dt>lang
-            <span class="property-type">string</span>
-        </dt>
-        <dd> ISO 2 chars language code (e.g. “it”, “en”, “fr”, “de”, “es”) to be used for returned descriptions if available in
-            multiple languages. Currently for languages other than “it” and “en” it returns “en” descriptions. (if parameter
-            is missing “en” is assumed)</dd>
-    </dl>
-
-    <h3>Outputs</h3>
-    <ol class="node-ports">
-        <li>ServiceUri Array
-            <dl class="message-properties">
-                <dd> Returns an array containing the servicesUri of each service found</dd>
-            </dl>
-        </li>
-        <li> All services together
-            <dl class="message-properties">
-                <dd> It returns the services merge in Results section</dd>
-            </dl>
-        </li>
-    </ol>
-
-    <h3>Details</h3>
-    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
-        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
-        in either part, an error is generated for the necessary parameters.</p>
-
 </script>

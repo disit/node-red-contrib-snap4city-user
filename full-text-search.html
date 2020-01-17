@@ -13,39 +13,16 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
-<script type="text/javascript">
-    RED.nodes.registerType('full-text-search-usr', {
-        category: 'S4CSearch',
-        color: '#FFAAAA',
-        defaults: {
-            name: {
-                value: ""
-            },
-            search: {
-                value: "",
-                required: false
-            },
-            maxresults: {
-                value: 100,
-                required: false,
-                validate: RED.validators.number()
-            },
-            lang: {
-                value: "",
-                required: false
-            }
-        },
-        outputs: 2,
-        inputs: 1,
-        outputLabels: ["service uri array", "geojson result"],
-        icon: "abc.png",
-        label: function () {
-            return this.name || "full-text-search-usr";
-        }
-    });
-</script>
-
 <script type="text/x-red" data-template-name="full-text-search-usr">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
     <div class="form-row">
         <label for="node-input-name">Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
@@ -115,4 +92,58 @@
         If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
         in either part, an error is generated for the necessary parameters.</p>
 
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('full-text-search-usr', {
+        category: 'S4CSearch',
+        color: '#FFAAAA',
+        defaults: {
+            name: {
+                value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
+            search: {
+                value: "",
+                required: false
+            },
+            maxresults: {
+                value: 100,
+                required: false,
+                validate: RED.validators.number()
+            },
+            lang: {
+                value: "",
+                required: false
+            }
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
+            }
+        },
+        outputs: 2,
+        inputs: 1,
+        outputLabels: ["service uri array", "geojson result"],
+        icon: "abc.png",
+        label: function () {
+            return this.name || "full-text-search-usr";
+        }
+    });
 </script>

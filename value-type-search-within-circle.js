@@ -30,10 +30,15 @@ module.exports = function (RED) {
             var language = (msg.payload.lang ? msg.payload.lang : config.lang);
             var uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
+            var accessToken = "";
+            accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             console.log(encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&value_type=" + valuetype + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
-            xmlHttp.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&value_type=" + valuetype + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
+            xmlHttp.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&value_type=" + valuetype + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")  + "&appID=iotapp"), true); // false for synchronous request
+            if (typeof accessToken != "undefined" && accessToken != "") {
+                xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+            }
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
@@ -65,12 +70,14 @@ module.exports = function (RED) {
                         s4cUtility.eventLog(RED, inPayload, msgs, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msgs);
                     } else {
-                        console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                        console.error(xmlHttp.statusText);
+                        node.error(xmlHttp.responseText);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                console.error(xmlHttp.statusText);
+                node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);
         });

@@ -13,110 +13,6 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
-<script type="text/x-red" data-template-name="bus-routes-search-near-marker">
-    <div class="form-row">
-        <label for="node-input-name">Name</label>
-        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-maxdists">Max Distance</label>
-        <select id="node-input-maxdists">
-            <option value="0.1">100 Meters</option>
-            <option value="0.2">200 Meters</option>
-            <option value="0.5">500 Meters</option>
-            <option value="1">1 KMeters</option>
-            <option value="2">2 KMeters</option>
-            <option value="5">5 KMeters</option>
-            <option value="10">10 KMeters</option>
-            <option value="20">20 KMeters</option>
-            <option value="50">50 KMeters</option>
-            <option value="0">All</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-maxresults">Max Results</label>
-        <select id="node-input-maxresults">
-            <option value="100">100</option>
-            <option value="200">200</option>
-            <option value="500">500</option>
-            <option value="1000">1000</option>
-            <option value="2000">2000</option>
-            <option value="0">All</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-agency">Agency</label>
-        <select id="node-input-agency">
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-latitude">Latitude</label>
-        <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
-    </div>
-    <div class="form-row">
-        <label for="node-input-longitude">Longitude</label>
-        <input type="text" autocomplete="off" id="node-input-longitude" placeholder="Longitude" disabled>
-    </div>
-    <div class="form-row">
-        <link rel="stylesheet" href="s4c/css/leaflet.css" />
-        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
-        <div id="node-input-map" style="width: 100%; height: 300px"></div>
-    </div>
-
-</script>
-
-<script type="text/x-red" data-help-name="bus-routes-search-near-marker">
-    <p>It provides a list of the public transport routes that have a stop in a specified area.
-    </p>
-
-    <h3>Inputs</h3>
-    A JSON with these parameters:
-
-    <dl class="message-properties">
-        <dt>latitude
-            <span class="property-type">number</span>
-        </dt>
-        <dd> latitude of a GPS position</dd>
-        <dt>longitude
-            <span class="property-type">number</span>
-        </dt>
-        <dd> longitude of a GPS position</dd>
-        <dt>agency
-            <span class="property-type">string</span>
-        </dt>
-        <dd> URI of an agency to restrict the search to a specified agency
-        </dd>
-        <dt>maxdistance
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum distance from the GPS position of the services to be retrieved, expressed in Km (0.1 is used if parameter
-            is missing) if it is equal to “inside” it searches for services with a WKT geometry that contains the specified
-            GPS position (e.g a park)</dd>
-        <dt>maxresults
-            <span class="property-type">number</span>
-        </dt>
-        <dd> maximum number of results to be returned (if parameter is missing 100 is assumed), if it is 0 all results are returned</dd>
-    </dl>
-
-    <h3>Outputs</h3>
-    <dl class="message-properties">
-        <dd> It provides a JSON Object with all the routes that have stops on the specified area. For each route the following
-            properties are provided: • lineNumber: the line short name • lineName: the line long name • route: the route
-            name • routeUri: an URI identifying the route (it can be used to retrieve all the stops of the route) • direction:
-            with first and last stop • agency: with agency name • agencyUri: with agency URI • polyline: with the WKT geometry
-            of the route</dd>
-    </dl>
-
-    <h3>Details</h3>
-    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
-        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
-        in either part, an error is generated for the necessary parameters.</p>
-
-</script>
-
-<!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
-<!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
-
 <script type="text/javascript">
     RED.nodes.registerType('bus-routes-search-near-marker', {
         category: 'S4CSearch',
@@ -124,6 +20,10 @@
         defaults: {
             name: {
                 value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
             },
             latitude: {
                 value: 0.0,
@@ -148,6 +48,24 @@
                 value: 100,
                 required: false,
                 validate: RED.validators.number()
+            }
+        },
+        oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
             }
         },
         outputs: 1,
@@ -283,4 +201,113 @@
             }
         }
     });
+</script>
+
+<script type="text/x-red" data-template-name="bus-routes-search-near-marker">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you must have to insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-maxdists">Max Distance</label>
+        <select id="node-input-maxdists">
+            <option value="0.1">100 Meters</option>
+            <option value="0.2">200 Meters</option>
+            <option value="0.5">500 Meters</option>
+            <option value="1">1 KMeters</option>
+            <option value="2">2 KMeters</option>
+            <option value="5">5 KMeters</option>
+            <option value="10">10 KMeters</option>
+            <option value="20">20 KMeters</option>
+            <option value="50">50 KMeters</option>
+            <option value="0">All</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-maxresults">Max Results</label>
+        <select id="node-input-maxresults">
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+            <option value="2000">2000</option>
+            <option value="0">All</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-agency">Agency</label>
+        <select id="node-input-agency">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-latitude">Latitude</label>
+        <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
+    </div>
+    <div class="form-row">
+        <label for="node-input-longitude">Longitude</label>
+        <input type="text" autocomplete="off" id="node-input-longitude" placeholder="Longitude" disabled>
+    </div>
+    <div class="form-row">
+        <link rel="stylesheet" href="s4c/css/leaflet.css" />
+        <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
+        <div id="node-input-map" style="width: 80%; height: 300px"></div>
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="bus-routes-search-near-marker">
+    <p>It provides a list of the public transport routes that have a stop in a specified area.
+    </p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>latitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> latitude of a GPS position</dd>
+        <dt>longitude
+            <span class="property-type">number</span>
+        </dt>
+        <dd> longitude of a GPS position</dd>
+        <dt>agency
+            <span class="property-type">string</span>
+        </dt>
+        <dd> URI of an agency to restrict the search to a specified agency
+        </dd>
+        <dt>maxdistance
+            <span class="property-type">number</span>
+        </dt>
+        <dd> maximum distance from the GPS position of the services to be retrieved, expressed in Km (0.1 is used if parameter
+            is missing) if it is equal to “inside” it searches for services with a WKT geometry that contains the specified
+            GPS position (e.g a park)</dd>
+        <dt>maxresults
+            <span class="property-type">number</span>
+        </dt>
+        <dd> maximum number of results to be returned (if parameter is missing 100 is assumed), if it is 0 all results are returned</dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dd> It provides a JSON Object with all the routes that have stops on the specified area. For each route the following
+            properties are provided: • lineNumber: the line short name • lineName: the line long name • route: the route
+            name • routeUri: an URI identifying the route (it can be used to retrieve all the stops of the route) • direction:
+            with first and last stop • agency: with agency name • agencyUri: with agency URI • polyline: with the WKT geometry
+            of the route</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+        in either part, an error is generated for the necessary parameters.</p>
+
 </script>

@@ -275,7 +275,7 @@
 <!--<script type="text/javascript" src="s4c/js/leaflet.js"></script> -->
 <!--<script type="text/javascript" src="s4c/js/leaflet.draw.js"></script> -->
 <!--<script type="text/javascript" src="s4c/js/jquery.fancytree-all.min.js"></script> -->
-<script type="text/javascript" src="s4c/js/require.js"></script>
+<!-- <script type="text/javascript" src="s4c/js/require.js"></script> -->
 <script type="text/javascript" src="s4c/js/jquery-simulate-ext-master/libs/jquery.simulate.js"></script>
 <script type="text/javascript" src="s4c/js/jquery-simulate-ext-master/libs/bililiteRange.js"></script>
 
@@ -379,20 +379,12 @@ RED.nodes.registerType('label',{
 
         /******* ON EDIT PREPARE  START ********/
 
-        oneditprepare: function () {
-
-            //release keycloak
-            var KEYCLOACK="https://www.snap4city.org/auth/realms/master/protocol/openid-connect/userinfo";
-            //test keycloak
-            //var KEYCLOACK="https://www.disit.org/auth/realms/master/protocol/openid-connect/userinfo";
-            
-             username="";
-             user_roles=[];
-             role="manager";
-             organization="";
-             gpsCentreLatLng="";
-            
-             accessToken = "";
+        oneditprepare: function () {   
+			username="";
+			role="manager";
+			organization="";
+			gpsCentreLatLng="";
+			accessToken = "";
             
             $.ajax({
                 url: "isThereLocalRefreshToken/",
@@ -430,6 +422,7 @@ RED.nodes.registerType('label',{
                             async: false,
                             success: function (_data) {
                                 if (_data.accessToken == "") {
+								
                                     $("#deviceTabButton").parent().hide();
                                     $("#Device-based-search").hide();
                                     $("#Value-based-search").hide();
@@ -444,51 +437,19 @@ RED.nodes.registerType('label',{
                 }
             });
             
+			
+			
             if(accessToken!=""){
-                $.ajax({
-                            url: KEYCLOACK,
-                            type: "GET",
-                            async: false,
-                            headers:{
-                                Accept:"application/json" ,
-                                Authorization:"Bearer "+ accessToken,
-                                "Access-Control-Allow-Origin":"*"
-                            },
-                            success: function (_data) {
-                                if(_data.preferred_username!="" && _data.preferred_username!=undefined && _data.preferred_username!="undefined")
-                                    username= _data.preferred_username;
-                                else
-                                    username=_data.username;
-                                
-                                
-                                user_roles= _data.roles;
-                                
-                                for(var i=0; i<user_roles.length; i++){
-                                    if(user_roles[i].toLowerCase()=="rootadmin" ||
-                                      user_roles[i].toLowerCase()=="tooladmin"||
-                                      user_roles[i].toLowerCase()=="areamanager")
-                                        
-                                    {
-                                        role=user_roles[i];
-                                        break;
-                                    }
-                                    
-                                }
-                                
-                            }
-                        });
-                console.log("username: "+ username);
-                console.log("role: "+ role);
-                
+				$.ajax({
+					url: "retrieveUsernameAndRole?accessToken="+accessToken,
+					type: "GET",
+					async: false,
+					success: function (resp) {
+						username=resp.username;
+						role=resp.role;
+					}
+				});
             }
-        
-
-            
-           //******uncomment for Testing 
-            /*username="fatimaroot";
-            accessToken="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJRczF6Wko2REIyTlp0ajB3RlVHNlFfN2JwZGhuRnRFX1NMZFdHb29CSUFFIn0.eyJqdGkiOiI0Mjc1NWI3YS01NzA3LTQwNmItOTY2Zi01NzczZjNlNmQzZWQiLCJleHAiOjE1NjM5MjYyMTIsIm5iZiI6MCwiaWF0IjoxNTYzOTI0NzEyLCJpc3MiOiJodHRwOi8vd3d3LmRpc2l0Lm9yZy9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJwaHAtaW90LWRpcmVjdG9yeS10ZXN0Iiwic3ViIjoiNjQyMDllZmUtYTQwOC00MGM4LTk5Y2YtOGFmYjk4MTRlOTBhIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoicGhwLWlvdC1kaXJlY3RvcnktdGVzdCIsIm5vbmNlIjoiZDBiZWIzN2Y3ZmQyNmRlYWU4YWRmNDcxYzE5MmE2NTUiLCJhdXRoX3RpbWUiOjE1NjI2NzU5NDEsInNlc3Npb25fc3RhdGUiOiJiMjExMTU4Yi0xNTc5LTRiNTEtOWRmMi02NDUwOGQ5YjVkZDkiLCJhY3IiOiIwIiwiYWxsb3dlZC1vcmlnaW5zIjpbXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbInVtYV9hdXRob3JpemF0aW9uIiwiUm9vdEFkbWluIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwicm9sZXMiOlsidW1hX2F1dGhvcml6YXRpb24iLCJvZmZsaW5lX2FjY2VzcyIsIlJvb3RBZG1pbiJdLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJmYXRpbWFyb290IiwiZW1haWwiOiJhbmdlbG8uZGlmaW5vQGdtYWlsLmNvbSJ9.ICzrvGBdbm8E7_vQsYqj9oztpBuwqUSMBL8xC0u3kpTziVWt1t8UZ5VpTLKhPmyZo4wQQy1jEuwGGLj1ZwVnkTmeNIZMHRHnXd0PIBdCqdLR9JDlN-AS8VsqBnJyVntwqw4-oaYhS4TTdp2vxYwR30ZvillOf6NM7PDyLg39FR7oYos5scqauIwt5mqYhbJy6JtEqGP7IGacDQUcUONbC92ztWeg3zkn2L_YwPVbZTx8KrNzQ2T8CqfrMmPfARKum1Hspcgiyc1lvEbO6x4g7XUHE6I134bwGGYQdxjch4L6tmnULC9F0-Xv2IAGE_wClvCgHmpImRA3QVwd2AqqOw";
-            role="RootAdmin";    */
-
 
             $(".editor-tray").css("width", "700px");
             maxCanvasHeight = 0;
@@ -2154,14 +2115,14 @@ RED.nodes.registerType('label',{
                     //console.log("this.id " + this.id);
                     //var accesstoken= "";
                     //********comment this block for testing, don't forget the ending brackets
-                                     $.ajax({
-                                        url: "deviceregistration/" + this.id,
-                                        type: "GET",
-                                        async: false,
-                                        success: function (resp) {
-                                            console.log(resp);
-                                            //accesstoken = resp.refreshToken;
-                                            accesstoken = resp.accessToken; 
+                    //                 $.ajax({
+                    //                    url: "deviceregistration/" + this.id,
+                    //                    type: "GET",
+                    //                    async: false,
+                    //                    success: function (resp) {
+                    //                        console.log(resp);
+                    //                        //accesstoken = resp.refreshToken;
+                    //                        accesstoken = resp.accessToken; 
 
                     //*****until here//
                     
@@ -2390,13 +2351,13 @@ RED.nodes.registerType('label',{
                                                 .always(function () {
                                                     console.log("complete");
                                                 });
-                                        },
-                                         
-                                         error: function(jqXHR,textStatus,errorThrown) { //******also comment this error block for testing
-                                             console.log("ERROR");
-                            
-                                         }
-                                     });
+                                        //},
+                                        // 
+                                        // error: function(jqXHR,textStatus,errorThrown) { //******also comment this error block for testing
+                                        //     console.log("ERROR");
+										//
+										//}
+                                     //});
 
                 } catch (err) {
                     console.log("error creating the token " + err);
@@ -2930,7 +2891,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      var xmlhRequest = global.get(\'xmlhRequest\');\r\n      var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n       request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n}\r\n snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 600,
@@ -3442,7 +3403,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      var xmlhRequest = global.get(\'xmlhRequest\');\r\n      var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n       request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n}\r\n snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 800,
@@ -3922,7 +3883,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      var xmlhRequest = global.get(\'xmlhRequest\');\r\n      var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n       request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n}\r\n snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
                                 "outputs": corresponding_out_ids.length,
                                 "noerr": 0,
                                 "x": 800,

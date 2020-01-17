@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.2.0",
+    "version": "0.2.5",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "assert": "^1.4.1",
@@ -23,7 +23,7 @@
         "util": "^0.10.3",
         "wellknown": "^0.5.0",
         "when": "~3.x",
-        "ws": "^1.1.5",
+        "ws": "~3.3.1",
         "xmlhttprequest": "^1.8.0"
     },
     "keywords": [
@@ -41,6 +41,9 @@
             "service-search-along-path": "service-search-along-path.js",
             "distance-from-coordinates": "distance-from-coordinates.js",
             "point-within-polygon": "point-within-polygon.js",
+            "routing": "routing.js",
+            "heatmap-picker": "heatmap-picker.js",
+            "coordinates-to-address": "coordinates-to-address.js",
             "service-info": "service-info.js",
             "full-text-search-near-marker": "full-text-search-near-marker.js",
             "full-text-search-within-circle": "full-text-search-within-circle.js",
@@ -80,6 +83,7 @@
             "get-my-delegated": "get-my-delegated.js",
             "get-my-activity": "get-my-activity.js",
             "get-other-activity-on-my-data": "get-other-activity-on-my-data.js",
+            "get-iotapps-using-my-kpidata": "get-iotapps-using-my-kpidata.js",
             "save-my-data": "save-my-data.js",
             "save-my-kpidata-values": "save-my-kpidata-values.js",
             "get-my-annotation": "get-my-annotation.js",
@@ -95,6 +99,7 @@
             "dashboard-time-trend": "dashboard-time-trend.js",
             "dashboard-geolocator": "dashboard-geolocator.js",
             "dashboard-bar-content": "dashboard-bar-content.js",
+            "dashboard-bar-series": "dashboard-bar-series.js",
             "dashboard-column-content": "dashboard-column-content.js",
             "dashboard-web-content": "dashboard-web-content.js",
             "sigfox-device-filter": "sigfox-device-filter.js",

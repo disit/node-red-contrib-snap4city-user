@@ -14,39 +14,6 @@
   limitations under the License.
 -->
 <!-- dashboard-websocket-input Node -->
-<script type="text/x-red" data-template-name="dashboard-websocket-in">
-    <div class="form-row">
-        <label for="node-input-mode">
-            <i class="fa fa-dot-circle-o"></i> Type</label>
-        <select id="node-input-mode">
-            <option value="server" data-i18n="websocket.listenon">Listen On</option>
-            <option value="client" data-i18n="websocket.connectto">Connect To</option>
-        </select>
-    </div>
-    <div class="form-row" id="dashboard-websocket-server-row">
-        <label for="node-input-server">
-            <i class="fa fa-bookmark"></i> Path</label>
-        <input type="text" id="node-input-server">
-    </div>
-    <div class="form-row" id="dashboard-websocket-client-row">
-        <label for="node-input-client">
-            <i class="fa fa-bookmark"></i> URL</label>
-        <input type="text" id="node-input-client">
-    </div>
-    <div class="form-row">
-        <label for="node-input-name">
-            <i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
-    </div>
-</script>
-
-<script type="text/x-red" data-help-name="dashboard-websocket-in">
-    <p>dashboard-websocket-input node.</p>
-    <p>By default, the data received from the WebSocket will be in
-        <code>msg.payload</code>. The socket can be configured to expect a properly formed JSON string, in which case it will parse
-        the JSON and send on the resulting object as the entire message.</p>
-</script>
-
 <script type="text/javascript">
     (function () {
 
@@ -231,6 +198,40 @@
         });
 
     })();
+</script>
+
+<!-- dashboard-websocket-in Node -->
+<script type="text/x-red" data-template-name="dashboard-websocket-in">
+    <div class="form-row">
+        <label for="node-input-mode">
+            <i class="fa fa-dot-circle-o"></i> Type</label>
+        <select id="node-input-mode">
+            <option value="server" data-i18n="websocket.listenon">Listen On</option>
+            <option value="client" data-i18n="websocket.connectto">Connect To</option>
+        </select>
+    </div>
+    <div class="form-row" id="dashboard-websocket-server-row">
+        <label for="node-input-server">
+            <i class="fa fa-bookmark"></i> Path</label>
+        <input type="text" id="node-input-server">
+    </div>
+    <div class="form-row" id="dashboard-websocket-client-row">
+        <label for="node-input-client">
+            <i class="fa fa-bookmark"></i> URL</label>
+        <input type="text" id="node-input-client">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name">
+            <i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="dashboard-websocket-in">
+    <p>dashboard-websocket-input node.</p>
+    <p>By default, the data received from the WebSocket will be in
+        <code>msg.payload</code>. The socket can be configured to expect a properly formed JSON string, in which case it will parse
+        the JSON and send on the resulting object as the entire message.</p>
 </script>
 
 <!-- dashboard-websocket-out Node -->

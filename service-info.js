@@ -22,17 +22,22 @@ module.exports = function (RED) {
         node.on('input', function (msg) {
             var uri = "https://www.disit.org/superservicemap/api/v1/";
             var serviceuri = (msg.payload.serviceuri ? msg.payload.serviceuri : config.serviceuri);
-            if (typeof serviceuri == "undefined" || (typeof serviceuri != "undefined" && serviceuri == "" && msg.payload.indexOf("://") != -1)) {
+            if (typeof serviceuri == "undefined" || (serviceuri == "" && msg.payload.indexOf("://") != -1)) {
                 serviceuri = msg.payload;
             }
             var lang = (msg.payload.lang ? msg.payload.lang : config.lang);
             var uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
+            var accessToken = "";
+            accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             console.log(encodeURI(uri + "?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
             if (typeof serviceuri != "undefined" && serviceuri != "") {
-                xmlHttp.open("GET", encodeURI(uri + "?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
+                xmlHttp.open("GET", encodeURI(uri + "?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")  + "&appID=iotapp"), true); // false for synchronous request
+                if (typeof accessToken != "undefined" && accessToken != "") {
+                    xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+                }
                 xmlHttp.onload = function (e) {
                     if (xmlHttp.readyState === 4) {
                         if (xmlHttp.status === 200) {
