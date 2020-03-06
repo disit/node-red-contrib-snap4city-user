@@ -15,7 +15,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function GetDelegatedKPIDataValues(config) {
+    function GetIOTAppsUsingMyKPIData(config) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.selectedKPIDataId = config.selectedKPIDataId;
@@ -26,7 +26,7 @@ module.exports = function (RED) {
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             var uid = s4cUtility.retrieveAppID(RED);
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "api/v1/kpidata/" + node.kpiId + "/values";
+            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "api/v1/kpidata/" + node.kpiId + "/activities";
             var startdate = (msg.payload.startdate ? msg.payload.startdate : config.startdate);
             var enddate = (msg.payload.enddate ? msg.payload.enddate : config.enddate);
             var last = (msg.payload.last ? msg.payload.last : config.last);
@@ -36,8 +36,8 @@ module.exports = function (RED) {
             if (accessToken != "" && typeof accessToken != "undefined") {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-                console.log(encodeURI(uri + "?sourceRequest=iotapp" + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "")));
-                xmlHttp.open("GET", encodeURI(uri + "?sourceRequest=iotapp" + (typeof uid != "undefined" && uid != "" ? "&sourceId=" + uid : "") + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "")), true);
+                console.log(encodeURI(uri + "?sourceRequestFilter=iotapp" + (typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "")));
+                xmlHttp.open("GET", encodeURI(uri + "?sourceRequestFilter=iotapp" +(typeof startdate != "undefined" && startdate != "" ? "&from=" + startdate : "") + (typeof enddate != "undefined" && enddate != "" ? "&to=" + enddate : "") + (typeof last != "undefined" && last != "" ? "&last=" + last : "")), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                 xmlHttp.onload = function (e) {
@@ -46,13 +46,6 @@ module.exports = function (RED) {
                             if (xmlHttp.responseText != "") {
                                 try {
                                     msg.payload = JSON.parse(xmlHttp.responseText);
-                                    for (var i = 0; i < msg.payload.length; i++) {
-                                        if (node.kpiDataType == "integer") {
-                                            msg.payload[i].value = parseInt(msg.payload[i].value);
-                                        } else if (node.kpiDataType == "float" || node.kpiDataType == "precentage") {
-                                            msg.payload[i].value = parseFloat(msg.payload[i].value);
-                                        }
-                                    }
                                 } catch (e) {
                                     msg.payload = xmlHttp.responseText;
                                 }
@@ -77,7 +70,7 @@ module.exports = function (RED) {
         });
     }
 
-    RED.nodes.registerType("get-delegated-kpidata-values", GetDelegatedKPIDataValues);
+    RED.nodes.registerType("get-iotapps-using-my-kpidata", GetIOTAppsUsingMyKPIData);
 
 
     RED.httpAdmin.get('/myPersonalDataUrl', function (req, res) {
@@ -87,14 +80,14 @@ module.exports = function (RED) {
         });
     });
 
-    RED.httpAdmin.get('/delegatedKpiDataList', RED.auth.needsPermission('get-my-kpidata-values.read'), function (req, res) {
+    RED.httpAdmin.get('/myKpiDataList', RED.auth.needsPermission('get-iotapps-using-my-kpidata.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();
         var myPersonalDataUrl = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/");
         var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
         if (accessToken != "" && myPersonalDataUrl != "") {
-            xmlHttp.open("GET", encodeURI(myPersonalDataUrl + "api/v1/kpidata/delegated/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" + accessToken), true); // false for synchronous request
+            xmlHttp.open("GET", encodeURI(myPersonalDataUrl + "api/v1/kpidata?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" + accessToken), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {

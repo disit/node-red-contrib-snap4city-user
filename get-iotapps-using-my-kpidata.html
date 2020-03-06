@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/javascript">
-    RED.nodes.registerType('get-delegated-kpidata-values', {
+    RED.nodes.registerType('get-iotapps-using-my-kpidata', {
         category: 'S4CKPIData',
         color: '#b0dfe3',
         defaults: {
@@ -45,7 +45,7 @@
         inputs: 1,
         icon: "white-globe.png",
         label: function () {
-            return this.name || "get-delegated-kpidata-values";
+            return this.name || "get-iotapps-using-my-kpidata";
         },
         oneditprepare: function () {
             $("#node-input-kpiId").val("");
@@ -60,7 +60,7 @@
                         $("#rowAuthentication").hide();
                         $("#tipAuthentication").hide();
                         $.ajax({
-                            url: "delegatedKpiDataList",
+                            url: "myKpiDataList",
                             type: "GET",
                             async: false,
                             success: function (_data) {
@@ -94,11 +94,11 @@
                     }
                 }
             });
-            refreshDelegatedKPIDataSelection(accessToken, kpiDataList);
+            refreshKPIDataSelection(accessToken, kpiDataList);
         },
         oneditsave: function () {
             $("#node-input-selectedKPIDataId").val($("#node-input-kpiId").val());
-            $("#node-input-name").val("Value of delegated " + $("#node-input-kpiId").val().split("-")[1]);
+            $("#node-input-name").val("Value of my " + $("#node-input-kpiId").val().split("-")[1]);
         },
         oneditresize: function () {
             $.ajax({
@@ -138,7 +138,7 @@
         }
     });
 
-    var refreshDelegatedKPIDataSelection = function (accessToken, kpiDataList) {
+    var refreshKPIDataSelection = function (accessToken, kpiDataList) {
         $("#node-input-kpiId").empty();
         if (kpiDataList != "") {
             createKPIDataSelection(kpiDataList);
@@ -150,7 +150,7 @@
                 success: function (_data) {
                     $.ajax({
                         url: _data.myPersonalDataUrl +
-                            "api/v1/kpidata/delegated/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
+                            "api/v1/kpidata/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
                             accessToken,
                         type: "GET",
                         async: true,
@@ -182,7 +182,7 @@
     }
 </script>
 
-<script type="text/x-red" data-template-name="get-delegated-kpidata-values">
+<script type="text/x-red" data-template-name="get-iotapps-using-my-kpidata">
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-selectedKPIDataId">
     <div class="form-row" id="rowAuthentication">
@@ -227,12 +227,11 @@
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="get-delegated-kpidata-values">
-    <p>It allows to retrieve the personal data inserted in My Personal KPI Data.</p>
-
+<script type="text/x-red" data-help-name="get-iotapps-using-my-kpidata">
+    <p>It allows to retrieve the activities performed on your kpi data from the iotapps</p>
     <h3>Outputs</h3>
     <dl class="message-properties">
-        <dd> Returns an array containing the data that have been saved in the search period</dd>
+        <dd> Returns an array containing the iotapps that have been accessed your kpi data, filtered in the period</dd>
     </dl>
 
     <h3>Details</h3>

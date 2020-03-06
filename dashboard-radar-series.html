@@ -25,9 +25,8 @@
     }
 </style>
 
-
 <script type="text/javascript">
-    RED.nodes.registerType('impulse-button', {
+    RED.nodes.registerType('radar-series', {
         category: 'S4CDashboard',
         color: '#00a2d3',
         defaults: {
@@ -48,35 +47,36 @@
                 value: ""
             },
             name: {
-                value: ""
+                value: "",
+                required: true
             },
             dashboardTitle: {
+                value: "",
+                required: true
+            },
+            metricType: {
+                value: "Series"
+            },
+            startValue: {
+                value: 0
+            },
+            metricShortDesc: {
                 value: ""
             },
-            valueType: {
-                value: "String",
-                required: true
-            },
-            offValue: {
-                value: "Off",
-                required: true
-            },
-            onValue: {
-                value: "On",
-                required: true
+            metricFullDesc: {
+                value: ""
             }
         },
-        inputs: 0,
-        outputs: 2,
-        outputLabels: ["impulse value", "base value"],
-        icon: "impulse-button.png",
+        inputs: 1,
+        outputs: 0,
+        icon: "radarseries.png",
         label: function () {
-            return this.name || "impulse-button";
+            return this.name || "radar-series";
         },
         paletteLabel: function () {
-            return this.name || "impulse-button";
+            return this.name || "radar-series";
         },
-        align: 'left',
+        align: 'right',
         oneditprepare: function () {
             $("#node-input-dashboardTitle").val("");
             var accessToken = "";
@@ -146,6 +146,7 @@
                         type: "GET",
                         async: true,
                         success: function (_data) {
+
                             window.open(_data.dashboardManagerBaseUrl +
                                 "/controllers/openNRDashboardEditor.php?username=" +
                                 username +
@@ -161,7 +162,7 @@
 
             $('#node-dashboard-view').click(function () {
                 if ($('#node-input-dashboardTitle').val() != null && $(
-                        '#node-input-dashboardTitle')
+                    '#node-input-dashboardTitle')
                     .val() != "") {
                     var dashboardTitle = $('#node-input-dashboardTitle').val();
                     try {
@@ -200,12 +201,6 @@
                 $("#node-dashboard-edit").hide();
                 $("#node-input-tip").show();
                 $("#node-input-createNewClicked").val("true");
-                $('#node-input-dashboardTitle').keypress(function (e) {
-                    var txt = String.fromCharCode(e.which);
-                    if (!txt.match(/[A-Za-z0-9&. ]/)) {
-                        return false;
-                    }
-                });
                 $('#node-input-dashboardTitle').keypress(function (e) {
                     var txt = String.fromCharCode(e.which);
                     if (!txt.match(/[A-Za-z0-9&. ]/)) {
@@ -278,6 +273,7 @@
         }
     });
 
+
     var refreshDashboardSelection = function (username, accessToken, dashboardList) {
         $("#node-input-dashboardTitle").empty();
         if (dashboardList != "") {
@@ -320,19 +316,19 @@
             var currentValue = $("#node-input-selectedDashboard").val();
             for (var i = 0; i < currentDashboardList.length; i++) {
                 $("<option value='" + JSON.stringify(currentDashboardList[i]) + "'>" +
-                        decodeURI(currentDashboardList[i].title.replace(
-                            /\+/g, " ")) + "</option>")
+                    decodeURI(currentDashboardList[i].title.replace(
+                        /\+/g, " ")) + "</option>")
                     .appendTo($("#node-input-dashboardTitle"));
                 if (JSON.stringify(currentDashboardList[i]) == $(
-                        "#node-input-selectedDashboard").val() || decodeURI(currentDashboardList[i].title.replace(
+                    "#node-input-selectedDashboard").val() || decodeURI(currentDashboardList[i].title.replace(
                         /\+/g, " ")) == $(
-                        "#node-input-selectedDashboard").val()) {
+                            "#node-input-selectedDashboard").val()) {
                     currentValue = JSON.stringify(currentDashboardList[i]);
                     $("#node-input-createNewClicked").val("false");
                 }
             }
             if ($("#node-input-createNewClicked").val() != null && $(
-                    "#node-input-createNewClicked").val() == "true") {
+                "#node-input-createNewClicked").val() == "true") {
                 $("#createNewDashboardTitle").click();
             }
             $("#node-input-dashboardTitle").val(currentValue);
@@ -344,9 +340,11 @@
     }
 </script>
 
-<script type="text/x-red" data-template-name="impulse-button">
-    <input type="hidden" id="node-input-username">
-    <input type="hidden" id="node-input-flowName">
+
+
+<script type="text/x-red" data-template-name="radar-series">
+
+    <input type="hidden" id="node-input-username"><input type="hidden" id="node-input-flowName">
     <input type="hidden" id="node-input-createNewClicked">
     <input type="hidden" id="node-input-selectedDashboard">
     <div class="form-row" id="rowAuthentication">
@@ -378,63 +376,81 @@
     <div id="node-input-tip" class="form-tips" style="display:none">The new dashboard is created entering the title and saving the node (with "Done" button) and deploying the flow (with
         "Deploy" button)
     </div>
-    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
-		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
-    </div>
-    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
-        Maybe the authentication data are wrong. Check them and redeploy the node.
-    </div>
-    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
-        Deploy the node to retrieve the updated list of dashboards.
-    </div>
-    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
-        Insert the authentication data and deploy the node to retrieve the updated list of dashboards.
-	</div>
 </script>
 
-<script type="text/x-red" data-help-name="impulse-button">
-    <p>With this node you can add a button to an existing dashboard or a new one created by the node. If this button is pressed,
-        it outputs a message from the top output, if the button is released, it outputs a message from the bottom output.
+<script type="text/x-red" data-help-name="radar-series">
+    <p>With this node you can add a radar series graph to an existing dashboard or a new one created by the node to show radar series graph.
     </p>
 
-    <h3>Configuration</h3>
+    <h3>Configurations</h3>
 
     <dl class="message-properties">
         <dt>dashboard
             <span class="property-type">string</span>
         </dt>
-        <dd>Dashboard title to which the button will be added</dd>
+        <dd>Dashboard title to which the radar series graph will be added</dd>
         <dt>widget
             <span class="property-type">string</span>
         </dt>
-        <dd> Title that will have the widget containing the button.</dd>
-        <dt>value type
-            <span class="property-type">string</span>
-        </dt>
-        <dd> Type of value that is sent from the node when the button is pressed or released</dd>
-        <dt>base value
-            <span class="property-type">string</span>
-        </dt>
-        <dd> Value that is sent when the button is released</dd>
-        <dt>impulse value
-            <span class="property-type">string</span>
-        </dt>
-        <dd> Value that is sent when the button is pressed</dd>
-
+        <dd> Title that will have the widget containing the radar series graph.</dd>
     </dl>
 
-    <h3>Outputs</h3>
-    <ol class="node-ports">
-        <li>Impulse Value
-            <dl class="message-properties">
-                <dd> Returns the impulse value when the button is pressed</dd>
-            </dl>
-        </li>
-        <li>Base Value
-            <dl class="message-properties">
-                <dd> Returns the base value when the button is released</dd>
-            </dl>
-        </li>
-    </ol>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        A JSON array like the following:
+        <pre>
+[
+    {
+        "metricId": [Service Uri Of A Sensor],
+        "metricHighLevelType": "Sensor",
+        "metricName": [The name of the Sensor],
+        "metricType": [A measure recorded by the sensor]
+    },
+    {
+        "metricId": [The ID of a KPI],
+        "metricHighLevelType": "MyKPI",
+        "metricName": [The name of the MyKPI],
+        "metricType": [The type of the measure saved in the KPI]
+    },
+    {
+        "metricId": "",
+        "metricHighLevelType": "Dynamic",
+        "metricName": [The name of the dynamic data],
+        "metricType": [The type of the dynamic data],
+        "metricValueUnit": [The unit of the dynamic data],
+        "measuredTime": [The ISO time of the measure of dynamic data],
+        "value": [A dynamic value]
+    }
+]
+        </pre>
 
+    <p>You can insert an arbitrary number of MyKPI and Sensor element inside the array.
+    An example of the JSON array filled with correct data:</p>
+
+        <pre>
+[
+    {
+        "metricId": "http://www.disit.org/km4city/resource/tusc_weather_sensor_ow_3166540",
+        "metricHighLevelType": "Sensor",
+        "metricName": "tusc_weather_sensor_ow_3166540",
+        "metricType": "airTemperature"
+    },
+    {
+        "metricId": "17056579",
+        "metricHighLevelType": "MyKPI",
+        "metricName": "OBD2 - Intake Air Temperature",
+        "metricType": "Temperature"
+    },
+    {
+        "metricId": "",
+        "metricHighLevelType": "Dynamic",
+        "metricName": "BatteryGalaxyNote",
+        "metricType": "Temperature",
+        "metricValueUnit": "°C",
+        "measuredTime": "2019-11-21T14:51:00Z",
+        "value": 42
+    }
+]
+        </pre>
+    </dl>
 </script>

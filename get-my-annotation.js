@@ -21,7 +21,7 @@ module.exports = function (RED) {
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             var uid = s4cUtility.retrieveAppID(RED);
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/apps/" + uid + "/data";
+            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "api/v1/apps/" + uid + "/data";
             var inPayload = msg.payload;
             var motivation = "Annotation";
             var startdate = (msg.payload.startdate ? msg.payload.startdate : config.startdate);

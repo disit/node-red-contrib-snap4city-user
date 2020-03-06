@@ -139,8 +139,12 @@ module.exports = function (RED) {
                         node.status({
                             fill: "green",
                             shape: "dot",
-                            text: "Created on dashboard"
+                               text: "Created on dashboard"
                         });
+                        if (node.intervalID != null){
+                            clearInterval(node.intervalID);
+                            node.intervalID = null;
+                        }
                     } else {
                         //TBD - CASI NEGATIVI DA FARE
                         util.log("WebSocket server could not add/edit emitter type for impulse-button node " + node.name + ": " + response.result);
@@ -232,7 +236,9 @@ module.exports = function (RED) {
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
             if (wsServerRetryActive === 'yes' && !node.notRestart) {
                 util.log("impulse-button node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
-                setTimeout(node.wsInit, parseInt(wsServerRetryTime) * 1000);
+                if (!node.intervalID){
+                    node.intervalID = setInterval(node.wsInit, parseInt(wsServerRetryTime) * 1000);
+                }
             }
             node.notRestart = false;
         };

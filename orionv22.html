@@ -400,98 +400,267 @@
 
 </script>
 
-<script type="text/x-red" data-help-name="fiware-orion-out-v22"></script>
+
+<script type="text/x-red" data-help-name="fiware-orion-out-v22">
+	<p>Provides a node for sending generic json payload to Fiware Orion context broker.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)
+		</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI)
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (optional)</dd>
+		<dt>Device NameID
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional)</dd>		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional)</dd>
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) 
+		the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+	
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the payload to send to the Fiware Orion context broker. Can be:
+		<ul>
+			<li>the complete contextElements (not an array):
+				<code>
+					msg.payload = { "id": "angelo-mydevice001", "type": "test-device", "attributes": [{ "name": "temperatura", "value": "8", "type": "float" }] };
+				</code></br>
+				NOTE: if msg.payload.type and msg.payload.id are not present, the "Device type" and "Device NameID" has to be specified in the Configuration section (<b>mandatory</b>)</li>
+			<li>the simple attributes (an array)
+				<code>
+					msg.payload = [{ "name": "temperatura", "value": "12", "type": "float" }];
+				</code></br>
+				NOTE: the "Device type" and "Device NameID" has to be specified in the Configuration section (<b>mandatory</b>)</li>
+		</ul>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node receive a JSON as described in the Inputs section and send a message to the Fiware Broker context broker based on the specified Configuration.
+			If the values are not present in the input JSON an error is generated.</p>
+	</dl>
+</script>
 
 <script type="text/x-red" data-help-name="orion-service-v22"></script>
 
 <script type="text/x-red" data-help-name="fiware-orion-in-v22">
-	<p>Provides a node subscribing on Fiware Orion context broker and listening for the changes.</p>
-
-	<ul>
-		<li>
-			<code>url</code>, used as the context broker url of the request. Url shouldn't contain port</li>
-		<li>
-			<code>port</code>, used as the url port.</li>
-		<li>
-			<code>throttle</code>, is used to specify a minimum inter-notification arrival time, default value 5 seconds</li>
-		<li>
-			<code>entity type</code>, if set, should be context element entity type. If not specified, will search for all types</li>
-		<li>
-			<code>entity id</code>, if set, should be context element entity ID. If not specified, will search for all IDs</li>
-		<li>
-			<code>is pattern</code>, whether entity ID is pattern, false by default</li>
-		<li>
-			<code>duration</code>time untill subscription will expire</li>
-		<li>
-			<code>attributes</code>, a comma separated list of context element attributes to be filtered and returned. If not specified,
-			will return all</li>
-		<li>
-			<code>condvalues</code>, the "triggering attributes", i.e. attributes that upon change due to Update context elements trigger
-			the notification.</li>
-		<li>
-			<code>includeattr</code>, include all element attributes in the output, by default
-			<code>true</code>
-		</li>
-		<li>
-			<code>credentials</code>, include authorization credentials: user and password</li>
-	</ul>
-	<p>
-		The output message contains the following properties:
-		<ul>
-			<li>
-				<code>payload</code> containing list of changed elements</li>
-			<li>
-				<code>statusCode</code> is the status code, or the error code if the subscription processing failed</li>
-		</ul>
-</script>
+		<p>Provides a node for subscribing on Fiware Orion context broker and listening changes.</p>
+	
+		<h3>Configuration</h3>
+		<dl class="message-properties">
+			<dt>Authentication (only available on edge scenario)</dt>	
+			<dd>Configuration options for Snap4city Authentication (optional)</dd>
+		
+			<dt>Service</dt>	
+			<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+				The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI). 
+			</dd>
+			
+			<dt>Certificates</dt>	
+			<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>.
+			</dd>
+		
+			<dt>Device type
+				<span class="property-type">string</span>
+			</dt>
+			<dd>Context element entity type (<b>mandatory</b>)</dd>
+			
+			<dt>Device NameID
+				<span class="property-type">string</span>
+			</dt>
+			<dd>Context element entity id (<b>mandatory</b>)</dd>				
+			
+			<dt>key 1
+				<span class="property-type">string</span>
+			</dt>
+			<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+	
+			<dt>key 2
+				<span class="property-type">string</span>
+			</dt>
+			<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+	
+			<dt>apikey
+				<span class="property-type">string</span>
+			</dt>
+			<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+	
+			<dt>auth
+				<span class="property-type">string</span>
+			</dt>
+			<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+			If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+	
+			<dt>is pattern
+				<span class="property-type">boolean</span>
+			</dt>
+			<dd>Specify whether entity ID is pattern, default is false (optional)</dd>
+	
+			<dt>attributes
+				<span class="property-type">string</span>
+			</dt>
+			<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all (optional)</dd>
+				
+			<dt>condvalues
+				<span class="property-type">string</span>
+			</dt>
+			<dd>the "triggering attributes" (attributes that upon change due to Update context elements trigger the notification) (optional)</dd>
+	
+			<dt>includeattr
+				<span class="property-type">string</span>
+			</dt>
+			<dd>include all element attributes in the output, default is true (optional)</code>
+	
+			<dt>throttle
+				<span class="property-type">multiple choice</span>
+			</dt>
+			<dd>used to specify a minimum inter-notification arrival time, default value 5 seconds (<b>mandatory</b>)</dd>
+	
+			<dt>duration
+				<span class="property-type">multiple choice</span>
+			</dt>
+			<dd>time until subscription will expire (<b>mandatory</b>)</dd>
+			
+			<dt>Find node-red routable hostname automatically
+				<span class="property-type">boolean</span>
+			</dt>
+			<dd>Automatic route the hostname (optional)</dd>
+			
+			<dt>node-red hostname
+				<span class="property-type">string</span>
+			</dt>
+			<dd>name of the host this nodered is reacheable (optional)</dd>
+	
+			<dt>name
+				<span class="property-type">string</span>
+			</dt>
+			<dd>Label assigned to the current node (optional)</dd>
+		</dl>
+	
+		<h3>Output</h3>
+		<dl class="message-properties">
+			The output message contains the following properties:
+			<ul>
+				<li>
+					<code>payload</code> is the body of the response containing list of requested elements</li>
+				<li>
+					<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+			</ul>
+		</dl>
+	</script>
 
 <script type="text/x-red" data-help-name="fiware-orion-query-v22">
 	<p>Provides a node for making requests to Fiware Orion context broker.</p>
-	<p>The URL and port can be configured in the node, if they are left blank they should be set in an incoming message on
-		<code>msg.url</code> and
-		<code>msg.port</code>
-	</p>
-	<p>Orion auth. credentials must be configured in the node, if left blank should be set in incoming message under
-		<code>msg.credentials.user</code> and
-		<code>msg.credentials.password</code> or in case using access token auth
-		<code>msg.credentials.token</code>
-	</p>
-	<ul>
-		<li>
-			<code>url</code>, used as the context broker url of the request. Url shouldn't contain port</li>
-		<li>
-			<code>port</code>, used as the url port.</li>
-		<li>
-			<code>entype</code>, if set, should be context element entity type. If not specified, will search for all types</li>
-		<li>
-			<code>enid</code>, if set, should be context element entity ID. If not specified, will search for all IDs</li>
-		<li>
-			<code>ispattern</code>, whether ID is pattern, false by default</li>
-		<li>
-			<code>attributes</code>, a comma separated list of context element attributes to be filtered and returned. If not specified,
-			will return all elements</li>
-		<li>
-			<code>rtype</code>, filter type. Available filters:
-			<code>FIWARE::StringQuery</code>,
-			<code>FIWARE::Filter::Existence</code> and
-			<code>FIWARE::Filter::Not::Existence</code>
-		</li>
-		<li>
-			<code>rvalue</code>, filter value, relevant only only for
-			<code>StringQuery</code> filter type, as
-			<code>Existence</code> filters use default
-			<code>"entity::type"</code>
-		</li>
-		<li>
-			<code>limit</code>, limit number of returned elements</li>
-		<li>
-			<code>includeattr</code>, include all element attributes in the output, by default
-			<code>true</code>
-		</li>
-		<li>
-			<code>credentials</code>, include authorization credentials, access token or user and password</li>
-	</ul>
-	<p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+			The URL should not contains any prefix for http/https and any port information (valid example are: 192.168.1.10 or www.example.it or orionUNIFI)</code>
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>). It can be passed in <code>msg.enid</code></dd>
+		
+		<dt>Device NameID
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional). It can be passed in <code>msg.entype</code></dd>
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.userk1</code></dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.passk2</code></dd>
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>attributes</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all elements (optional)</dd>
+
+		<dt>limit
+			<span class="property-type">integer</span>
+		</dt>
+		<dd>limit number of returned elements (optional). It can be passed in <code>msg.limit</code></dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the Configuration. Can be:
+				<code>
+					msg = {"enid" : "angelo-mydevice001","entype": "test-device"};
+				</code>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node (optionally) can receive a JSON as described in the Inputs section and send a query message to the Fiware Broker context broker based on the specified Configuration.
+			The Configuration specified in the Input JSON are considered just if <i>not</i> insert the UI</p>
+	</dl>
+
+	<h3>Output</h3>
+	<dl class="message-properties">
 		The output message contains the following properties:
 		<ul>
 			<li>
@@ -499,6 +668,7 @@
 			<li>
 				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
 		</ul>
+	</dl>
 </script>
 
 <script type="text/javascript">
@@ -627,7 +797,10 @@
 			outputs: 1,
 			icon: "orioncb.png",
 			label: function () {
-				return this.name || "Fiware Orion In V2";
+				return this.name || "fiware-orion-in-v2";
+			},
+			paletteLabel: function () {
+				return this.name || "fiware-orion-in-v2";
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";
@@ -712,7 +885,10 @@
 			outputs: 1,
 			icon: "orioncb.png",
 			label: function () {
-				return this.name || "Fiware Orion Query V2";
+				return this.name || "fiware-orion-query-v2";
+			},
+			paletteLabel: function () {
+				return this.name || "fiware-orion-query-v2";
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";
@@ -828,7 +1004,10 @@
 				});
 			},
 			label: function () {
-				return this.name || "Fiware Orion Out V2";
+				return this.name || "fiware-orion-out-v2";
+			},
+			paletteLabel: function () {
+				return this.name || "fiware-orion-out-v2";
 			},
 			labelStyle: function () {
 				return this.name ? "node_label_italic" : "";

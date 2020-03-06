@@ -14,8 +14,8 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
-
-    function SingleContentNode(config) {
+    
+    function RadarSeriesNode(config) {
         var WebSocket = require('ws');
         var util = require('util');
         var s4cUtility = require("./snap4city-utility.js");
@@ -36,8 +36,9 @@ module.exports = function (RED) {
             node.dashboardTitle = decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
             node.dashboardId = dashboardTitleJson.id
         } catch (e) {
-            //NOTHING TO DO         
+            //NOTHING TO DO
         }
+
         node.metricName = "NR_" + node.id.replace(".", "_");
         node.metricType = config.metricType;
         node.startValue = config.startValue;
@@ -46,10 +47,10 @@ module.exports = function (RED) {
         node.httpRoot = null;
 
         node.on('input', function (msg) {
-            util.log("Flow input received for single-content node " + node.name + ": " + JSON.stringify(msg));
+            util.log("Flow input received for radar-series node " + node.name + ": " + JSON.stringify(msg));
 
             var timeout = 0;
-            if ((new Date().getTime() - node.wsStart) > parseInt((RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200)) * 1000) {
+            if ((new Date().getTime() - node.wsStart) > parseInt(RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200) * 1000) {
                 node.ws.removeListener('error', node.wsErrorCallback);
                 node.ws.removeListener('open', node.wsOpenCallback);
                 node.ws.removeListener('message', node.wsMessageCallback);
@@ -62,21 +63,21 @@ module.exports = function (RED) {
                 node.ws.on('open', node.wsOpenCallback);
                 node.ws.on('message', node.wsMessageCallback);
                 node.ws.on('close', node.wsCloseCallback);
-                util.log("single-content node " + node.name + " is reconnetting to open WebSocket");
+                util.log("radar-series node " + node.name + " is reconnetting to open WebSocket");
                 timeout = 1000;
             }
             node.wsStart = new Date().getTime();
 
             var newMetricData = {
                 msgType: "AddMetricData",
+                nodeId: node.id,
                 metricName: encodeURIComponent(node.metricName),
                 metricType: node.metricType,
-                nodeId: node.id,
+                newValue: msg.payload,
                 appId: uid,
+                user: node.username,
                 flowId: node.z,
                 flowName: node.flowName,
-                user: node.username,
-                newValue: msg.payload,
                 accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
             };
 
@@ -84,7 +85,7 @@ module.exports = function (RED) {
                 try {
                     node.ws.send(JSON.stringify(newMetricData));
                 } catch (e) {
-                    util.log("Error sending data to WebSocket for single-content node " + node.name + ": " + JSON.stringify(e));
+                    util.log("Error sending data to WebSocket for radar-series node " + node.name + ": " + e);
                 }
             }, timeout);
 
@@ -95,11 +96,11 @@ module.exports = function (RED) {
         node.on('close', function (removed, closedDoneCallback) {
             if (removed) {
                 // Cancellazione nodo
-                util.log("single-content node " + node.name + " is being removed from flow");
+                util.log("radar-series node " + node.name + " is being removed from flow");
                 node.deleteMetric();
             } else {
                 // Riavvio nodo
-                util.log("single-content node " + node.name + " is being rebooted");
+                util.log("radar-series node " + node.name + " is being rebooted");
             }
             node.notRestart = true;
             node.ws.close();
@@ -128,15 +129,15 @@ module.exports = function (RED) {
                     msgType: "AddEditMetric",
                     metricName: encodeURIComponent(node.metricName),
                     metricType: node.metricType,
-                    startValue: node.startValue,
                     nodeId: node.id,
+                    startValue: node.startValue,
                     user: node.username,
                     metricShortDesc: node.metricShortDesc,
                     metricFullDesc: node.metricFullDesc,
                     appId: uid,
                     flowId: node.z,
                     flowName: node.flowName,
-                    widgetType: "widgetSingleContent",
+                    widgetType: "widgetRadarSeries",
                     widgetTitle: node.name,
                     dashboardTitle: node.dashboardTitle,
                     dashboardId: node.dashboardId,
@@ -146,7 +147,8 @@ module.exports = function (RED) {
 
                 //console.log(payload);
 
-                util.log("Single-content node " + node.name + " IS GOING TO CONNECT WS");
+                util.log("Bar-content node " + node.name + " IS GOING TO CONNECT WS");
+
                 if (payload.accessToken != "") {
                     node.ws.send(JSON.stringify(payload));
                 } else {
@@ -166,14 +168,14 @@ module.exports = function (RED) {
                 case "AddEditMetric":
                     if (response.result === "Ok") {
                         node.widgetUniqueName = response.widgetUniqueName;
-                        util.log("WebSocket server correctly added/edited metric type for single-content node " + node.name + ": " + response.result);
+                        util.log("WebSocket server correctly added/edited metric type for radar-series node " + node.name + ": " + response.result);
                         if (node.intervalID != null){
                             clearInterval(node.intervalID);
                             node.intervalID = null;
                         }
                     } else {
                         //TBD - CASI NEGATIVI DA FARE
-                        util.log("WebSocket server could not add/edit metric type for single-content node " + node.name + ": " + response.result);
+                        util.log("WebSocket server could not add/edit metric type for radar-series node " + node.name + ": " + response.result);
                         node.status({
                             fill: "red",
                             shape: "dot",
@@ -184,12 +186,12 @@ module.exports = function (RED) {
 
                 case "DelMetric":
                     if (response.result === "Ok") {
-                        util.log("WebSocket server correctly deleted metric type for single-content node " + node.name + ": " + response.result);
+                        util.log("WebSocket server correctly deleted metric type for radar-series node " + node.name + ": " + response.result);
                     } else {
                         //TBD - CASI NEGATIVI DA FARE
-                        util.log("WebSocket server could not delete metric type for single-content node " + node.name + ": " + response.result);
+                        util.log("WebSocket server could not delete metric type for radar-series node " + node.name + ": " + response.result);
                     }
-                    util.log("Closing webSocket server for single-content node " + node.name);
+                    util.log("Closing webSocket server for radar-series node " + node.name);
                     node.notRestart = true;
                     node.ws.close();
                     break;
@@ -200,7 +202,7 @@ module.exports = function (RED) {
         };
 
         node.wsCloseCallback = function (e) {
-            util.log("single-content node " + node.name + " closed WebSocket");
+            util.log("radar-series node " + node.name + " closed WebSocket");
 
             if (node.dashboardTitle == null || node.dashboardTitle == "") {
                 node.status({
@@ -225,7 +227,7 @@ module.exports = function (RED) {
             var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
             if (wsServerRetryActive === 'yes' && !node.notRestart) {
-                util.log("single-content node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
+                util.log("radar-series node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
                 if (!node.intervalID){
                     node.intervalID = setInterval(node.wsInit, parseInt(wsServerRetryTime) * 1000);
                 }
@@ -234,16 +236,16 @@ module.exports = function (RED) {
         };
 
         node.wsErrorCallback = function (e) {
-            util.log("single-content node " + node.name + " got WebSocket error: " + e);
+            util.log("radar-series node " + node.name + " got WebSocket error: " + e);
         };
 
         node.deleteMetric = function () {
-            util.log("Deleting metric via webSocket for single-content node " + node.name);
+            util.log("Deleting metric via webSocket for radar-series node " + node.name);
             var newMsg = {
                 msgType: "DelMetric",
+                nodeId: node.id,
                 metricName: encodeURIComponent(node.metricName),
                 metricType: node.metricType,
-                nodeId: node.id,
                 user: node.username,
                 appId: uid,
                 flowId: node.z,
@@ -254,17 +256,17 @@ module.exports = function (RED) {
             try {
                 node.ws.send(JSON.stringify(newMsg));
             } catch (e) {
-                util.log("Error deleting metric via webSocket for single-content node " + node.name + ": " + e);
+                util.log("Error deleting metric via webSocket for radar-series node " + node.name + ": " + e);
             }
         };
 
-        //Lasciarlo, altrimenti va in timeout!!! https://nodered.org/docs/creating-nodes/node-js#closing-the-node
+        //Lasciare così, sennò va in timeout!!! https://nodered.org/docs/creating-nodes/node-js#closing-the-node
         node.closedDoneCallback = function () {
-            util.log("single-content node " + node.name + " has been closed");
+            util.log("radar-series node " + node.name + " has been closed");
         };
 
         node.wsInit = function (e) {
-            util.log("single-content node " + node.name + " is trying to open WebSocket");
+            util.log("radar-series node " + node.name + " is trying to open WebSocket");
             try {
                 node.status({
                     fill: "yellow",
@@ -279,10 +281,10 @@ module.exports = function (RED) {
                     node.ws.on('close', node.wsCloseCallback);
                     node.wsStart = new Date().getTime();
                 } else {
-                    util.log("single-content node " + node.name + " already open WebSocket");
+                    util.log("radar-series node " + node.name + " already open WebSocket");
                 }
             } catch (e) {
-                util.log("single-content node " + node.name + " could not open WebSocket");
+                util.log("radar-series node " + node.name + " could not open WebSocket");
                 node.status({
                     fill: "red",
                     shape: "ring",
@@ -296,25 +298,20 @@ module.exports = function (RED) {
         try {
             node.wsInit();
         } catch (e) {
-            util.log("single-content node " + node.name + " got main exception connecting to WebSocket");
+            util.log("radar-series node " + node.name + " got main exception connecting to WebSocket");
         }
-
-
-
 
     }
 
-    RED.nodes.registerType("single-content", SingleContentNode);
+    RED.nodes.registerType("radar-series", RadarSeriesNode);
 
     RED.httpAdmin.get('/dashboardManagerBaseUrl', function (req, res) {
         var dashboardManagerBaseUrl = (RED.settings.dashboardManagerBaseUrl ? RED.settings.dashboardManagerBaseUrl : "https://main.snap4city.org");
-        util.log(dashboardManagerBaseUrl);
         var dashboardSecret = (RED.settings.dashboardSecret ? RED.settings.dashboardSecret : "45awwprty_zzq34");
         res.send({
             "dashboardManagerBaseUrl": dashboardManagerBaseUrl,
             "dashboardSecret": dashboardSecret
         });
     });
-
-
+    
 };

@@ -169,6 +169,10 @@ module.exports = function (RED) {
                     if (response.result === "Ok") {
                         node.widgetUniqueName = response.widgetUniqueName;
                         util.log("WebSocket server correctly added/edited metric type for bar-series node " + node.name + ": " + response.result);
+                        if (node.intervalID != null){
+                            clearInterval(node.intervalID);
+                            node.intervalID = null;
+                        }
                     } else {
                         //TBD - CASI NEGATIVI DA FARE
                         util.log("WebSocket server could not add/edit metric type for bar-series node " + node.name + ": " + response.result);
@@ -224,7 +228,9 @@ module.exports = function (RED) {
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
             if (wsServerRetryActive === 'yes' && !node.notRestart) {
                 util.log("bar-series node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
-                setTimeout(node.wsInit, parseInt(wsServerRetryTime) * 1000);
+                if (!node.intervalID){
+                    node.intervalID = setInterval(node.wsInit, parseInt(wsServerRetryTime) * 1000);
+                }
             }
             node.notRestart = false;
         };

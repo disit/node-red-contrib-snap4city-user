@@ -26,7 +26,7 @@ module.exports = function (RED) {
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             var uid = s4cUtility.retrieveAppID(RED);
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "/api/v1/kpidata/" + node.kpiId + "/values";
+            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "api/v1/kpidata/" + node.kpiId + "/values";
             var startdate = (msg.payload.startdate ? msg.payload.startdate : config.startdate);
             var enddate = (msg.payload.enddate ? msg.payload.enddate : config.enddate);
             var last = (msg.payload.last ? msg.payload.last : config.last);
@@ -94,7 +94,7 @@ module.exports = function (RED) {
         var myPersonalDataUrl = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/");
         var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
         if (accessToken != "" && myPersonalDataUrl != "") {
-            xmlHttp.open("GET", encodeURI(myPersonalDataUrl + "/api/v1/kpidata?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" + accessToken), true); // false for synchronous request
+            xmlHttp.open("GET", encodeURI(myPersonalDataUrl + "api/v1/kpidata?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" + accessToken), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
