@@ -17,7 +17,7 @@ module.exports = function (RED) {
 
     function PointWithinPolygon(config) {
         var wellknown = require("wellknown");
-        
+
         RED.nodes.createNode(this, config);
         var node = this;
         node.on('input', function (msg) {
@@ -33,23 +33,26 @@ module.exports = function (RED) {
     function inside(point, vs) {
         // ray-casting algorithm based on
         // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    
-        var x = point[0], y = point[1];
-    
+
+        var x = point[0],
+            y = point[1];
+
         var inside = false;
         for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-            var xi = vs[i][0], yi = vs[i][1];
-            var xj = vs[j][0], yj = vs[j][1];
-    
-            var intersect = ((yi > y) != (yj > y))
-                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            var xi = vs[i][0],
+                yi = vs[i][1];
+            var xj = vs[j][0],
+                yj = vs[j][1];
+
+            var intersect = ((yi > y) != (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
             if (intersect) inside = !inside;
         }
-    
+
         return inside;
     };
 
-    
+
     RED.nodes.registerType("point-within-polygon", PointWithinPolygon);
 
     RED.httpAdmin.get('/s4c/js/*', function (req, res) {

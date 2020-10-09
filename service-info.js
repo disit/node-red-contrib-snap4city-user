@@ -16,25 +16,26 @@
 module.exports = function (RED) {
 
     function ServiceInfo(config) {
-        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
         node.on('input', function (msg) {
-            var uri = "https://www.disit.org/superservicemap/api/v1/";
+            var uri = (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1");
             var serviceuri = (msg.payload.serviceuri ? msg.payload.serviceuri : config.serviceuri);
             if (typeof serviceuri == "undefined" || (serviceuri == "" && msg.payload.indexOf("://") != -1)) {
                 serviceuri = msg.payload;
             }
             var lang = (msg.payload.lang ? msg.payload.lang : config.lang);
-            var uid = s4cUtility.retrieveAppID(RED);
+            const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
             var accessToken = "";
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri + "?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
+            logger.info(encodeURI(uri + "/?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
             if (typeof serviceuri != "undefined" && serviceuri != "") {
-                xmlHttp.open("GET", encodeURI(uri + "?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")  + "&appID=iotapp"), true); // false for synchronous request
+                xmlHttp.open("GET", encodeURI(uri + "/?serviceUri=" + serviceuri + "&realtime=true" + "&lang=" + lang + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
                 if (typeof accessToken != "undefined" && accessToken != "") {
                     xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
                 }
@@ -45,21 +46,23 @@ module.exports = function (RED) {
                                 try {
                                     msg.payload = JSON.parse(xmlHttp.responseText);
                                 } catch (e) {
+                                    logger.error("Problem Parsing data " + xmlHttp.responseText);
                                     msg.payload = xmlHttp.responseText;
                                 }
                             } else {
                                 msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
+                                logger.error("Problem Parsing data " + xmlHttp.responseText);
                             }
                             s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
                             node.send(msg);
                         } else {
-                            console.error(xmlHttp.statusText);
+                            logger.error(xmlHttp.statusText);
                             node.error(xmlHttp.responseText);
                         }
                     }
                 };
                 xmlHttp.onerror = function (e) {
-                    console.error(xmlHttp.statusText);
+                    logger.error(xmlHttp.statusText);
                     node.error(xmlHttp.responseText);
                 };
                 xmlHttp.send(null);

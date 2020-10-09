@@ -16,30 +16,40 @@
 module.exports = function (RED) {
 
     function EventSearchUsr(config) {
-        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
         var msgs = [{}, {}];
         node.on('input', function (msg) {
-            var uri = "https://www.disit.org/superservicemap/api/v1/events/";
+            var uri = (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/events/";
             var range = (msg.payload.range ? msg.payload.range : config.range);
             var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);
-            var uid = s4cUtility.retrieveAppID(RED);
+            const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
             var accessToken = "";
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri + "?range=" + range + "&maxResults=" + maxResults + "&format=json" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
-            xmlHttp.open("GET", encodeURI(uri + "?range=" + range + "&maxResults=" + maxResults + "&format=json" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")  + "&appID=iotapp"), true); // false for synchronous request
+            logger.info(encodeURI(uri + "/?range=" + range + "&maxResults=" + maxResults + "&format=json" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
+            xmlHttp.open("GET", encodeURI(uri + "/?range=" + range + "&maxResults=" + maxResults + "&format=json" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
             if (typeof accessToken != "undefined" && accessToken != "") {
                 xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+            } else {
+                logger.debug("Call without accessToken");
             }
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
+                        logger.info("ResponseText: " + xmlHttp.responseText);
                         if (xmlHttp.responseText != "") {
-                            var response = JSON.parse(xmlHttp.responseText);
+                            var response = "";
+                            try {
+                                response = JSON.parse(xmlHttp.responseText);
+                            } catch (error){
+                                logger.error("Problem Parsing data " + xmlHttp.responseText);
+                            }
+                            logger.info("Response: " + response);
                             if (response["Event"] != null) {
                                 var serviceUriArray = [];
                                 for (var i = 0; i < response["Event"].features.length; i++) {
@@ -54,17 +64,18 @@ module.exports = function (RED) {
                         } else {
                             msgs[0].payload = JSON.parse("{\"status\": \"error\"}");
                             msgs[1].payload = JSON.parse("{\"status\": \"error\"}");
+                            logger.error("xmlHttp.responseText empty");
                         }
                         s4cUtility.eventLog(RED, inPayload, msgs, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msgs);
                     } else {
-                        console.error(xmlHttp.statusText);
+                        logger.error(xmlHttp.statusText);
                         node.error(xmlHttp.responseText);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);
+                logger.error(xmlHttp.statusText);
                 node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);

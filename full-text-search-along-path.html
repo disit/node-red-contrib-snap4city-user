@@ -43,19 +43,6 @@
                 required: false
             }
         },
-        oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
-        },
         oneditresize: function () {
             if ($("#node-input-authentication").children().length > 1) {
                 $("#node-input-authentication option[value='_ADD_']").remove();
@@ -69,6 +56,17 @@
             return this.name || "full-text-search-along-path";
         },
         oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
             $.ajax({
                 url: "s4c/js/leaflet.js",
                 async: false,

@@ -150,7 +150,7 @@
                 success: function (_data) {
                     $.ajax({
                         url: _data.myPersonalDataUrl +
-                            "api/v1/kpidata/public/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
+                            "/kpidata/public/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
                             accessToken,
                         type: "GET",
                         async: true,
@@ -197,11 +197,11 @@
     </div>
     <div class="form-row">
         <label for="node-input-startdate">Start Date</label>
-        <input type="datetime-local" id="node-input-startdate">
+        <input type="text" id="node-input-startdate" placeholder="yyyy-MM-ddTHH:mmX or timestamp">
     </div>
     <div class="form-row">
         <label for="node-input-enddate">End Date</label>
-        <input type="datetime-local" id="node-input-enddate">
+        <input type="text" id="node-input-enddate" placeholder="yyyy-MM-ddTHH:mmX or timestamp">
     </div>
     <div class="form-row">
         <label for="node-input-last">Last</label>
@@ -229,6 +229,38 @@
 
 <script type="text/x-red" data-help-name="get-public-kpidata-values">
     <p>It allows to retrieve the personal data inserted in My Personal KPI Data.</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>id
+            <span class="property-type">number</span>
+        </dt>
+        <dd> the id of the kpi data</dd>
+        <dt>startdate
+            <span class="property-type">string or number</span>
+        </dt>
+        <dd> Start date of the data search period in the format yyyy-MM-ddTHH:mmX (where X is the timezone) or timestamp
+        <dt>enddate
+           <span class="property-type">string or number</span>
+        </dt>
+        <dd>Start date of the data search period in the format yyyy-MM-ddTHH:mmX (where X is the timezone) or timestamp
+            <dt>last
+                <span class="property-type">number</span>
+            </dt>
+            <dd>If selected, it only retrieves the last n (where n is the value inserted) data of the inserted period</dd>
+    </dl>
+
+    <p>An example of the JSON array filled with correct data:</p>
+    <pre>
+{
+    "id": 17849,
+    "startdate": "2020-04-14T16:30Z",
+    "enddate": "2020-04-16T18:30Z",
+    "last": 5
+}
+    </pre>
 
     <h3>Outputs</h3>
     <dl class="message-properties">

@@ -52,7 +52,6 @@ module.exports = function (RED) {
 
 
     RED.httpAdmin.get("/get-id", RED.auth.needsPermission('iot-directory-in.read'), function (req, res) {
-        //console.log(req);
         console.log(req.query);
 
         var ids = [];
@@ -84,47 +83,46 @@ module.exports = function (RED) {
             "accessToken": s4cUtility.retrieveAccessToken(RED, null, null, null)
         });
     });
-	
-	RED.httpAdmin.get("/retrieveUsernameAndRole/", RED.auth.needsPermission('iot-directory-in.read'), function (req, res) {
-		username="";
-		user_roles=[];
-		role="manager";
-		
-		var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/userinfo/";          
-		var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-		var xmlHttp = new XMLHttpRequest();
-		xmlHttp.open("GET", encodeURI(url), false);
-		xmlHttp.setRequestHeader("Accept", "application/json");
-		xmlHttp.setRequestHeader("Authorization", "Bearer "+ req.query.accessToken);
-		xmlHttp.send();
-		if (xmlHttp.responseText != "") {
-			try {
-				response = JSON.parse(xmlHttp.responseText);
-			} catch (e) {
-				console.log(e)
-			}
-		}
-		if (response != "") {
-			if(response.preferred_username!="" && response.preferred_username!=undefined && response.preferred_username!="undefined")
-				username= response.preferred_username;
-			else
-				username=response.username;			
-			user_roles= response.roles;			
-			for(var i=0; i<user_roles.length; i++){
-				if(user_roles[i].toLowerCase()=="rootadmin" ||
-				  user_roles[i].toLowerCase()=="tooladmin"||
-				  user_roles[i].toLowerCase()=="areamanager")
-				{
-					role=user_roles[i];
-					break;
-				}
-			}
-		
-			res.json({
-				"username": username,
-				"role":role
-			});        
-		}
+
+    RED.httpAdmin.get("/retrieveUsernameAndRole/", RED.auth.needsPermission('iot-directory-in.read'), function (req, res) {
+        username = "";
+        user_roles = [];
+        role = "manager";
+
+        var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/userinfo/";
+        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", encodeURI(url), false);
+        xmlHttp.setRequestHeader("Accept", "application/json");
+        xmlHttp.setRequestHeader("Authorization", "Bearer " + req.query.accessToken);
+        xmlHttp.send();
+        if (xmlHttp.responseText != "") {
+            try {
+                response = JSON.parse(xmlHttp.responseText);
+            } catch (e) {
+                console.log(e)
+            }
+        }
+        if (response != "") {
+            if (response.preferred_username != "" && response.preferred_username != undefined && response.preferred_username != "undefined")
+                username = response.preferred_username;
+            else
+                username = response.username;
+            user_roles = response.roles;
+            for (var i = 0; i < user_roles.length; i++) {
+                if (user_roles[i].toLowerCase() == "rootadmin" ||
+                    user_roles[i].toLowerCase() == "tooladmin" ||
+                    user_roles[i].toLowerCase() == "areamanager") {
+                    role = user_roles[i];
+                    break;
+                }
+            }
+
+            res.json({
+                "username": username,
+                "role": role
+            });
+        }
     });
 
     RED.httpAdmin.get('/s4c/js/*', function (req, res) {
@@ -178,9 +176,9 @@ module.exports = function (RED) {
         var xmlHttpSensor = new XMLHttpRequest();
         var xmlHttpActuator = new XMLHttpRequest();
 
-        // xmlHttp.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=" + categories + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true"), false); // false for synchronous request
-        xmlHttpSensor.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists), false); // false for synchronous request
-        console.log(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists);
+        // xmlHttp.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=" + categories + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true"), false); // false for synchronous request
+        xmlHttpSensor.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists), false); // false for synchronous request
+        console.log(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists);
         xmlHttpSensor.send(null);
 
         if (xmlHttpSensor.responseText != "") {
@@ -195,8 +193,8 @@ module.exports = function (RED) {
             };
             //console.log(array_sensors);
 
-            xmlHttpActuator.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists), false); // false for synchronous request
-            console.log(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists);
+            xmlHttpActuator.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists), false); // false for synchronous request
+            console.log(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists);
             xmlHttpActuator.send(null)
 
         };
@@ -232,9 +230,9 @@ module.exports = function (RED) {
         var xmlHttpSensor = new XMLHttpRequest();
         var xmlHttpActuator = new XMLHttpRequest();
 
-        // xmlHttp.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=" + categories + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true"), false); // false for synchronous request
-        xmlHttpSensor.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists), false); // false for synchronous request
-        console.log(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists);
+        // xmlHttp.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=" + categories + "&maxResults=" + maxResults + "&maxDists=" + maxDists + "&format=json" + "&lang=" + language + "&geometry=true"), false); // false for synchronous request
+        xmlHttpSensor.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists), false); // false for synchronous request
+        console.log(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTSensor" + "&maxDists=" + maxDists);
         xmlHttpSensor.send(null);
 
 
@@ -250,8 +248,8 @@ module.exports = function (RED) {
             };
             //console.log(array_sensors);
 
-            xmlHttpActuator.open("GET", encodeURI(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists), false); // false for synchronous request
-            console.log(uri + "?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists);
+            xmlHttpActuator.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists), false); // false for synchronous request
+            console.log(uri + "/?selection=" + latitude + ";" + longitude + "&categories=IoTActuator" + "&maxDists=" + maxDists);
             xmlHttpActuator.send(null)
 
         };

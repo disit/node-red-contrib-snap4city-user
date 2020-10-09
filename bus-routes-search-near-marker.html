@@ -50,19 +50,6 @@
                 validate: RED.validators.number()
             }
         },
-        oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
-        },
         oneditresize: function () {
             if ($("#node-input-authentication").children().length > 1) {
                 $("#node-input-authentication option[value='_ADD_']").remove();
@@ -77,6 +64,17 @@
         },
         oneditprepare: function () {
             node = this;
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
             $.ajax({
                 url: "s4c/js/leaflet.js",
                 async: false,
@@ -177,7 +175,7 @@
 
             $("#node-input-agency").empty();
             $.ajax({
-                url: "https://www.disit.org/superservicemap/api/v1/tpl/agencies/",
+                url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/agencies/",
                 type: "GET",
                 async: false,
                 dataType: "json",

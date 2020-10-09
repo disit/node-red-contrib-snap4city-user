@@ -93,8 +93,8 @@
             L.control.layers(mapLayers, {
                 'drawlayer': drawnItems
             }, {
-                    collapsed: true
-                }).addTo(map);
+                collapsed: true
+            }).addTo(map);
 
             map.on(L.Draw.Event.CREATED, function (e) {
                 var fence = e.layer;
@@ -134,7 +134,7 @@
                 $("#node-input-latitude").val(markers[node.id].geometry.coordinates[1]);
                 $("#node-input-longitude").val(markers[node.id].geometry.coordinates[0]);
 
-    
+
             });
 
             map.on('draw:deleted', function (e) {
@@ -143,7 +143,7 @@
                 $("#node-input-longitude").val(0);
             });
 
-            
+
 
         },
         oneditresize: function () {

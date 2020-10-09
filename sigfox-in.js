@@ -141,7 +141,7 @@ module.exports = function (RED) {
             this.callback = function (req, res) {
                 var msgid = RED.util.generateId();
                 res._msgid = msgid;
-                s4cUtility.eventLog(RED,{}, req.body, config, "Node-Red", "SigFox", "/sigfox/callback/" + config.device, "RX");
+                s4cUtility.eventLog(RED, {}, req.body, config, "Node-Red", "SigFox", "/sigfox/callback/" + config.device, "RX");
                 res.sendStatus(200);
                 node.send({
                     _msgid: msgid,

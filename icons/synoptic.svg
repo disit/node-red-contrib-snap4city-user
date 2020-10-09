@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: CorelDRAW X7 -->
+
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" 
+  xmlns:cc="http://creativecommons.org/ns#" 
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+  xmlns:svg="http://www.w3.org/2000/svg" 
+  xmlns="http://www.w3.org/2000/svg" 
+  xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" 
+  xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xml:space="preserve" width="50mm" height="50mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" viewBox="0 0 5000 5000" id="svg2" inkscape:version="0.48+devel " onload="var src; if (document.documentURI) src = document.documentURI; else if (this.getSrc) src = this.getSrc(); else src = document.location.href + ''; try {parent.preload.load(src);}catch(e) {}" sodipodi:docname="02 - Dashboards-white.svg">
+  <metadata id="metadata23">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview pagecolor="#ffffff" bordercolor="#666666" borderopacity="1" objecttolerance="10" gridtolerance="10" guidetolerance="10" inkscape:pageopacity="0" inkscape:pageshadow="2" inkscape:window-width="1349" inkscape:window-height="820" id="namedview21" showgrid="false" inkscape:zoom="1.3320889" inkscape:cx="-14.263312" inkscape:cy="88.582675" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="0" inkscape:current-layer="_2020824339360" />
+  <defs id="defs4">
+    <style type="text/css" id="style6">
+      <![CDATA[
+    .fil2 {fill:#334045}
+    .fil0 {fill:#FFCC00}
+    .fil1 {fill:#FFCC00;fill-rule:nonzero}
+   ]]>
+    </style>
+  </defs>
+  <g id="Layer_x0020_1">
+    <metadata id="CorelCorpID_0Corel-Layer" />
+    <g id="_2020824339360">
+      <path class="fil0" d="M2500 318c1205,0 2182,977 2182,2182 0,1205 -977,2182 -2182,2182 -1205,0 -2182,-977 -2182,-2182 0,-1205 977,-2182 2182,-2182z" id="path11" style="fill:#ffffff;fill-opacity:1" />
+      <path class="fil1" d="M2500 70c671,0 1278,272 1718,712 440,440 712,1047 712,1718 0,671 -272,1278 -712,1718 -440,440 -1047,712 -1718,712 -671,0 -1278,-272 -1718,-712 -440,-440 -712,-1047 -712,-1718 0,-671 272,-1278 712,-1718 440,-440 1047,-712 1718,-712zm1647 783c-421,-422 -1004,-682 -1647,-682 -643,0 -1226,260 -1647,682 -422,421 -682,1004 -682,1647 0,643 260,1226 682,1647 421,422 1004,682 1647,682 643,0 1226,-260 1647,-682 422,-421 682,-1004 682,-1647 0,-643 -260,-1226 -682,-1647z" id="path13" style="fill:#ffffff;fill-opacity:1" />
+      <path class="fil2" d="M664 3017l578 1c9,-29 11,-98 15,-134 13,-142 125,-399 211,-512 41,-53 85,-111 135,-161 184,-184 488,-352 825,-352 140,0 161,-2 299,27l132 40c35,8 43,-4 67,-18l501 -312c19,-12 15,-8 22,-29 -38,-15 -66,-46 -149,-82 -23,-10 -29,-19 -51,-30l-51 -24c-69,-35 -215,-82 -293,-101 -178,-44 -291,-58 -477,-58 -206,0 -533,73 -713,163 -142,72 -144,75 -277,159 -193,121 -415,374 -529,568 -77,133 -163,325 -192,470 -17,86 -66,296 -53,385z" id="path15" />
+      <path class="fil2" d="M4030 1487c-21,3 -626,391 -751,467 -255,158 -510,327 -758,475 -112,67 -205,128 -305,191 -97,62 -180,150 -203,287 -67,393 364,626 655,417 50,-36 83,-75 118,-129l208 -282c69,-93 141,-195 209,-287 138,-191 280,-381 416,-569 73,-101 142,-196 207,-283 17,-23 202,-267 204,-287z" id="path17" />
+      <path class="fil2" d="M4258 3014c18,-31 -23,-264 -28,-291 -27,-140 -104,-365 -176,-491 -19,-33 -105,-189 -130,-202 -16,8 -189,256 -218,292 -37,49 -70,98 -108,150 -63,84 -44,39 4,174 31,85 66,220 74,314 6,73 -7,59 70,58 65,0 487,8 512,-4z" id="path19" />
+    </g>
+  </g>
+</svg>

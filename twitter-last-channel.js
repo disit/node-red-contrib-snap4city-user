@@ -16,20 +16,22 @@
 module.exports = function (RED) {
 
     function twitterlastchannel(config) {
-        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
         node.on("input", function (msg) {
             var uri = "http://disit.org/rttv/query/TwLastChannel.php";
             var channel = (msg.payload.channel ? msg.payload.channel : config.channel);
             var inPayload = msg.payload;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri + "?channel=" + channel));
-            xmlHttp.open("GET", encodeURI(uri + "?channel=" + channel), true);
+            logger.info(encodeURI(uri + "/?channel=" + channel));
+            xmlHttp.open("GET", encodeURI(uri + "/?channel=" + channel), true);
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
+                        logger.info("ResponseText: " + xmlHttp.responseText);
                         if (xmlHttp.responseText != "") {
                             try {
                                 msg.payload = JSON.parse(xmlHttp.responseText);
@@ -42,12 +44,14 @@ module.exports = function (RED) {
                         s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "TwitterVigilance", uri, "RX");
                         node.send(msg);
                     } else {
-                        console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                        logger.error(xmlHttp.statusText);
+                        node.error(xmlHttp.responseText);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                logger.error(xmlHttp.statusText);
+                node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);
         });

@@ -58,7 +58,7 @@
         oneditprepare: function () {
             $("#node-input-agency").empty();
             $.ajax({
-                url: "https://www.disit.org/superservicemap/api/v1/tpl/agencies/",
+                url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/agencies/",
                 type: "GET",
                 async: false,
                 dataType: "json",

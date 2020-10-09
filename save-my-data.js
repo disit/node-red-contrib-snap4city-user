@@ -18,10 +18,13 @@ module.exports = function (RED) {
     function SaveMyData(config) {
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
+        const uid = s4cUtility.retrieveAppID(RED);
         node.on('input', function (msg) {
-            var s4cUtility = require("./snap4city-utility.js");
-            var uid = s4cUtility.retrieveAppID(RED);
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/") + "api/v1/apps/" + uid + "/data";
+            
+            
+            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1") + "/apps/" + uid + "/data";
             var inPayload = msg.payload;
             var variableName = (msg.payload.variablename ? msg.payload.variablename : config.variablename);
             var variableValue = (msg.payload.variablevalue ? msg.payload.variablevalue : config.variablevalue);
@@ -32,11 +35,11 @@ module.exports = function (RED) {
             if (accessToken != "" && typeof accessToken != "undefined") {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-                console.log(encodeURI(uri + "?accessToken=" + accessToken));
-                xmlHttp.open("POST", encodeURI(uri + "?sourceRequest=iotapp"), true);
+                logger.info(encodeURI(uri + "/?accessToken=" + accessToken));
+                xmlHttp.open("POST", encodeURI(uri + "/?sourceRequest=iotapp"), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
-                console.log(JSON.stringify({
+                logger.debug("Message sent to KPI: " + JSON.stringify({
                     "dataTime": Date.now(),
                     "variableName": variableName,
                     "variableValue": variableValue,
@@ -47,26 +50,27 @@ module.exports = function (RED) {
                 xmlHttp.onload = function (e) {
                     if (xmlHttp.readyState === 4) {
                         if (xmlHttp.status === 200) {
-                            console.log(xmlHttp.status);
                             if (xmlHttp.responseText != "") {
                                 try {
                                     msg.payload = JSON.parse(xmlHttp.responseText);
                                 } catch (e) {
+                                    logger.error("Problem Parsing data " + xmlHttp.responseText);
                                     msg.payload = xmlHttp.responseText;
                                 }
                             } else {
                                 msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
+                                logger.error("Problem Parsing data " + xmlHttp.responseText);
                             }
                             s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "MyData", uri, "TX");
                             node.send(msg);
                         } else {
-                            console.error(xmlHttp.statusText);
+                            logger.error(xmlHttp.statusText);
                             node.error(xmlHttp.responseText);
                         }
                     }
                 };
                 xmlHttp.onerror = function (e) {
-                    console.error(xmlHttp.statusText);
+                    logger.error(xmlHttp.statusText);
                     node.error(xmlHttp.responseText);
                 };
                 try {
@@ -79,7 +83,7 @@ module.exports = function (RED) {
                         "APPID": uid.toString('utf8')
                     }));
                 } catch (e) {
-                    console.log(e);
+                    logger.error("Error to send message: " + e);
                 }
             }
         });

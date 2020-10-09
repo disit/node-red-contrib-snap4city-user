@@ -30,7 +30,6 @@ module.exports = function (RED) {
 	var http = require("follow-redirects").http;
 	var https = require("follow-redirects").https;
 	var urllib = require("url");
-	var util = require('util');
 	var https2 = require('https');
 
 	var testSubscriptionIDs = {}; //PB fix
@@ -43,7 +42,6 @@ module.exports = function (RED) {
 
 
 	function OrionService(config) {
-		
 		RED.nodes.createNode(this, config);
 		var serviceNode = this;
 
@@ -77,20 +75,24 @@ module.exports = function (RED) {
 		};
 
 		this.queryContext = function (node, config, payload) {
-			
+
 			var s4cUtility = require("./snap4city-utility.js");
-			var uid = s4cUtility.retrieveAppID(RED);
+			const logger = s4cUtility.getLogger(RED, node);
+			const uid = s4cUtility.retrieveAppID(RED);
 			var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
-			
+
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "Querying data"
 			});
-			util.log("queryContext "+ config.enid);
-			//elementID = payload.entities[0].id;
+			logger.info("queryContext, entityID: " + config.enid);
+			logger.debug("queryContext, payload: " + JSON.stringify(payload));
+
 			var orionBrokerService = RED.nodes.getNode(config.service);
 			return when.promise(function (resolve, reject) {
+
+				getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
 
 				var hostname = orionBrokerService.url;
 				var prefixPath = "";
@@ -110,7 +112,7 @@ module.exports = function (RED) {
 					method: 'POST',
 					rejectUnauthorized: false,
 					headers: {
-						'Authorization': 'Bearer '+accessToken,//by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
+						'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
 						'Content-Type': 'application/json',
 						'Content-Length': JSON.stringify(payload).length
 					}
@@ -123,8 +125,11 @@ module.exports = function (RED) {
 				if (config.basicAuth != null && config.basicAuth != "") {
 					options.headers.Authorization = config.basicAuth;
 				}
-
-				console.log("options:"+JSON.stringify(options));
+				
+				if (config.tenant != null && config.tenant != "") {
+					options.headers["Fiware-Service"]=config.tenant;
+					options.headers["Fiware-ServicePath"]=config.servicepath;
+				}
 
 				var tlsNode = RED.nodes.getNode(config.tls);
 
@@ -137,9 +142,11 @@ module.exports = function (RED) {
 					}
 				}
 
+				logger.debug("queryContext options:" + JSON.stringify(options));
+
 				var msg = {};
 
-				var req = https2.request(options, function (res) {				
+				var req = https2.request(options, function (res) {
 					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 					msg.statusCode = res.statusCode;
 					msg.headers = res.headers;
@@ -147,11 +154,10 @@ module.exports = function (RED) {
 					res.on('data', function (chunk) {
 						msg.payload += chunk;
 					});
-					res.on('end', function () {					
+					res.on('end', function () {
 						if (res.statusCode === 200) {
 							resolve(msg);
-						}
-						else {
+						} else {
 							reject(msg);
 						}
 					});
@@ -166,21 +172,29 @@ module.exports = function (RED) {
 			});
 		}
 
-		this.updateContext = function (node, config, payload) {
-			
+		this.updateContext = function (node, config, payload, auth) {
+
+			var k1 = (auth && auth.k1) ? auth.k1 : ((config.userk1) ? config.userk1 : undefined);
+			var k2 = (auth && auth.k2) ? auth.k2 : ((config.passk2) ? config.passk2 : undefined);
+			var apikey = (auth && auth.apikey) ? auth.apikey : ((config.apikey) ? config.apikey : undefined);
+			var basicAuth = (auth && auth.basicAuth) ? auth.basicAuth : ((config.basicAuth) ? config.basicAuth : undefined);
+
 			var s4cUtility = require("./snap4city-utility.js");
-			var uid = s4cUtility.retrieveAppID(RED);
+			const logger = s4cUtility.getLogger(RED, node);
+			const uid = s4cUtility.retrieveAppID(RED);
 			var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
-			
+
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "Sending data"
 			});
-			util.log("updateContext " + JSON.stringify(payload));
-			//elementID = payload.contextElements[0].id;
+			logger.info("updateContext, entityID: " + payload.contextElements[0].id);
+			logger.debug("updateContext, payload: " + JSON.stringify(payload));
 			var orionBrokerService = RED.nodes.getNode(config.service);
 			return when.promise(function (resolve, reject) {
+
+				getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, payload.contextElements[0].id, uid, accessToken);
 
 				var hostname = orionBrokerService.url;
 				var prefixPath = "";
@@ -196,22 +210,27 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/updateContext/?elementid=" + payload.contextElements[0].id + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					path: prefixPath + "/v1/updateContext/?elementid=" + payload.contextElements[0].id + (k1 ? "&k1=" + k1 : "") + (k2 ? "&k2=" + k2 : ""),
 					method: 'POST',
 					rejectUnauthorized: false,
 					headers: {
-						'Authorization': 'Bearer '+accessToken,//by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
+						'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
 						'Content-Type': 'application/json',
 						'Content-Length': JSON.stringify(payload).length
 					}
 				};
 
-				if (config.apikey != null && config.apikey != "") {
-					options.headers.apikey = config.apikey;
+				if (apikey) {
+					options.headers.apikey = apikey;
 				}
 
-				if (config.basicAuth != null && config.basicAuth != "") {
-					options.headers.Authorization = config.basicAuth;
+				if (basicAuth) {
+					options.headers.Authorization = basicAuth;
+				}
+				
+				if (config.tenant != null && config.tenant != "") {
+					options.headers["Fiware-Service"]=config.tenant;
+					options.headers["Fiware-ServicePath"]=config.servicepath;
 				}
 
 				var tlsNode = RED.nodes.getNode(config.tls);
@@ -225,9 +244,11 @@ module.exports = function (RED) {
 					}
 				}
 
+				logger.debug("updateContext options:" + JSON.stringify(options));
+
 				var msg = {};
 
-				var req = https2.request(options, function (res) {		
+				var req = https2.request(options, function (res) {
 					msg.statusCode = res.statusCode;
 					msg.headers = res.headers;
 					msg.payload = "";
@@ -237,8 +258,7 @@ module.exports = function (RED) {
 					res.on('end', function () {
 						if (res.statusCode === 200) {
 							resolve(msg);
-						}
-						else {
+						} else {
 							reject(msg);
 						}
 					});
@@ -248,28 +268,30 @@ module.exports = function (RED) {
 					reject(e);
 				});
 
-				util.log(JSON.stringify(payload));
 				req.write(JSON.stringify(payload));
 				req.end();
 			});
 		};
 
 		this.subscribe = function (node, config, payload) {
-			
+
 			var s4cUtility = require("./snap4city-utility.js");
-			var uid = s4cUtility.retrieveAppID(RED);
+			const logger = s4cUtility.getLogger(RED, node);
+			const uid = s4cUtility.retrieveAppID(RED);
 			var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid, false);
-			
+
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "Subscribing"
 			});
-			util.log("subscribeContext in: " + orionUrl + " with node id: " + node.id);
+			logger.info("subscribeContext, entityID: " + config.enid);
+			logger.debug("subscribeContext, payload: " + JSON.stringify(payload));
 			var reference = payload.reference;
-			//elementID = payload.entities[0].id;
 			var orionBrokerService = RED.nodes.getNode(config.service);
-			
+
+			getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+
 			var hostname = orionBrokerService.url;
 			var prefixPath = "";
 			if (hostname.indexOf("http") != -1) {
@@ -288,7 +310,7 @@ module.exports = function (RED) {
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
-					'Authorization': 'Bearer '+accessToken,//by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
+					'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
 					'Content-Length': JSON.stringify(payload).length
@@ -303,6 +325,11 @@ module.exports = function (RED) {
 				options.headers.Authorization = config.basicAuth;
 			}
 
+			if (config.tenant != null && config.tenant != "") {
+				options.headers["Fiware-Service"]=config.tenant;
+				options.headers["Fiware-ServicePath"]=config.servicepath;
+			}
+
 			var tlsNode = RED.nodes.getNode(config.tls);
 
 			if (tlsNode != null) {
@@ -314,11 +341,12 @@ module.exports = function (RED) {
 				}
 			}
 
+			logger.debug("subscribeContext options:" + JSON.stringify(options));
 
-			try{
+			try {
 				var msg = {};
 
-				var req = https2.request(options, function (res) {		
+				var req = https2.request(options, function (res) {
 					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 					msg.statusCode = res.statusCode;
 					msg.headers = res.headers;
@@ -326,27 +354,44 @@ module.exports = function (RED) {
 					res.on('data', function (chunk) {
 						msg.payload += chunk;
 					});
-					res.on('end', function () {		
-						util.log("subscribeContext result:" + msg.statusCode + " " +msg.payload);
-						
+					res.on('end', function () {
+						logger.info("subscribeContext result:" + msg.statusCode + " " + msg.payload);
+
 						if (res.statusCode === 200) {
 							var parsedResponse = JSON.parse(msg.payload);
 
 							if (parsedResponse.subscribeResponse != null) {
 								var subscriptionID = parsedResponse.subscribeResponse.subscriptionId;
+								logger.info("subs debug:"+subscriptionID);
 
 								var nodeID = (node.id + "").replace('.', '');
-								util.log("subscribeContext elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
-								var idToUnsubscribe = subscriptionIDs[nodeID];
-								if (typeof subscriptionIDs[nodeID] != "undefined") {
-									setTimeout(function () {
-										unsubscribeFromOrion(node, idToUnsubscribe, orionUrl, config);
-									}, 2000);
-								}
-								subscriptionIDs[nodeID] = subscriptionID;
 
+								//listen subscription just if the return code is 200ok
+								listenOnUrl(nodeID, function (req, res) {
+									if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
+										logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
+										unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
+									} else {
+										var payload = formatOutput(node, config, req.body);
+										node.send({
+											payload: payload,
+											statusCode: 200
+										});
+									}
+									res.sendStatus(200);
+								});
+								
+								logger.info("subscribeContext elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
+								var idToUnsubscribe = subscriptionIDs[nodeID];//save previous sub for unsub
+								subscriptionIDs[nodeID] = subscriptionID;//update new subs
+								if (idToUnsubscribe != undefined) {//if there was a previous sub
+									logger.info("unsubscription:"+idToUnsubscribe);
+									setTimeout(function () {
+										unsubscribeFromOrion(node, idToUnsubscribe, orionUrl, config);//unsub previous sub
+									}, 2000);
+								}					
 							} else if (parsedResponse.result == false) {
-								util.log("subscribeContext error:"+JSON.stringify(msg));
+								logger.error("subscribeContext error:" + JSON.stringify(msg));
 								node.status({
 									fill: "red",
 									shape: "ring",
@@ -354,31 +399,24 @@ module.exports = function (RED) {
 								});
 								node.error(msg);
 							}
-						} 
-						else {
-							util.log("subscribeContext error:"+JSON.stringify(msg));
+						} else {
+							logger.error("subscribeContext error:" + JSON.stringify(msg));
 							node.status({
-									fill: "red",
-									shape: "ring",
-									text: getErrorMessage(msg)
-								});					
+								fill: "red",
+								shape: "ring",
+								text: getErrorMessage(msg)
+							});
 							node.error(msg);
 						}
 					});
 				});
-
 				req.on('error', function (err) {
-					//msg.payload = err.toString();
-					//msg.statusCode = err.code;			
-					
-					//util.log("subscribeContext error:"+msg.payload);
-					util.log("subscribeContext error:"+err);
+					logger.error("subscribeContext error:" + err);
 					node.status({
 						fill: "red",
 						shape: "ring",
 						text: getErrorMessage(err)
 					});
-					//node.error("failed to subscribe, reason: " + msg.payload);
 					node.error(err);
 				});
 
@@ -389,33 +427,19 @@ module.exports = function (RED) {
 				});
 
 				if (payload) {
-					util.log("subscribeContext payload:"+JSON.stringify(payload));
+					logger.debug("subscribeContext payload:" + JSON.stringify(payload));
 					req.write(JSON.stringify(payload));
 				}
 
 				req.end();
 
-				var nodeID = (node.id + "").replace('.', '');
-				listenOnUrl(nodeID, function (req, res) {
-					if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
-						util.log("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
-						unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
-					} else {
-						var payload = formatOutput(node, config, req.body);
-						node.send({
-							payload: payload,
-							statusCode: 200
-						});
-					}
-					res.sendStatus(200);
-				});
 			} catch (err) {
-				util.log("subscribeContext error:"+err);
+				logger.error("subscribeContext error:" + err);
 				node.status({
-								fill: "red",
-								shape: "ring",
-								text: getErrorMessage(err)
-							});
+					fill: "red",
+					shape: "ring",
+					text: getErrorMessage(err)
+				});
 				node.error(err);
 			}
 		};
@@ -433,12 +457,13 @@ module.exports = function (RED) {
 	});
 
 	function unsubscribeFromOrion(node, subscriptionId, url, config) {
-		
+
 		var s4cUtility = require("./snap4city-utility.js");
-		var uid = s4cUtility.retrieveAppID(RED);
+		const logger = s4cUtility.getLogger(RED, node);
+		const uid = s4cUtility.retrieveAppID(RED);
 		var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
-		
-		util.log("unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
+
+		logger.debug("unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
 
 		var payload = {
 			"subscriptionId": subscriptionId
@@ -446,7 +471,7 @@ module.exports = function (RED) {
 
 		var orionBrokerService = RED.nodes.getNode(config.service);
 		return when.promise(function (resolve, reject) {
-			
+
 			var hostname = orionBrokerService.url;
 			var prefixPath = "";
 			if (hostname.indexOf("http") != -1) {
@@ -465,7 +490,7 @@ module.exports = function (RED) {
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
-					'Authorization': 'Bearer '+accessToken,//by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
+					'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
 					'Content-Length': JSON.stringify(payload).length
@@ -479,6 +504,11 @@ module.exports = function (RED) {
 			if (config.basicAuth != null && config.basicAuth != "") {
 				options.headers.Authorization = config.basicAuth;
 			}
+			
+			if (config.tenant != null && config.tenant != "") {
+				options.headers["Fiware-Service"]=config.tenant;
+				options.headers["Fiware-ServicePath"]=config.servicepath;
+			}
 
 			var tlsNode = RED.nodes.getNode(config.tls);
 
@@ -491,10 +521,12 @@ module.exports = function (RED) {
 				}
 			}
 
+			logger.debug("unsubscribeContext options:" + JSON.stringify(options));
+
 			var req = https2.request(options, function (res) {
-				
+
 				(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
-				res.on('end', function () {				
+				res.on('end', function () {
 					resolve(res);
 				});
 			});
@@ -509,6 +541,8 @@ module.exports = function (RED) {
 
 	// retrieve token from context broker
 	function getToken(node, orionUrl, credentials) {
+		var s4cUtility = require("./snap4city-utility.js");
+		const logger = s4cUtility.getLogger(RED, node);
 		var tokenUrl = orionUrl + "/token";
 		if (tokenUrl.indexOf("http://") >= 0) {
 			tokenUrl = "https://" + tokenUrl.substring(7);
@@ -536,7 +570,7 @@ module.exports = function (RED) {
 			if (!credentials.user) {
 				resolve();
 			} else {
-				util.log("--requesting token using payload: " + payload);
+				logger.debug("--requesting token using payload: " + payload);
 				var req = (https).request(opts, function (res) {
 					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 
@@ -545,7 +579,7 @@ module.exports = function (RED) {
 					});
 
 					res.on('end', function () {
-						util.log("--resolved token: " + token);
+						logger.debug("--resolved token: " + token);
 						resolve(token);
 					});
 				});
@@ -573,19 +607,20 @@ module.exports = function (RED) {
 
 		var contextResponses = msg.contextResponses;
 		var payload = [];
+		if (typeof contextResponses != "undefined") {
+			contextResponses.forEach(function (entry) {
+				var contextElement = entry.contextElement;
+				delete contextElement.isPattern;
+				if (!n.includeattr) {
+					// removing attribute metadata
+					contextElement.attributes.forEach(function (entry) {
+						delete entry.metadatas;
+					});
+				}
 
-		contextResponses.forEach(function (entry) {
-			var contextElement = entry.contextElement;
-			delete contextElement.isPattern;
-			if (!n.includeattr) {
-				// removing attribute metadata
-				contextElement.attributes.forEach(function (entry) {
-					delete entry.metadatas;
-				});
-			}
-
-			payload.push(contextElement);
-		});
+				payload.push(contextElement);
+			});
+		}
 
 		return payload;
 	}
@@ -638,6 +673,8 @@ module.exports = function (RED) {
 		n.ispattern = n.ispattern;
 		n.userk1 = n.userk1;
 		n.passk2 = n.passk2;
+		n.tenant = n.tenant;
+		n.servicepath = n.servicepath;		
 		n.apikey = n.apikey;
 		n.basicAuth = n.basicAuth;
 		n.attributes = n.attributes;
@@ -712,7 +749,6 @@ module.exports = function (RED) {
 	}
 
 	function request(node, method, payload, url) {
-		util.log("URL:  " + url);
 		var opts = urllib.parse(url);
 
 		opts.method = method;
@@ -758,6 +794,85 @@ module.exports = function (RED) {
 		});
 	}
 
+	function getContextBrokerListForRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
+		var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+		var xmlHttp = new XMLHttpRequest();
+		if (typeof node.currentContextBroker != "undefined" && node.currentContextBroker.accesslink.indexOf(contextBrokerUrl) == -1) {
+			delete node.contextBrokerList;
+		}
+		if (typeof node.contextBrokerList == "undefined") {
+			var uri = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
+			if (accessToken != "" && typeof accessToken != "undefined") {
+				xmlHttp.open("GET", encodeURI(uri + "/api/contextbroker.php?action=get_all_contextbroker&nodered=yes"), true);
+				xmlHttp.setRequestHeader("Content-Type", "application/json");
+				xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
+				xmlHttp.onload = function (e) {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status === 200) {
+							if (xmlHttp.responseText != "") {
+								try {
+									node.contextBrokerList = JSON.parse(xmlHttp.responseText).data;
+								} catch (e) {
+									node.contextBrokerList = xmlHttp.responseText.data;
+								}
+								createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
+							}
+						} else {
+							logger.error(xmlHttp.statusText);
+						}
+					}
+				};
+				xmlHttp.onerror = function (e) {
+					logger.error(xmlHttp.statusText);
+				};
+				xmlHttp.send(null);
+			}
+		} else {
+			createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
+		}
+	}
+
+	function createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
+		var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+		var xmlHttp = new XMLHttpRequest();
+		if (typeof node.deviceLongId == "undefined" || node.deviceLongId.indexOf(deviceName) == -1) {
+			if (typeof node.contextBrokerList != "undefined") {
+				for (var i = 0; i < node.contextBrokerList.length; i++) {
+					if (node.contextBrokerList[i].accesslink.indexOf(contextBrokerUrl) != -1 && node.contextBrokerList[i].accessport == contextBrokerPort) {
+						node.deviceLongId = node.contextBrokerList[i].organization + ":" + node.contextBrokerList[i].name + ":" + deviceName;
+						node.currentContextBroker = node.contextBrokerList[i];
+					}
+				}
+			}
+		}
+
+		if (typeof node.deviceLongId != "undefined") {
+			var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1");
+			if (accessToken != "" && typeof accessToken != "undefined") {
+				xmlHttp.open("POST", encodeURI(uri + "/lightactivities/?elementType=IOTID&sourceRequest=iotapp&sourceId=" + iotappid + "&elementId=" + node.deviceLongId), true);
+				xmlHttp.setRequestHeader("Content-Type", "application/json");
+				xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
+				xmlHttp.onload = function (e) {
+					if (xmlHttp.readyState === 4) {
+						if (xmlHttp.status !== 200) {
+							logger.error(xmlHttp.statusText);
+						}
+					} else {
+						logger.error(xmlHttp.statusText);
+					}
+				};
+				xmlHttp.onerror = function (e) {
+					logger.error(xmlHttp.statusText);
+				};
+				xmlHttp.send(null);
+			}
+		}
+	}
+
 	// To validate two ways connectivity following flow implemented	
 	// init: 
 	// 1. (v) create context element of type Test with id: node uid
@@ -781,18 +896,18 @@ module.exports = function (RED) {
 
 				/*PB commentato forza la validazione
 				if(result.subscriptionId != testSubscriptionID){
-                	util.log(nodeID+" result.subscriptionId: " + result.subscriptionId + "!=" + testSubscriptionID);
+                	console.log(nodeID+" result.subscriptionId: " + result.subscriptionId + "!=" + testSubscriptionID);
                 	node.error("Communication with context broker failed: received wrong subId");
 					unsubscribeFromOrion(node, result.subscriptionId, orionUrl).then(function(res){
-						util.log("Unsubscribed invalid subscription: " + result.subscriptionId + " res: " + JSON.stringify(res));
+						console.log("Unsubscribed invalid subscription: " + result.subscriptionId + " res: " + JSON.stringify(res));
 					});
 					unsubscribeFromOrion(node, testSubscriptionID, orionUrl).then(function(res){
-						util.log("Unsubscribed test subscription: " + testSubscriptionID + " res: " + JSON.stringify(res));
+						console.log("Unsubscribed test subscription: " + testSubscriptionID + " res: " + JSON.stringify(res));
 					});
 					
                 	reject("Communication with context broker failed");
                 }else{*/
-				util.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
+				//console.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
 				resolve();
 				//}
 			});
@@ -804,7 +919,7 @@ module.exports = function (RED) {
 
 						try {
 							var testSubscriptionID = subscription.subscribeResponse.subscriptionId
-							util.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
+							//console.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
 							testSubscriptionIDs[nodeID] = testSubscriptionID;
 
 							if (testSubscriptionID) {
@@ -826,7 +941,7 @@ module.exports = function (RED) {
 	}
 
 	function validateOrionConnectivityOneWay(node, orionUrl, createElementPayload) {
-		util.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
+		console.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
 
 		return when.promise(function (resolve, reject) {
 			request(node, "POST", createElementPayload, orionUrl + "/v1/updateContext").then(function (result) {
@@ -848,6 +963,7 @@ module.exports = function (RED) {
 
 	function OrionSubscribe(n) {
 		RED.nodes.createNode(this, n);
+		var node = this;
 		this.service = n.service;
 		this.brokerConn = RED.nodes.getNode(this.service);
 		this.noderedhost = n.noderedhost;
@@ -856,10 +972,8 @@ module.exports = function (RED) {
 		this.apikey = n.apikey;
 		this.basicAuth = n.basicAuth;
 
-		var node = this;
-
 		this.on("close", function () {
-			var node = this;
+
 
 			var nodeID = node.id + "";
 			nodeID = nodeID.replace('.', '');
@@ -906,7 +1020,7 @@ module.exports = function (RED) {
 		return when.promise(
 			function (resolve, reject) {
 				getMyUri(node).then(function (myUri) {
-					util.log("myUri: " + myUri);
+					logger.debug("myUri: " + myUri);
 					resolve({
 						"entities": [{
 							"type": "Test",
@@ -929,7 +1043,9 @@ module.exports = function (RED) {
 	function getMyUri(node) {
 		return when.promise(
 			function (resolve, reject) {
-
+				var s4cUtility = require("./snap4city-utility.js");
+				const logger = s4cUtility.getLogger(RED, node);
+				
 				// first try to get user specified uri, TODO: many input validations...
 				var myUri = node.noderedhost;
 				if (myUri) {
@@ -937,6 +1053,8 @@ module.exports = function (RED) {
 				} else {
 					myUri = RED.settings.externalHost; //PB fix added
 					if (myUri)
+						//TODO check if this one is needed 
+						//resolve(myUri + RED.settings.httpRoot.substring(0, RED.settings.httpRoot.lenght - 1) /*+ ":" + RED.settings.uiPort*/ ); //PB remove port
 						resolve(myUri + RED.settings.httpRoot /*+ ":" + RED.settings.uiPort*/ ); //PB remove port
 					else {
 						// attempt to get from bluemix
@@ -944,7 +1062,7 @@ module.exports = function (RED) {
 							var app = JSON.parse(process.env.VCAP_APPLICATION);
 							myUri = app['application_uris'][0];
 						} catch (e) {
-							util.log("Probably not running in bluemix...");
+							logger.error("Probably not running in bluemix...");
 						}
 					}
 				}
@@ -969,12 +1087,14 @@ module.exports = function (RED) {
 			}
 		);
 	}
-	
+
 	//OrionQuery node constructor	
 	RED.nodes.registerType("fiware orion", OrionQuery);
-	
+
 	function OrionQuery(n) {
 		RED.nodes.createNode(this, n);
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, this);
 
 		this.on("input", function (msg) {
 			this.service = n.service;
@@ -1007,7 +1127,7 @@ module.exports = function (RED) {
 				node.brokerConn.init(node, n).then(function () {
 					node.brokerConn.queryContext(node, n, payload).then(
 						function (msg) {
-							util.log("queryContext result:"+JSON.stringify(msg));
+							logger.debug("queryContext result:" + JSON.stringify(msg));
 							msg = formatOutput(node, n, JSON.parse(msg.payload));
 
 							node.send({
@@ -1022,7 +1142,7 @@ module.exports = function (RED) {
 							});
 						},
 						function (reason) {
-							util.log("queryContext error:"+JSON.stringify(reason));
+							logger.error("queryContext error:" + JSON.stringify(reason));
 							node.status({
 								fill: "red",
 								shape: "ring",
@@ -1035,10 +1155,10 @@ module.exports = function (RED) {
 			} catch (err) {
 				node.error(err, msg);
 				node.status({
-								fill: "red",
-								shape: "ring",
-								text: getErrorMessage(err.code)
-							});
+					fill: "red",
+					shape: "ring",
+					text: getErrorMessage(err.code)
+				});
 				node.send({
 					payload: err.toString(),
 					statusCode: err.code
@@ -1050,11 +1170,13 @@ module.exports = function (RED) {
 	function processInput(node, n, msg) {
 		n.url = n.url || msg.url;
 		n.port = n.port || msg.port;
-		n.enid = n.enid || msg.enid || ".*";//TODO don't allow .* for queryContext (but also for subscribeContext)
+		n.enid = n.enid || msg.enid || ".*"; //TODO don't allow .* for queryContext (but also for subscribeContext)
 		n.entype = n.entype || msg.entype;
 		n.limit = n.limit || msg.limit || LIMIT;
 		n.userk1 = n.userk1 || msg.userk1;
 		n.passk2 = n.passk2 || msg.passk2;
+		n.tenant = n.tenant || msg.tenant;
+		n.servicepath = n.servicepath || msg.servicepath;		
 		n.apikey = n.apikey || msg.apikey;
 		n.basicAuth = n.basicAuth || msg.basicAuth;
 		n.attributes = n.attributes || msg.attributes;
@@ -1082,22 +1204,27 @@ module.exports = function (RED) {
 	RED.nodes.registerType("orion-test", OrionUpdate);
 
 	function OrionUpdate(n) {
-		
 		RED.nodes.createNode(this, n);
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, this);
 
 		this.on("input", function (msg) {
 			this.service = n.service;
 			this.brokerConn = RED.nodes.getNode(this.service);
 			var node = this;
 
+			if (typeof msg.auth == "string") {
+				msg.auth = JSON.parse(msg.auth);
+			}
+
 			// create json payload for context update
 			var payload = generateCreateElementPayload(node, n, msg);
 
 			try {
 				node.brokerConn.init(node, n).then(function () {
-					node.brokerConn.updateContext(node, n, payload).then(
+					node.brokerConn.updateContext(node, n, payload, msg.auth).then(
 						function (msg) {
-							util.log("updateContext result:"+JSON.stringify(msg));
+							logger.debug("updateContext result:" + JSON.stringify(msg));
 							msg = formatOutput(node, n, JSON.parse(msg.payload));
 
 							node.send({
@@ -1112,7 +1239,7 @@ module.exports = function (RED) {
 							});
 						},
 						function (reason) {
-							util.log("updateContext error:"+JSON.stringify(reason));
+							logger.error("updateContext error:" + JSON.stringify(reason));
 							node.status({
 								fill: "red",
 								shape: "ring",
@@ -1125,10 +1252,10 @@ module.exports = function (RED) {
 			} catch (err) {
 				node.error(err, msg);
 				node.status({
-								fill: "red",
-								shape: "ring",
-								text: getErrorMessage(err.code)
-							});
+					fill: "red",
+					shape: "ring",
+					text: getErrorMessage(err.code)
+				});
 				node.send({
 					payload: err.toString(),
 					statusCode: getErrorMessage(err.code)
@@ -1138,26 +1265,25 @@ module.exports = function (RED) {
 	}
 
 	//reason is a json
-	function getErrorMessage(reason){
-		try{
-			if (JSON.stringify(reason).indexOf("TIMEDOUT")!=-1)
+	function getErrorMessage(reason) {
+		try {
+			if (JSON.stringify(reason).indexOf("TIMEDOUT") != -1)
 				return "problem, Timeout";
-			else if (JSON.stringify(reason).indexOf("ENOTFOUND")!=-1)
+			else if (JSON.stringify(reason).indexOf("ENOTFOUND") != -1)
 				return "problem, Not reachable";
-			else if (JSON.stringify(reason).indexOf("ECONNREFUSED")!=-1)
+			else if (JSON.stringify(reason).indexOf("ECONNREFUSED") != -1)
 				return "problem, Connection refused";
-			else if (JSON.stringify(reason).indexOf("SELF_SIGNED_CERT_IN_CHAIN")!=-1)
+			else if (JSON.stringify(reason).indexOf("SELF_SIGNED_CERT_IN_CHAIN") != -1)
 				return "problem, CA certificate not valid";
-			else if (JSON.stringify(reason).indexOf("is not in the cert's list")!=-1)
+			else if (JSON.stringify(reason).indexOf("is not in the cert's list") != -1)
 				return "problem, Broker URL mismatch";
-			else if ((JSON.stringify(reason).indexOf("certificate unknown")!=-1)||(JSON.stringify(reason).indexOf("EPROTO")!=-1))
+			else if ((JSON.stringify(reason).indexOf("certificate unknown") != -1) || (JSON.stringify(reason).indexOf("EPROTO") != -1))
 				return "problem, Certificate credentials not valid";
-			else if (JSON.stringify(reason).indexOf("key values mismatch")!=-1)
-				return "problem, Key values mismatch";			
-			else 
-				return "problem, "+JSON.parse(reason.payload).message;
-		}
-		catch(err){
+			else if (JSON.stringify(reason).indexOf("key values mismatch") != -1)
+				return "problem, Key values mismatch";
+			else
+				return "problem, " + JSON.parse(reason.payload).message;
+		} catch (err) {
 			return "unknown problem";
 		}
 	}
@@ -1173,8 +1299,10 @@ module.exports = function (RED) {
 				name,
 				value
 			});
-		} else {
+		} else if (typeof msg.attributes != "undefined") {
 			attributes = msg.attributes;
+		} else if (typeof msg.payload.attributes != "undefined") {
+			attributes = msg.payload.attributes;
 		}
 
 		if (!attributes) {
@@ -1201,17 +1329,23 @@ module.exports = function (RED) {
 
 	function OrionOut(n) {
 		RED.nodes.createNode(this, n);
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, this);
 
 		this.on("input", function (msg) {
 			this.service = n.service;
 			this.brokerConn = RED.nodes.getNode(this.service);
 			var node = this;
 			try {
-				
+
+				if (typeof msg.auth == "string") {
+					msg.auth = JSON.parse(msg.auth);
+				}
+
 				if (typeof msg.payload == "string") {
 					msg.payload = JSON.parse(msg.payload);
 				}
-				
+
 				//it converts to array a single attribute
 				if (typeof msg.payload.length == "undefined" && typeof msg.payload.name != "undefined" && typeof msg.payload.value != "undefined") {
 					msg.payload = [msg.payload];
@@ -1221,7 +1355,7 @@ module.exports = function (RED) {
 				//var payload = generateCreateElementPayload(node, n, msg);
 				var payload = ""
 				if (Array.isArray(msg.payload)) {
-					if ((n.entype=="") || (n.enid==""))
+					if ((n.entype == "") || (n.enid == ""))
 						throw ("entype or enid missing");
 					payload = {
 						"contextElements": [{
@@ -1233,8 +1367,8 @@ module.exports = function (RED) {
 						"updateAction": "APPEND"
 					};
 				} else {
-					if (((msg.payload.type==undefined)&&(n.entype=="")) || 
-						((msg.payload.id ==undefined)&&(n.enid=="")))
+					if (((msg.payload.type == undefined) && (n.entype == "")) ||
+						((msg.payload.id == undefined) && (n.enid == "")))
 						throw ("entype or enid missing");
 					payload = {
 						"contextElements": [{
@@ -1248,9 +1382,9 @@ module.exports = function (RED) {
 				}
 				try {
 					node.brokerConn.init(node, n).then(function () {
-						node.brokerConn.updateContext(node, n, payload).then(
+						node.brokerConn.updateContext(node, n, payload, msg.auth).then(
 							function (msg) {
-								util.log("updateContext result:"+JSON.stringify(msg));
+								logger.info("updateContext result:" + JSON.stringify(msg));
 								msg = formatOutput(node, n, JSON.parse(msg.payload));
 
 								node.send({
@@ -1265,7 +1399,7 @@ module.exports = function (RED) {
 								});
 							},
 							function (reason) {
-								util.log("updateContext error:"+JSON.stringify(reason));
+								logger.error("updateContext error:" + JSON.stringify(reason));
 								node.status({
 									fill: "red",
 									shape: "ring",
@@ -1278,10 +1412,10 @@ module.exports = function (RED) {
 				} catch (err) {
 					node.error(err, msg);
 					node.status({
-									fill: "red",
-									shape: "ring",
-									text: getErrorMessage(err.code)
-								});
+						fill: "red",
+						shape: "ring",
+						text: getErrorMessage(err.code)
+					});
 					node.send({
 						payload: err.toString(),
 						statusCode: getErrorMessage(err.code)

@@ -19,14 +19,15 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.name = config.name;
-        var fs = require('fs');
-
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
+        
         this.setNewOwnership = function (accessToken, uid) {
             var os = require('os');
             var fs = require('fs');
-            if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership") && !fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership")) {
+            if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership") && !fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership") && !fs.existsSync(__dirname + "/../../../.snap4cityConfig/ownership")) {
                 var ifaces = os.networkInterfaces();
-                var url = (RED.settings.ownershipUrl ? RED.settings.ownershipUrl :"https://www.snap4city.org/ownership-api/") + "/v1/register/?";
+                var url = (RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/ownership-api/") + "/v1/register/?";
                 var params = "accessToken=" + accessToken;
                 var iplocal = null;
                 Object.keys(ifaces).forEach(function (ifname) {
@@ -43,7 +44,7 @@ module.exports = function (RED) {
                 });
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-                console.log(encodeURI(url));
+                logger.info(encodeURI(url));
                 xmlHttp.open("POST", encodeURI(url + params), false);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 var message = {
@@ -72,33 +73,32 @@ module.exports = function (RED) {
                                 }
                                 fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership", "");
                             }
+                            if (fs.existsSync(__dirname + "/../../../.snap4cityConfig")) {
+                                if (!fs.existsSync(__dirname + "/../../../.snap4cityConfig")) {
+                                    fs.mkdirSync(__dirname + "/../../../.snap4cityConfig");
+                                }
+                                fs.writeFileSync(__dirname + "/../../../.snap4cityConfig/ownership", "");
+                            }
                         }
                     } catch (e) {}
                 }
             } else {
-                if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership")) {
-                    if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer")) {
-                        if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config")) {
-                            fs.mkdirSync(__dirname + "/../node-red-contrib-snap4city-developer/config");
-                        }
-                        fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership", "");
+                if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership") || fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership")) {
+                    if (!fs.existsSync(__dirname + "/../../../.snap4cityConfig")) {
+                        fs.mkdirSync(__dirname + "/../../../.snap4cityConfig");
                     }
-                } else if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership")) {
-                    if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user")) {
-                        if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config")) {
-                            fs.mkdirSync(__dirname + "/../node-red-contrib-snap4city-user/config");
-                        }
-                        fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership", "");
-                    }
+                    fs.writeFileSync(__dirname + "/../../../.snap4cityConfig/ownership", "");
                 }
             }
         }
 
         this.retrieveCurrentUser = function () {
-            return node.credentials.user;
+            return node.credentials.user.toLowerCase();
         }
 
         this.refreshTokenGetAccessToken = function (uid) {
+            var s4cUtility = require("./snap4city-utility.js");
+            const logger = s4cUtility.getLogger(RED, node);
             var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
             var params = "";
             var expiresTimestamp = node.credentials.expiresTimestamp;
@@ -111,7 +111,8 @@ module.exports = function (RED) {
             var response = "";
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log("Refresh token from:"+encodeURI(url));
+            logger.info("Refresh token");
+            logger.silly("Refresh token from:" + encodeURI(url) + " with parameters: " + params);
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             xmlHttp.send(params);
@@ -130,7 +131,9 @@ module.exports = function (RED) {
                     if (response.refresh_expires_in != null) {
                         node.credentials.expiresTimestamp = (new Date().getTime()) + response.refresh_expires_in * 1000;
                     }
-                } catch (e) {console.log(e);}
+                } catch (e) {
+                    logger.error("Problem Parsing this data: " + xmlHttp.responseText);
+                }
 
                 if (response != "") {
                     if (response.access_token != null) {
@@ -143,7 +146,7 @@ module.exports = function (RED) {
             return response;
         }
 
-        RED.httpAdmin.get("/retrieveAccessTokenAuthentication/",RED.auth.needsPermission('snap4city-authentication.read'), function (req, res) {
+        RED.httpAdmin.get("/retrieveAccessTokenAuthentication/", RED.auth.needsPermission('snap4city-authentication.read'), function (req, res) {
             var s4cUtility = require("./snap4city-utility.js");
             res.json({
                 "accessToken": s4cUtility.retrieveAccessToken(RED, node, node.id, null),
@@ -156,7 +159,7 @@ module.exports = function (RED) {
             var fs = require('fs');
             try {
                 res.send({
-                    "changedUser": fs.readFileSync(__dirname + "/config/changedUser", 'utf-8')
+                    "changedUser": fs.readFileSync(__dirname + "../snap4cityConfig/changedUser", 'utf-8')
                 });
             } catch (e) {
                 res.send({
@@ -175,18 +178,11 @@ module.exports = function (RED) {
 
     RED.httpAdmin.post('/setChangedUser/', function (req, res) {
         var fs = require('fs');
-        if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer")) {
-            if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config")) {
-                fs.mkdirSync(__dirname + "/../node-red-contrib-snap4city-developer/config");
-            }
-            fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-developer/config/changedUser", req.body.changedUser);
+        if (!fs.existsSync(__dirname + "/../../../.snap4cityConfig")) {
+            fs.mkdirSync(__dirname + "/../../../.snap4cityConfig");
         }
-        if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user")) {
-            if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config")) {
-                fs.mkdirSync(__dirname + "/../node-red-contrib-snap4city-user/config");
-            }
-            fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-user/config/changedUser", req.body.changedUser);
-        }
+        fs.writeFileSync(__dirname + "/../../../.snap4cityConfig/changedUser", req.body.changedUser);
+
         res.sendStatus(200);
     });
 

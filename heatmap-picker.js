@@ -16,9 +16,10 @@
 module.exports = function (RED) {
 
     function HeatmapPicker(config) {
-        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
         node.on('input', function (msg) {
             var metadataUrl = "https://heatmap.snap4city.org/heatmap-metadata.php";
             var interpolationUrl = "https://heatmap.snap4city.org/interp.php";
@@ -26,17 +27,18 @@ module.exports = function (RED) {
             var datetime = (msg.payload.datetime ? msg.payload.datetime : config.datetime);
             var latitude = parseFloat(msg.payload.latitude ? msg.payload.latitude : config.latitude);
             var longitude = parseFloat(msg.payload.longitude ? msg.payload.longitude : config.longitude);
-            var uid = s4cUtility.retrieveAppID(RED);
+            const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             var xmlHttp2 = new XMLHttpRequest();
 
-            console.log(encodeURI(metadataUrl + "/?dataset=" + heatmapname + "&latitude_min=" + (latitude - 0.15) + "&latitude_max=" + (latitude + 0.15) + "&longitude_min=" + (longitude - 0.15) + "&longitude_max=" + (longitude + 0.15)));
+            logger.info(encodeURI(metadataUrl + "/?dataset=" + heatmapname + "&latitude_min=" + (latitude - 0.15) + "&latitude_max=" + (latitude + 0.15) + "&longitude_min=" + (longitude - 0.15) + "&longitude_max=" + (longitude + 0.15)));
             xmlHttp.open("GET", encodeURI(metadataUrl + "/?dataset=" + heatmapname + "&latitude_min=" + (latitude - 0.15) + "&latitude_max=" + (latitude + 0.15) + "&longitude_min=" + (longitude - 0.15) + "&longitude_max=" + (longitude + 0.15)), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
+                        logger.info("ResponseText: " + xmlHttp.responseText);
                         if (xmlHttp.responseText != "") {
                             try {
                                 heatmapMetadata = JSON.parse(xmlHttp.responseText);
@@ -87,12 +89,12 @@ module.exports = function (RED) {
                     }
 
                 } else {
-                    console.error(xmlHttp.statusText);
+                    logger.error(xmlHttp.statusText);
                 }
             }
 
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);
+                logger.error(xmlHttp.statusText);
                 node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);

@@ -16,28 +16,21 @@
 module.exports = function (RED) {
 
     function SingleContentNode(config) {
-        var WebSocket = require('ws');
-        var util = require('util');
-        var s4cUtility = require("./snap4city-utility.js");
-        var uid = s4cUtility.retrieveAppID(RED);
         RED.nodes.createNode(this, config);
         var node = this;
+        var WebSocket = require('ws');
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
+        const uid = s4cUtility.retrieveAppID(RED);
         var wsServer = (RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "wss://dashboard.km4city.org:443/server");
+        var wsServerHttpOrigin = (RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org");
         node.ws = null;
         node.notRestart = false;
         node.name = config.name;
         node.username = config.username;
         node.flowName = config.flowName;
-        node.selectedDashboard = config.selectedDashboard;
-        node.dashboardTitle = config.dashboardTitle;
-        node.dashboardId = "";
-        try {
-            var dashboardTitleJson = JSON.parse(node.dashboardTitle);
-            node.dashboardTitle = decodeURI(dashboardTitleJson.title.replace(/\+/g, " "));
-            node.dashboardId = dashboardTitleJson.id
-        } catch (e) {
-            //NOTHING TO DO         
-        }
+        node.selectedDashboardId = config.selectedDashboardId;
+        node.dashboardId = config.dashboardId;
         node.metricName = "NR_" + node.id.replace(".", "_");
         node.metricType = config.metricType;
         node.startValue = config.startValue;
@@ -46,45 +39,63 @@ module.exports = function (RED) {
         node.httpRoot = null;
 
         node.on('input', function (msg) {
-            util.log("Flow input received for single-content node " + node.name + ": " + JSON.stringify(msg));
+            logger.debug("Flow input received: " + JSON.stringify(msg));
 
             var timeout = 0;
-            if ((new Date().getTime() - node.wsStart) > parseInt((RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200)) * 1000) {
-                node.ws.removeListener('error', node.wsErrorCallback);
-                node.ws.removeListener('open', node.wsOpenCallback);
-                node.ws.removeListener('message', node.wsMessageCallback);
-                node.ws.removeListener('close', node.wsCloseCallback);
-                node.notRestart = true;
-                node.ws.close();
-                node.ws = null;
-                node.ws = new WebSocket(wsServer);
+            if ((new Date().getTime() - node.wsStart) > parseInt(RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200) * 1000) {
+                if (node.ws != null) {
+                    node.ws.removeListener('error', node.wsErrorCallback);
+                    node.ws.removeListener('open', node.wsOpenCallback);
+                    node.ws.removeListener('message', node.wsMessageCallback);
+                    node.ws.removeListener('close', node.wsCloseCallback);
+                    node.ws.removeListener('pong', node.wsHeartbeatCallback);
+                    node.notRestart = true;
+                    node.ws.terminate();
+                    node.ws = null;
+                } else {
+                    logger.debug("Why ws is null? I am in node.on('input'");
+                }
+                node.ws = new WebSocket(wsServer, {
+                    origin: wsServerHttpOrigin
+                });
                 node.ws.on('error', node.wsErrorCallback);
                 node.ws.on('open', node.wsOpenCallback);
                 node.ws.on('message', node.wsMessageCallback);
                 node.ws.on('close', node.wsCloseCallback);
-                util.log("single-content node " + node.name + " is reconnetting to open WebSocket");
+                node.ws.on('pong', node.wsHeartbeatCallback);
+                logger.debug("is reconnetting to open WebSocket");
                 timeout = 1000;
             }
             node.wsStart = new Date().getTime();
 
             var newMetricData = {
                 msgType: "AddMetricData",
+                nodeId: node.id,
                 metricName: encodeURIComponent(node.metricName),
                 metricType: node.metricType,
-                nodeId: node.id,
+                newValue: msg.payload,
                 appId: uid,
+                user: node.username,
                 flowId: node.z,
                 flowName: node.flowName,
-                user: node.username,
-                newValue: msg.payload,
                 accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
             };
+
+            if (typeof newMetricData.newValue === 'object') {
+                if (newMetricData.newValue.metricHighLevelType === "Dynamic") {
+                    newMetricData.newValue = newMetricData.newValue.value;
+                } else {
+                    newMetricData.metricType = "Series";
+                }
+            }
 
             setTimeout(function () {
                 try {
                     node.ws.send(JSON.stringify(newMetricData));
+                    logger.info("Send AddMetricData to WebSocket: " + newMetricData.newValue);
+                    logger.debug("Send AddMetricData to WebSocket: " + JSON.stringify(newMetricData));
                 } catch (e) {
-                    util.log("Error sending data to WebSocket for single-content node " + node.name + ": " + JSON.stringify(e));
+                    logger.error("Error sending data to WebSocket : " + e);
                 }
             }, timeout);
 
@@ -95,19 +106,20 @@ module.exports = function (RED) {
         node.on('close', function (removed, closedDoneCallback) {
             if (removed) {
                 // Cancellazione nodo
-                util.log("single-content node " + node.name + " is being removed from flow");
+                logger.debug("is being removed from flow");
                 node.deleteMetric();
             } else {
                 // Riavvio nodo
-                util.log("single-content node " + node.name + " is being rebooted");
+                logger.debug("is being rebooted");
+                node.notRestart = true;
+                node.ws.terminate();
             }
-            node.notRestart = true;
-            node.ws.close();
+            clearInterval(node.pingInterval);
             closedDoneCallback();
         });
 
         node.wsOpenCallback = function () {
-            if (node.dashboardTitle != null && node.dashboardTitle != "") {
+            if (node.dashboardId != null && node.dashboardId != "") {
                 node.status({
                     fill: "green",
                     shape: "dot",
@@ -117,7 +129,6 @@ module.exports = function (RED) {
                 if (RED.settings.hasOwnProperty('httpRoot')) {
                     if (RED.settings.httpRoot !== '/') {
                         node.httpRoot = RED.settings.httpRoot;
-
                     } else {
                         node.httpRoot = null;
                     }
@@ -128,8 +139,8 @@ module.exports = function (RED) {
                     msgType: "AddEditMetric",
                     metricName: encodeURIComponent(node.metricName),
                     metricType: node.metricType,
-                    startValue: node.startValue,
                     nodeId: node.id,
+                    startValue: node.startValue,
                     user: node.username,
                     metricShortDesc: node.metricShortDesc,
                     metricFullDesc: node.metricFullDesc,
@@ -138,95 +149,124 @@ module.exports = function (RED) {
                     flowName: node.flowName,
                     widgetType: "widgetSingleContent",
                     widgetTitle: node.name,
-                    dashboardTitle: node.dashboardTitle,
+                    dashboardTitle: "",
                     dashboardId: node.dashboardId,
                     httpRoot: node.httpRoot,
                     accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
                 };
 
-                //console.log(payload);
+                logger.info("AddEditMetric sent to WebSocket");
+                logger.debug("AddEditMetric sent to WebSocket: " + JSON.stringify(payload));
+                if (node.pingInterval == null) {
+                    node.pingInterval = setInterval(function () {
+                        logger.silly("ping");;
+                        if (node.ws != null) {
+                            try {
+                                node.ws.ping();
+                            } catch (e) {
+                                logger.debug("Errore on Ping " + e);
+                            }
+                        }
+                    }, 30000);
+                }
 
-                util.log("Single-content node " + node.name + " IS GOING TO CONNECT WS");
-                if (payload.accessToken != "") {
-                    node.ws.send(JSON.stringify(payload));
+                logger.info("is going connect to WS");if (payload.accessToken != "") {
+                    setTimeout(function () {
+                        node.ws.send(JSON.stringify(payload));
+                    }, Math.random() * 2000)
                 } else {
                     node.status({
                         fill: "red",
                         shape: "dot",
                         text: "Authentication Problem"
                     });
+                    logger.error("Problem with accessToken: " + accessToken);
                 }
+            } else {
+                node.status({
+                    fill: "red",
+                    shape: "dot",
+                    text: "No dashboard selected"
+                });
+                logger.error("No dashboard selected, dashboard Id: " + node.dashboardId);
             }
         };
 
         node.wsMessageCallback = function (data) {
             var response = JSON.parse(data);
-            util.log(response);
+            logger.debug("Message received from WebSocket: " + data);
             switch (response.msgType) {
                 case "AddEditMetric":
                     if (response.result === "Ok") {
                         node.widgetUniqueName = response.widgetUniqueName;
-                        util.log("WebSocket server correctly added/edited metric type for single-content node " + node.name + ": " + response.result);
-                        if (node.intervalID != null){
+                        logger.info("WebSocket server correctly AddEditMetric type: " + response.result);
+                        if (node.intervalID != null) {
                             clearInterval(node.intervalID);
                             node.intervalID = null;
                         }
                     } else {
-                        //TBD - CASI NEGATIVI DA FARE
-                        util.log("WebSocket server could not add/edit metric type for single-content node " + node.name + ": " + response.result);
+                        logger.error("WebSocket server could not AddEditMetric type: " + response.error);
                         node.status({
                             fill: "red",
                             shape: "dot",
-                            text: "Not created on dashboard"
+                            text: response.error
                         });
+                        node.error(response.error);
                     }
                     break;
 
                 case "DelMetric":
                     if (response.result === "Ok") {
-                        util.log("WebSocket server correctly deleted metric type for single-content node " + node.name + ": " + response.result);
+                        logger.info("WebSocket server correctly DelMetric type: " + response.result);
                     } else {
-                        //TBD - CASI NEGATIVI DA FARE
-                        util.log("WebSocket server could not delete metric type for single-content node " + node.name + ": " + response.result);
+                        logger.info("WebSocket server could not DelMetric type: " + response.result);
                     }
-                    util.log("Closing webSocket server for single-content node " + node.name);
+                    logger.info("Closing webSocket server after DelMetric message");
                     node.notRestart = true;
-                    node.ws.close();
+                    node.ws.terminate();
                     break;
 
                 default:
+                    logger.debug(response.msgType);
                     break;
             }
         };
 
-        node.wsCloseCallback = function (e) {
-            util.log("single-content node " + node.name + " closed WebSocket");
-
-            if (node.dashboardTitle == null || node.dashboardTitle == "") {
+node.wsCloseCallback = function (e) {
+            logger.warn("Closed WebSocket. Reason: " + e);
+            if (!(node.dashboardId != null && node.dashboardId != "")) {
                 node.status({
                     fill: "red",
                     shape: "dot",
-                    text: "No dashboard title inserted or selected"
+                    text: "No dashboard selected"
                 });
+                logger.error("No dashboard selected, dashboard Id: " + node.dashboardId);
             } else {
                 node.status({
                     fill: "red",
                     shape: "ring",
                     text: "lost connection from " + wsServer
                 });
+                logger.warn ("Lost connection from "  + wsServer);
             }
 
-            node.ws.removeListener('error', node.wsErrorCallback);
-            node.ws.removeListener('open', node.wsOpenCallback);
-            node.ws.removeListener('message', node.wsMessageCallback);
-            node.ws.removeListener('close', node.wsCloseCallback);
-            node.ws = null;
+            if (node.ws != null) {
+                node.ws.removeListener('error', node.wsErrorCallback);
+                node.ws.removeListener('open', node.wsOpenCallback);
+                node.ws.removeListener('message', node.wsMessageCallback);
+                node.ws.removeListener('close', node.wsCloseCallback);
+                node.ws.removeListener('pong', node.wsHeartbeatCallback);
+                node.ws = null;
+            } else {
+                logger.debug("Why ws is null? I am in node.wsCloseCallback");                    
+            }
 
             var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
+            logger.debug("wsServerRetryActive: " + wsServerRetryActive + " node.notRestart: " + node.notRestart);
             if (wsServerRetryActive === 'yes' && !node.notRestart) {
-                util.log("single-content node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
-                if (!node.intervalID){
+                logger.info("will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
+                if (!node.intervalID) {
                     node.intervalID = setInterval(node.wsInit, parseInt(wsServerRetryTime) * 1000);
                 }
             }
@@ -234,37 +274,42 @@ module.exports = function (RED) {
         };
 
         node.wsErrorCallback = function (e) {
-            util.log("single-content node " + node.name + " got WebSocket error: " + e);
+            logger.error("got WebSocket error: " + e);
         };
 
         node.deleteMetric = function () {
-            util.log("Deleting metric via webSocket for single-content node " + node.name);
-            var newMsg = {
+            var newMsg = JSON.stringify({
                 msgType: "DelMetric",
+                nodeId: node.id,
                 metricName: encodeURIComponent(node.metricName),
                 metricType: node.metricType,
-                nodeId: node.id,
                 user: node.username,
                 appId: uid,
                 flowId: node.z,
                 flowName: node.flowName,
                 accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
-            };
+            });
 
             try {
-                node.ws.send(JSON.stringify(newMsg));
+                node.ws.send(newMsg);
+                logger.info("Deleting metric via webSocket");
+                logger.debug("Deleting metric via webSocket: " + newMsg);
             } catch (e) {
-                util.log("Error deleting metric via webSocket for single-content node " + node.name + ": " + e);
-            }
+                logger.error("Error deleting metric via webSocket: " + e);
+            } 
         };
 
-        //Lasciarlo, altrimenti va in timeout!!! https://nodered.org/docs/creating-nodes/node-js#closing-the-node
+        node.wsHeartbeatCallback = function () {
+            logger.silly("heartbeat callback");
+        };
+
+        //Lasciare così, sennò va in timeout!!! https://nodered.org/docs/creating-nodes/node-js#closing-the-node
         node.closedDoneCallback = function () {
-            util.log("single-content node " + node.name + " has been closed");
+            logger.info("has been closed");
         };
 
         node.wsInit = function (e) {
-            util.log("single-content node " + node.name + " is trying to open WebSocket");
+            logger.info("is trying to open WebSocket");
             try {
                 node.status({
                     fill: "yellow",
@@ -272,17 +317,20 @@ module.exports = function (RED) {
                     text: "connecting to " + wsServer
                 });
                 if (node.ws == null) {
-                    node.ws = new WebSocket(wsServer);
+                    node.ws = new WebSocket(wsServer, {
+                        origin: wsServerHttpOrigin
+                    });
                     node.ws.on('error', node.wsErrorCallback);
                     node.ws.on('open', node.wsOpenCallback);
                     node.ws.on('message', node.wsMessageCallback);
                     node.ws.on('close', node.wsCloseCallback);
+                    node.ws.on('pong', node.wsHeartbeatCallback);
                     node.wsStart = new Date().getTime();
                 } else {
-                    util.log("single-content node " + node.name + " already open WebSocket");
+                    logger.error("already open WebSocket");
                 }
             } catch (e) {
-                util.log("single-content node " + node.name + " could not open WebSocket");
+                logger.error("could not open WebSocket");
                 node.status({
                     fill: "red",
                     shape: "ring",
@@ -296,25 +344,11 @@ module.exports = function (RED) {
         try {
             node.wsInit();
         } catch (e) {
-            util.log("single-content node " + node.name + " got main exception connecting to WebSocket");
+            logger.error("got main exception connecting to WebSocket");
         }
-
-
-
 
     }
 
     RED.nodes.registerType("single-content", SingleContentNode);
-
-    RED.httpAdmin.get('/dashboardManagerBaseUrl', function (req, res) {
-        var dashboardManagerBaseUrl = (RED.settings.dashboardManagerBaseUrl ? RED.settings.dashboardManagerBaseUrl : "https://main.snap4city.org");
-        util.log(dashboardManagerBaseUrl);
-        var dashboardSecret = (RED.settings.dashboardSecret ? RED.settings.dashboardSecret : "45awwprty_zzq34");
-        res.send({
-            "dashboardManagerBaseUrl": dashboardManagerBaseUrl,
-            "dashboardSecret": dashboardSecret
-        });
-    });
-
 
 };
