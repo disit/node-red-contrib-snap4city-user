@@ -93,17 +93,8 @@ module.exports = function (RED) {
 			return when.promise(function (resolve, reject) {
 
 				getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
-
-				var hostname = orionBrokerService.url;
-				var prefixPath = "";
-				if (hostname.indexOf("http") != -1) {
-					var urlWithoutHttp = orionBrokerService.url.replace("https://", "").replace("http://");
-					hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
-					prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
-					if (prefixPath == hostname) {
-						prefixPath = "";
-					}
-				}
+                
+                var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 
 				var options = {
 					hostname: hostname,
@@ -195,17 +186,8 @@ module.exports = function (RED) {
 			return when.promise(function (resolve, reject) {
 
 				getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, payload.contextElements[0].id, uid, accessToken);
-
-				var hostname = orionBrokerService.url;
-				var prefixPath = "";
-				if (hostname.indexOf("http") != -1) {
-					var urlWithoutHttp = orionBrokerService.url.replace("https://", "").replace("http://");
-					hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
-					prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
-					if (prefixPath == hostname) {
-						prefixPath = "";
-					}
-				}
+                
+                var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 
 				var options = {
 					hostname: hostname,

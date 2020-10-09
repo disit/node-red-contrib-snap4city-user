@@ -251,5 +251,17 @@ module.exports = {
         if (fs.existsSync(correctPath + ".snap4cityConfig") && fs.existsSync(correctPath + ".snap4cityConfig/context") && fs.existsSync(correctPath + ".snap4cityConfig/context/" + node.id)) {
             fs.unlinkSync(correctPath + ".snap4cityConfig/context/" + node.id);
         }
+    },
+
+    splitUrlInHostnameAndPrefixPath: function (url) {
+        var hostname = url;
+        var prefixPath = "";
+        var urlWithoutHttp = url.replace("https://", "").replace("http://");
+        hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
+        prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
+        if (prefixPath == hostname) {
+            prefixPath = "";
+        }
+        return [hostname, prefixPath];
     }
 }
