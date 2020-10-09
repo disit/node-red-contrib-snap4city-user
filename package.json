@@ -111,8 +111,6 @@
             "iot-directory": "iot-directory.js",
             "event-log": "event-log.js",
             "fiware-orion": "orion.js",
-            "fiware-orion-v22": "orionv22.js",
-            "fiware-orion-v2": "orionv2.js",
             "show-micro-web-app": "show-micro-web-app/show-micro-web-app.js",
             "show-general-iframe": "show-general-iframe/show-general-iframe.js",
             "twitter-last-channel": "twitter-last-channel.js",
