@@ -181,6 +181,7 @@
       "iotdirectory-get-device": "iotdirectory-get-device.js",
       "event-log": "event-log.js",
       "fiware-orion": "orion.js",
+      "fiware-orion-api-v2": "orionAPIv2.js",
       "show-micro-web-app": "show-micro-web-app/show-micro-web-app.js",
       "show-general-iframe": "show-general-iframe/show-general-iframe.js",
       "twitter-last-channel": "twitter-last-channel.js",
