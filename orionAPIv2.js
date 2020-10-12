@@ -18,6 +18,7 @@
 module.exports = function (RED) {
     "use strict";
 
+    var SubscriptionStore = require('./subscriptionStore')
     var bodyParser = require("body-parser");
     var getBody = require('raw-body');
     var jsonParser = bodyParser.json();
@@ -33,7 +34,7 @@ module.exports = function (RED) {
     var https2 = require('https');
 
     var testSubscriptionIDs = {}; //PB fix
-    var subscriptionIDs = {}; //PB fix
+    var subscriptionIDs = new SubscriptionStore() //PB fix
 
     var when = require('when');
     var token = "";
@@ -278,16 +279,7 @@ module.exports = function (RED) {
 
             getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
 
-            var hostname = orionBrokerService.url;
-            var prefixPath = "";
-            if (hostname.indexOf("http") != -1) {
-                var urlWithoutHttp = orionBrokerService.url.replace("https://", "").replace("http://");
-                hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
-                prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
-                if (prefixPath == hostname) {
-                    prefixPath = "";
-                }
-            }
+            var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 
             var options = {
                 hostname: hostname,
@@ -353,8 +345,8 @@ module.exports = function (RED) {
 
                                 //listen subscription just if the return code is 200ok
                                 listenOnUrl(nodeID, function (req, res) {
-                                    if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
-                                        logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
+                                    if (req.body.subscriptionId != subscriptionIDs.getSubscriptionOfNode(nodeID)) {
+                                        logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs.getSubscriptionOfNode(nodeID));
                                         unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);//TODO this doesnt work correctly
                                     } else {
                                         var payload = formatOutput(node, config, req.body.data);//TODO *1 verify formatOutput
@@ -367,8 +359,8 @@ module.exports = function (RED) {
                                 });
 
                                 logger.info("subscribeContext elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
-                                var idToUnsubscribe = subscriptionIDs[nodeID];//save previous sub for unsub
-                                subscriptionIDs[nodeID] = subscriptionID;//update new subs
+                                var idToUnsubscribe = subscriptionIDs.getSubscriptionOfNode(nodeID);//save previous sub for unsub
+                                subscriptionIDs.setSubscriptionOnNode(subscriptionID, nodeID);//update new subs
                                 if (idToUnsubscribe != undefined) {//if there was a previous sub
                                     logger.info("unsubscription:" + idToUnsubscribe);
                                     setTimeout(function () {
@@ -457,16 +449,7 @@ module.exports = function (RED) {
         var orionBrokerService = RED.nodes.getNode(config.service);
         return when.promise(function (resolve, reject) {
 
-            var hostname = orionBrokerService.url;
-            var prefixPath = "";
-            if (hostname.indexOf("http") != -1) {
-                var urlWithoutHttp = orionBrokerService.url.replace("https://", "").replace("http://");
-                hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
-                prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
-                if (prefixPath == hostname) {
-                    prefixPath = "";
-                }
-            }
+            var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 
             var options = {
                 hostname: hostname,
@@ -894,7 +877,7 @@ module.exports = function (RED) {
         return when.promise(function (resolve, reject) {
             listenOnUrl(nodeID, function (req, res) {
                 var result = req.body;
-                var testSubscriptionID = testSubscriptionIDs[nodeID]; //PB fix
+                var testSubscriptionID = subscriptionIDs.getSubscriptionOfNode(nodeID);
 
                 /*PB commentato forza la validazione
                 if(result.subscriptionId != testSubscriptionID){
@@ -922,7 +905,7 @@ module.exports = function (RED) {
                         try {
                             var testSubscriptionID = subscription.subscribeResponse.subscriptionId
                             //console.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
-                            testSubscriptionIDs[nodeID] = testSubscriptionID;
+                            subscriptionIDs.setSubscriptionOnNode(subscriptionID, nodeID);//update new subs
 
                             if (testSubscriptionID) {
                                 var data = {
