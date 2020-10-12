@@ -92,7 +92,7 @@ module.exports = {
             if (xmlHttp.responseText != "") {
                 try {
                     response = JSON.parse(xmlHttp.responseText);
-                } catch (e) {}
+                } catch (e) { }
             }
             if (response != "") {
                 fs.writeFileSync('/data/refresh_token', response.refresh_token);
@@ -135,7 +135,7 @@ module.exports = {
             if (xmlHttp.responseText != "") {
                 try {
                     response = JSON.parse(xmlHttp.responseText);
-                } catch (e) {}
+                } catch (e) { }
             }
             if (response != "") {
                 fs.writeFileSync('/data/refresh_token', response.refresh_token);
@@ -256,11 +256,10 @@ module.exports = {
     splitUrlInHostnameAndPrefixPath: function (url) {
         var hostname = url;
         var prefixPath = "";
-        var urlWithoutHttp = url.replace("https://", "").replace("http://");
-        hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
-        prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
-        if (prefixPath == hostname) {
-            prefixPath = "";
+        var urlWithoutHttp = url.replace("https://", "").replace("http://", "");
+        if (urlWithoutHttp.indexOf("/") >= 0) {
+            hostname = urlWithoutHttp.substring(0, urlWithoutHttp.indexOf("/"));
+            prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
         }
         return [hostname, prefixPath];
     }
