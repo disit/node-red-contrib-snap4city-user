@@ -353,7 +353,6 @@ module.exports = function (RED) {
                                     }
                                     res.sendStatus(200);
                                 });
-
                                 logger.info("subscribeContext elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs.getSubscriptionOfNode(nodeID) + " newSubId: " + subscriptionID);
                                 var idToUnsubscribe = subscriptionIDs.getSubscriptionOfNode(nodeID);//save previous sub for unsub
                                 subscriptionIDs.setSubscriptionOnNode(subscriptionID, nodeID);//update new subs

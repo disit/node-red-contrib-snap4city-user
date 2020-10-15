@@ -112,7 +112,7 @@ module.exports = function (RED) {
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             logger.info("Refresh token");
-            logger.silly("Refresh token from:" + encodeURI(url) + " with parameters: " + params);
+            //logger.info("Refresh token from:" + encodeURI(url) + " with parameters: " + params);
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             xmlHttp.send(params);
