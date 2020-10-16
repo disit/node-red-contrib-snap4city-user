@@ -15,32 +15,30 @@
  **/
 
 /* NODE-RED-CONTRIB-SNAP4CITY-USER    Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence     This program is free software: you can redistribute it and/or modify    it under the terms of the GNU Affero General Public License as    published by the Free Software Foundation, either version 3 of the    License, or (at your option) any later version.     This program is distributed in the hope that it will be useful,    but WITHOUT ANY WARRANTY; without even the implied warranty of    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    GNU Affero General Public License for more details.     You should have received a copy of the GNU Affero General Public License    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+var SubscriptionStore = require('./utils/subscriptionStore')
+var NodeStatus = require('./utils/nodeStatus')
+var s4cUtility = require("./snap4city-utility.js");
+var bodyParser = require("body-parser");
+var getBody = require('raw-body');
+var typer = require('media-typer');
+var isUtf8 = require('is-utf8');
+var http = require("follow-redirects").http;
+var https = require("follow-redirects").https;
+var urllib = require("url");
+var https2 = require('https');
+var when = require('when');
+
+var subscriptionIDs = new SubscriptionStore()
+var nodeStatus = new NodeStatus()
+
 module.exports = function (RED) {
     "use strict";
 
-    var SubscriptionStore = require('./subscriptionStore')
-    var bodyParser = require("body-parser");
-    var getBody = require('raw-body');
     var jsonParser = bodyParser.json();
-    var urlencParser = bodyParser.urlencoded({
-        extended: true
-    });
-    var typer = require('media-typer');
-    var isUtf8 = require('is-utf8');
+    var urlencParser = bodyParser.urlencoded({ extended: true });
 
-    var http = require("follow-redirects").http;
-    var https = require("follow-redirects").https;
-    var urllib = require("url");
-    var https2 = require('https');
-
-    var testSubscriptionIDs = {}; //PB fix
-    var subscriptionIDs = new SubscriptionStore()
-
-    var when = require('when');
     var token = "";
-
     var LIMIT = 30;
-
 
     function OrionServiceV2(config) {
         RED.nodes.createNode(this, config);
@@ -49,9 +47,8 @@ module.exports = function (RED) {
         this.url = config.url;
         this.port = config.port;
         var orionUrl = getOrionUrl(config);
-        var credentials = {};
-        credentials.user = "";
-        credentials.password = "";
+        var credentials = { user: '', password: '' };
+
         if (/\/$/.test(this.url)) {
             this.url = this.url.substring(this.url.length - 1);
         }
@@ -61,11 +58,7 @@ module.exports = function (RED) {
         }
 
         this.init = function (node) {
-            node.status({
-                fill: "blue",
-                shape: "dot",
-                text: "Initializing"
-            });
+            nodeStatus.initializing(node)
 
             return when.promise(function (resolve) {
                 // get token from context broker
@@ -77,16 +70,12 @@ module.exports = function (RED) {
 
         this.queryContext = function (node, config, payload) {
 
-            var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
 
-            node.status({
-                fill: "blue",
-                shape: "dot",
-                text: "Querying data"
-            });
+            nodeStatus.querying(node)
+
             logger.info("queryContext, entityID: " + config.enid);
             logger.debug("queryContext, payload: " + JSON.stringify(payload));
 
@@ -97,7 +86,7 @@ module.exports = function (RED) {
 
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 
-                var query = `${payload.entities[0].id}/?type=${payload.entities[0].type}`;//TODO vefiry how attributes are represented: right way &attrs=temp,press
+                var query = `${payload.entities[0].id}/?type=${payload.entities[0].type}`;
                 query += payload.attributes != "" ? `&attrs=${payload.attributes}` : '';
                 var options = {
                     hostname: hostname,
@@ -107,8 +96,6 @@ module.exports = function (RED) {
                     rejectUnauthorized: false,
                     headers: {
                         'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
-                        //'Content-Type': 'application/json',
-                        'Content-Length': 0//    JSON.stringify(payload).length
                     }
                 };
                 if (config.apikey != null && config.apikey != "") {
@@ -175,16 +162,13 @@ module.exports = function (RED) {
             var basicAuth = (auth && auth.basicAuth) ? auth.basicAuth : ((config.basicAuth) ? config.basicAuth : undefined);
             var deviceId = config.enid;
 
-            var s4cUtility = require("./snap4city-utility.js");
+
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
 
-            node.status({
-                fill: "blue",
-                shape: "dot",
-                text: "Sending data"
-            });
+            nodeStatus.sending(node)
+
             logger.info("updateContext, entityID: " + deviceId);
             logger.debug("updateContext, payload: " + JSON.stringify(payload));
             var orionBrokerService = RED.nodes.getNode(config.service);
@@ -259,17 +243,12 @@ module.exports = function (RED) {
 
         this.subscribe = function (node, config, payload) {
 
-            var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid, false);
-            logger.info(" ######### CHANGE PORT FROM 1026 to 8443 AND HTTP TO HTTPS  ######### ");
 
-            node.status({
-                fill: "blue",
-                shape: "dot",
-                text: "Subscribing"
-            });
+            nodeStatus.subscribing(node)
+
             logger.info("subscribeContext, entityID: " + config.enid);
             logger.debug("subscribeContext, payload: " + JSON.stringify(payload));
             var reference = payload.notification.http.url;
@@ -365,32 +344,17 @@ module.exports = function (RED) {
                                 }
                             } else if (parsedResponse.result == false) {
                                 logger.error("subscribeContext error:" + JSON.stringify(msg));
-                                node.status({
-                                    fill: "red",
-                                    shape: "ring",
-                                    text: getErrorMessage(msg)
-                                });
-                                node.error(msg);
+                                nodeStatus.getError(node, msg)
                             }
                         } else {
                             logger.error("subscribeContext error:" + JSON.stringify(msg));
-                            node.status({
-                                fill: "red",
-                                shape: "ring",
-                                text: getErrorMessage(msg)
-                            });
-                            node.error(msg);
+                            nodeStatus.getError(node, msg)
                         }
                     });
                 });
                 req.on('error', function (err) {
                     logger.error("subscribeContext error:" + err);
-                    node.status({
-                        fill: "red",
-                        shape: "ring",
-                        text: getErrorMessage(err)
-                    });
-                    node.error(err);
+                    nodeStatus.getError(node, err)
                 });
 
                 node.status({
@@ -408,12 +372,7 @@ module.exports = function (RED) {
 
             } catch (err) {
                 logger.error("subscribeContext error:" + err);
-                node.status({
-                    fill: "red",
-                    shape: "ring",
-                    text: getErrorMessage(err)
-                });
-                node.error(err);
+                nodeStatus.getError(node, err)
             }
         };
     }
@@ -431,16 +390,11 @@ module.exports = function (RED) {
 
     function unsubscribeFromOrion(node, subscriptionId, url, config) {
 
-        var s4cUtility = require("./snap4city-utility.js");
         const logger = s4cUtility.getLogger(RED, node);
         const uid = s4cUtility.retrieveAppID(RED);
         var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
 
         logger.debug("unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
-
-        // var payload = {//TODO remove
-        //     "subscriptionId": subscriptionId
-        // };
 
         var orionBrokerService = RED.nodes.getNode(config.service);
         return when.promise(function (resolve, reject) {
@@ -513,7 +467,7 @@ module.exports = function (RED) {
 
     // retrieve token from context broker
     function getToken(node, orionUrl, credentials) {
-        var s4cUtility = require("./snap4city-utility.js");
+
         const logger = s4cUtility.getLogger(RED, node);
         var tokenUrl = orionUrl + "/token";
         if (tokenUrl.indexOf("http://") >= 0) {
@@ -776,7 +730,7 @@ module.exports = function (RED) {
     }
 
     function getContextBrokerListForRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
-        var s4cUtility = require("./snap4city-utility.js");
+
         const logger = s4cUtility.getLogger(RED, node);
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();
@@ -816,7 +770,7 @@ module.exports = function (RED) {
     }
 
     function createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
-        var s4cUtility = require("./snap4city-utility.js");
+
         const logger = s4cUtility.getLogger(RED, node);
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();
@@ -938,7 +892,7 @@ module.exports = function (RED) {
     function getMyUri(node) {
         return when.promise(
             function (resolve, reject) {
-                var s4cUtility = require("./snap4city-utility.js");
+
                 const logger = s4cUtility.getLogger(RED, node);
 
                 // first try to get user specified uri, TODO: many input validations...
@@ -988,7 +942,7 @@ module.exports = function (RED) {
 
     function OrionQueryV2(n) {
         RED.nodes.createNode(this, n);
-        var s4cUtility = require("./snap4city-utility.js");
+
         const logger = s4cUtility.getLogger(RED, this);
 
         this.on("input", function (msg) {
@@ -1023,37 +977,17 @@ module.exports = function (RED) {
                     node.brokerConn.queryContext(node, n, payload).then(
                         function (msg) {
                             logger.debug("queryContext result:" + JSON.stringify(msg));
-                            //msg = formatOutput(node, n, JSON.parse(msg.payload)); //TODO 2*
-
-                            node.send({
-                                payload: [JSON.parse(msg.payload)],//TODO 2*
-                                statusCode: 200
-                            });
-
-                            node.status({
-                                fill: "green",
-                                shape: "dot",
-                                text: "success"
-                            });
+                            nodeStatus.send(node, [JSON.parse(msg.payload)], 200)
+                            nodeStatus.success(node)
                         },
                         function (reason) {
                             logger.error("queryContext error:" + JSON.stringify(reason));
-                            node.status({
-                                fill: "red",
-                                shape: "ring",
-                                text: getErrorMessage(reason)
-                            });
-                            node.error("failed to query, reason: " + JSON.stringify(reason));
+                            nodeStatus.getError(node, reason, "Failed to query! Reason: " + JSON.stringify(reason))
                         }
                     );
                 });
             } catch (err) {
-                node.error(err, msg);
-                node.status({
-                    fill: "red",
-                    shape: "ring",
-                    text: getErrorMessage(err.code)
-                });
+                nodeStatus.getError(node, err.code, msg)
                 node.send({
                     payload: err.toString(),
                     statusCode: err.code
@@ -1098,13 +1032,13 @@ module.exports = function (RED) {
     //OrionUpdate node constructor	
     RED.nodes.registerType("Fiware-Orion API v2: Test", OrionUpdateV2Test);
 
-    function OrionUpdateV2Test(n) {
-        RED.nodes.createNode(this, n);
-        var s4cUtility = require("./snap4city-utility.js");
+    function OrionUpdateV2Test(nodeConfig) {
+        RED.nodes.createNode(this, nodeConfig);
+
         const logger = s4cUtility.getLogger(RED, this);
 
         this.on("input", function (msg) {
-            this.service = n.service;
+            this.service = nodeConfig.service;
             this.brokerConn = RED.nodes.getNode(this.service);
             var node = this;
 
@@ -1113,107 +1047,55 @@ module.exports = function (RED) {
             }
 
             // create json payload for context update
-            var payload = generateCreateElementPayload(node, n, msg);
+            var payload = generateUpdatePayload(nodeConfig);
 
             try {
-                node.brokerConn.init(node, n).then(function () {
-                    node.brokerConn.updateContext(node, n, payload, msg.auth).then(
+                node.brokerConn.init(node, nodeConfig).then(function () {
+                    node.brokerConn.updateContext(node, nodeConfig, payload, msg.auth).then(
                         function (msg) {
                             logger.debug("updateContext result:" + JSON.stringify(msg));
-                            msg = formatOutput(node, n, JSON.parse(msg.payload));
-
-                            node.send({
-                                payload: msg,
-                                statusCode: 200
-                            });
-
-                            node.status({
-                                fill: "green",
-                                shape: "dot",
-                                text: "success"
-                            });
+                            nodeStatus.send(node, "Success", 200)
+                            nodeStatus.success(node)
                         },
                         function (reason) {
                             logger.error("updateContext error:" + JSON.stringify(reason));
-                            node.status({
-                                fill: "red",
-                                shape: "ring",
-                                text: getErrorMessage(reason)
-                            });
-                            node.error("failed to update, reason: " + JSON.stringify(reason));
+                            nodeStatus.getError(node, reason, "failed to update, reason: " + JSON.stringify(reason));
                         }
                     );
                 });
             } catch (err) {
-                node.error(err, msg);
-                node.status({
-                    fill: "red",
-                    shape: "ring",
-                    text: getErrorMessage(err.code)
-                });
-                node.send({
-                    payload: err.toString(),
-                    statusCode: getErrorMessage(err.code)
-                });
+                nodeStatus.getError(node, err.code, msg)
             }
         });
     }
 
-    //reason is a json
-    function getErrorMessage(reason) {
-        try {
-            if (JSON.stringify(reason).indexOf("TIMEDOUT") != -1)
-                return "problem, Timeout";
-            else if (JSON.stringify(reason).indexOf("ENOTFOUND") != -1)
-                return "problem, Not reachable";
-            else if (JSON.stringify(reason).indexOf("ECONNREFUSED") != -1)
-                return "problem, Connection refused";
-            else if (JSON.stringify(reason).indexOf("SELF_SIGNED_CERT_IN_CHAIN") != -1)
-                return "problem, CA certificate not valid";
-            else if (JSON.stringify(reason).indexOf("is not in the cert's list") != -1)
-                return "problem, Broker URL mismatch";
-            else if ((JSON.stringify(reason).indexOf("certificate unknown") != -1) || (JSON.stringify(reason).indexOf("EPROTO") != -1))
-                return "problem, Certificate credentials not valid";
-            else if (JSON.stringify(reason).indexOf("key values mismatch") != -1)
-                return "problem, Key values mismatch";
-            else
-                return "problem, " + JSON.parse(reason.payload).message;
-        } catch (err) {
-            return "unknown problem";
-        }
-    }
+    function generateUpdatePayload(nodeConfig) {
+        var attr
+        var attributesName = [];
+        var attributesValue = [];
+        var payload = {}
 
-    //priority to the n.attrkey and n.value. If not found, retrieve from msg
-    //in any case, use n.id and n.type
-    function generateCreateElementPayload(node, n, msg) {
-        var attributes = [];
-        if (n.attrkey && n.attrvalue) {
-            var name = n.attrkey.trim();
-            var value = n.attrvalue.trim();
-            attributes.push({
-                name,
-                value
-            });
-        } else if (typeof msg.attributes != "undefined") {
-            attributes = msg.attributes;
-        } else if (typeof msg.payload.attributes != "undefined") {
-            attributes = msg.payload.attributes;
+        if (nodeConfig.attrkey && nodeConfig.attrvalue) {
+            attributesName = nodeConfig.attrkey.replace(' ', '').split(',')
+            attributesValue = nodeConfig.attrvalue.replace(' ', '').split(',')
+            //Remove last element if attributes list ends with , (comma)
+            if (attributesName[attributesName.length - 1] === '')
+                attributesName.pop()
+            if (attributesValue[attributesValue.length - 1] === '')
+                attributesName.pop()
+            if (attributesName.length !== attributesValue.length)
+                throw "Missing attributes names or values "
         }
 
-        if (!attributes) {
-            throw "Missing 'attributes' property";
-        }
+        attributesValue.forEach((attrValue, index) => {
+            attr = { "value": attrValue, "type": "string" }
 
-        var payload = {
-            "contextElements": [{
-                "type": n.entype,
-                "isPattern": "false",
-                "id": n.enid,
-                "attributes": attributes
-            }],
-            "updateAction": "APPEND"
-        };
-
+            if (attrValue.indexOf('.') !== -1 && attrValue === Number.parseFloat(attrValue).toString())
+                attr = { "value": Number.parseFloat(attrValue), "type": "float" }
+            if (attrValue === Number.parseInt(attrValue).toString())
+                attr = { "value": Number.parseInt(attrValue), "type": "int" }
+            payload[attributesName[index]] = attr
+        })
         return payload;
     }
 
@@ -1224,7 +1106,7 @@ module.exports = function (RED) {
 
     function OrionOutV2(n) {
         RED.nodes.createNode(this, n);
-        var s4cUtility = require("./snap4city-utility.js");
+
         const logger = s4cUtility.getLogger(RED, this);
 
         this.on("input", function (msg) {
@@ -1256,42 +1138,21 @@ module.exports = function (RED) {
                         throw ("entype or enid missing");
                 }
                 try {
-                    node.brokerConn.init(node, n).then(function () {
+                    node.brokerConn.init(node, n).then(()=> {
                         node.brokerConn.updateContext(node, n, msg.payload[0], msg.auth).then(
-                            function (msg) {
-                                node.send({
-                                    payload: "msg",
-                                    statusCode: 200
-                                });
-
-                                node.status({
-                                    fill: "green",
-                                    shape: "dot",
-                                    text: "success"
-                                });
+                            ()=> {
+                                nodeStatus.send(node, "Success", 200)
+                                nodeStatus.success(node)
                             },
                             function (reason) {
                                 logger.error("updateContext error:" + JSON.stringify(reason));
-                                node.status({
-                                    fill: "red",
-                                    shape: "ring",
-                                    text: getErrorMessage(reason)
-                                });
-                                node.error("failed to update, reason: " + JSON.stringify(reason));
+                                nodeStatus.getError(node, reason, "failed to update, reason: " + JSON.stringify(reason));
                             }
                         );
                     });
                 } catch (err) {
-                    node.error(err, msg);
-                    node.status({
-                        fill: "red",
-                        shape: "ring",
-                        text: getErrorMessage(err.code)
-                    });
-                    node.send({
-                        payload: err.toString(),
-                        statusCode: getErrorMessage(err.code)
-                    });
+                    nodeStatus.getError(node, err.code, msg);
+                    nodeStatus.send(node, err.toString(),err.code)
                 }
             } catch (e) {
                 node.status({
