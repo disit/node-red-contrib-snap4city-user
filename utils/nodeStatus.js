@@ -48,7 +48,7 @@ class NodeStatus {
         node.status({
             fill: "blue",
             shape: "dot",
-            text: "Listening on: " + reference
+            text: "Listening on: " + url
         });
     }
 
