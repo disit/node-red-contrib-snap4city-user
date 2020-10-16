@@ -16,6 +16,7 @@
 
 /* NODE-RED-CONTRIB-SNAP4CITY-USER    Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence     This program is free software: you can redistribute it and/or modify    it under the terms of the GNU Affero General Public License as    published by the Free Software Foundation, either version 3 of the    License, or (at your option) any later version.     This program is distributed in the hope that it will be useful,    but WITHOUT ANY WARRANTY; without even the implied warranty of    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    GNU Affero General Public License for more details.     You should have received a copy of the GNU Affero General Public License    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 var SubscriptionStore = require('./utils/subscriptionStore')
+var HttpRequestOptions = require('./utils/httpRequestOptions')
 var NodeStatus = require('./utils/nodeStatus')
 var s4cUtility = require("./snap4city-utility.js");
 var bodyParser = require("body-parser");
@@ -30,6 +31,7 @@ var when = require('when');
 
 var subscriptionIDs = new SubscriptionStore()
 var nodeStatus = new NodeStatus()
+var httpRequestOptions = new HttpRequestOptions()
 
 module.exports = function (RED) {
     "use strict";
@@ -80,47 +82,14 @@ module.exports = function (RED) {
             logger.debug("queryContext, payload: " + JSON.stringify(payload));
 
             var orionBrokerService = RED.nodes.getNode(config.service);
+
             return when.promise(function (resolve, reject) {
 
                 getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
 
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
-
-                var query = `${payload.entities[0].id}/?type=${payload.entities[0].type}`;
-                query += payload.attributes != "" ? `&attrs=${payload.attributes}` : '';
-                var options = {
-                    hostname: hostname,
-                    port: orionBrokerService.port,
-                    path: prefixPath + "/v2/entities/" + query + "&limit=" + config.limit + "&elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
-                    method: 'GET',
-                    rejectUnauthorized: false,
-                    headers: {
-                        'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
-                    }
-                };
-                if (config.apikey != null && config.apikey != "") {
-                    options.headers.apikey = config.apikey;
-                }
-
-                if (config.basicAuth != null && config.basicAuth != "") {
-                    options.headers.Authorization = config.basicAuth;
-                }
-
-                if (config.tenant != null && config.tenant != "") {
-                    options.headers["Fiware-Service"] = config.tenant;
-                    options.headers["Fiware-ServicePath"] = config.servicepath;
-                }
-
-                var tlsNode = RED.nodes.getNode(config.tls);
-
-                if (tlsNode != null) {
-                    if (tlsNode.credentials != null) {
-                        options.key = tlsNode.credentials.keydata;
-                        options.cert = tlsNode.credentials.certdata;
-                        options.ca = tlsNode.credentials.cadata;
-                        options.rejectUnauthorized = tlsNode.verifyservercert;
-                    }
-                }
+                var options = httpRequestOptions.generateForOrionAPIV2Query(hostname, orionBrokerService.port, prefixPath, config, payload, accessToken)
+                options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
 
                 logger.debug("queryContext options:" + JSON.stringify(options));
 
@@ -155,13 +124,7 @@ module.exports = function (RED) {
         };
 
         this.updateContext = function (node, config, payload, auth) {
-
-            var k1 = (auth && auth.k1) ? auth.k1 : ((config.userk1) ? config.userk1 : undefined);
-            var k2 = (auth && auth.k2) ? auth.k2 : ((config.passk2) ? config.passk2 : undefined);
-            var apikey = (auth && auth.apikey) ? auth.apikey : ((config.apikey) ? config.apikey : undefined);
-            var basicAuth = (auth && auth.basicAuth) ? auth.basicAuth : ((config.basicAuth) ? config.basicAuth : undefined);
             var deviceId = config.enid;
-
 
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
@@ -173,44 +136,11 @@ module.exports = function (RED) {
             logger.debug("updateContext, payload: " + JSON.stringify(payload));
             var orionBrokerService = RED.nodes.getNode(config.service);
             return when.promise(function (resolve, reject) {
+
                 getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, deviceId, uid, accessToken);
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
-
-                var options = {
-                    hostname: hostname,
-                    port: orionBrokerService.port,
-                    path: prefixPath + "/v2/entities/" + deviceId + "/attrs?elementid=" + deviceId + (k1 ? "&k1=" + k1 : "") + (k2 ? "&k2=" + k2 : ""),
-                    method: 'PATCH',
-                    rejectUnauthorized: false,
-                    headers: {
-                        'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
-                        'Content-Type': 'application/json',
-                        'Content-Length': JSON.stringify(payload).length
-                    }
-                };
-                if (apikey) {
-                    options.headers.apikey = apikey;
-                }
-
-                if (basicAuth) {
-                    options.headers.Authorization = basicAuth;
-                }
-
-                if (config.tenant != null && config.tenant != "") {
-                    options.headers["Fiware-Service"] = config.tenant;
-                    options.headers["Fiware-ServicePath"] = config.servicepath;
-                }
-
-                var tlsNode = RED.nodes.getNode(config.tls);
-
-                if (tlsNode != null) {
-                    if (tlsNode.credentials != null) {
-                        options.key = tlsNode.credentials.keydata;
-                        options.cert = tlsNode.credentials.certdata;
-                        options.ca = tlsNode.credentials.cadata;
-                        options.rejectUnauthorized = tlsNode.verifyservercert;
-                    }
-                }
+                var options = httpRequestOptions.generateForOrionAPIV2Update(hostname, orionBrokerService.port, prefixPath, config, auth, JSON.stringify(payload).length, accessToken)
+                options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED, auth)
 
                 logger.debug("updateContext options:" + JSON.stringify(options));
 
@@ -257,44 +187,8 @@ module.exports = function (RED) {
             getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
 
             var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
-
-            var options = {
-                hostname: hostname,
-                port: orionBrokerService.port,
-                path: prefixPath + "/v2/subscriptions/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
-                method: 'POST',
-                rejectUnauthorized: false,
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Content-Length': JSON.stringify(payload).length
-                }
-            };
-
-            if (config.apikey != null && config.apikey != "") {
-                options.headers.apikey = config.apikey;
-            }
-
-            if (config.basicAuth != null && config.basicAuth != "") {
-                options.headers.Authorization = config.basicAuth;
-            }
-
-            if (config.tenant != null && config.tenant != "") {
-                options.headers["Fiware-Service"] = config.tenant;
-                options.headers["Fiware-ServicePath"] = config.servicepath;
-            }
-
-            var tlsNode = RED.nodes.getNode(config.tls);
-
-            if (tlsNode != null) {
-                if (tlsNode.credentials != null) {
-                    options.key = tlsNode.credentials.keydata;
-                    options.cert = tlsNode.credentials.certdata;
-                    options.ca = tlsNode.credentials.cadata;
-                    options.rejectUnauthorized = tlsNode.verifyservercert;
-                }
-            }
+            var options = httpRequestOptions.generateForOrionAPIV2Subscribe(hostname, orionBrokerService.port, prefixPath, config, JSON.stringify(payload).length, accessToken)
+            options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
 
             logger.debug("subscribeContext options:" + JSON.stringify(options));
 
@@ -401,43 +295,8 @@ module.exports = function (RED) {
 
             var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 
-            var options = {
-                hostname: hostname,
-                port: orionBrokerService.port,
-                path: prefixPath + "/v2/subscriptions/" + subscriptionId + "/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
-                method: 'DELETE',
-                rejectUnauthorized: false,
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Content-Length': 0// JSON.stringify(payload).length //TODO remove if not necessary
-                }
-            };
-
-            if (config.apikey != null && config.apikey != "") {
-                options.headers.apikey = config.apikey;
-            }
-
-            if (config.basicAuth != null && config.basicAuth != "") {
-                options.headers.Authorization = config.basicAuth;
-            }
-
-            if (config.tenant != null && config.tenant != "") {
-                options.headers["Fiware-Service"] = config.tenant;
-                options.headers["Fiware-ServicePath"] = config.servicepath;
-            }
-
-            var tlsNode = RED.nodes.getNode(config.tls);
-
-            if (tlsNode != null) {
-                if (tlsNode.credentials != null) {
-                    options.key = tlsNode.credentials.keydata;
-                    options.cert = tlsNode.credentials.certdata;
-                    options.ca = tlsNode.credentials.cadata;
-                    options.rejectUnauthorized = tlsNode.verifyservercert;
-                }
-            }
+            var options = httpRequestOptions.generateForOrionAPIV2Unsubscribe(hostname, orionBrokerService.port, prefixPath, config, subscriptionId, accessToken)
+            options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
 
             logger.debug("unsubscribeContext options:" + JSON.stringify(options));
 
@@ -1138,9 +997,9 @@ module.exports = function (RED) {
                         throw ("entype or enid missing");
                 }
                 try {
-                    node.brokerConn.init(node, n).then(()=> {
+                    node.brokerConn.init(node, n).then(() => {
                         node.brokerConn.updateContext(node, n, msg.payload[0], msg.auth).then(
-                            ()=> {
+                            () => {
                                 nodeStatus.send(node, "Success", 200)
                                 nodeStatus.success(node)
                             },
@@ -1152,7 +1011,7 @@ module.exports = function (RED) {
                     });
                 } catch (err) {
                     nodeStatus.getError(node, err.code, msg);
-                    nodeStatus.send(node, err.toString(),err.code)
+                    nodeStatus.send(node, err.toString(), err.code)
                 }
             } catch (e) {
                 node.status({
