@@ -1,5 +1,5 @@
 /*
- * There are the visual feedback you can see 
+ * These are the visual feedback you can see 
  * above the nodes and in debug side on node-red
  */
 class NodeStatus {

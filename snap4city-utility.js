@@ -253,6 +253,118 @@ module.exports = {
         }
     },
 
+    getContextBrokerListForRegisterActivity: function (RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
+
+        const logger = this.getLogger(RED, node);
+        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+        var xmlHttp = new XMLHttpRequest();
+        if (typeof node.currentContextBroker != "undefined" && node.currentContextBroker.accesslink.indexOf(contextBrokerUrl) == -1) {
+            delete node.contextBrokerList;
+        }
+        if (typeof node.contextBrokerList == "undefined") {
+            var uri = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
+            if (accessToken != "" && typeof accessToken != "undefined") {
+                xmlHttp.open("GET", encodeURI(uri + "/api/contextbroker.php?action=get_all_contextbroker&nodered=yes"), true);
+                xmlHttp.setRequestHeader("Content-Type", "application/json");
+                xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
+                xmlHttp.onload = function (e) {
+                    if (xmlHttp.readyState === 4) {
+                        if (xmlHttp.status === 200) {
+                            if (xmlHttp.responseText != "") {
+                                try {
+                                    node.contextBrokerList = JSON.parse(xmlHttp.responseText).data;
+                                } catch (err) {
+                                    node.contextBrokerList = xmlHttp.responseText.data;
+                                }
+                                this.createDeviceLongIdAndRegisterActivity(RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
+                            }
+                        } else {
+                            logger.error(xmlHttp.statusText);
+                        }
+                    }
+                };
+                xmlHttp.onerror = function (e) {
+                    logger.error(xmlHttp.statusText);
+                };
+                xmlHttp.send(null);
+            }
+        } else {
+            this.createDeviceLongIdAndRegisterActivity(RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
+        }
+    },
+
+    createDeviceLongIdAndRegisterActivity: function (RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
+
+        const logger = this.getLogger(RED, node);
+        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+        var xmlHttp = new XMLHttpRequest();
+        if (typeof node.deviceLongId == "undefined" || node.deviceLongId.indexOf(deviceName) == -1) {
+            if (typeof node.contextBrokerList != "undefined") {
+                for (var i = 0; i < node.contextBrokerList.length; i++) {
+                    if (node.contextBrokerList[i].accesslink.indexOf(contextBrokerUrl) != -1 && node.contextBrokerList[i].accessport == contextBrokerPort) {
+                        node.deviceLongId = node.contextBrokerList[i].organization + ":" + node.contextBrokerList[i].name + ":" + deviceName;
+                        node.currentContextBroker = node.contextBrokerList[i];
+                    }
+                }
+            }
+        }
+
+        if (typeof node.deviceLongId != "undefined") {
+            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1");
+            if (accessToken != "" && typeof accessToken != "undefined") {
+                xmlHttp.open("POST", encodeURI(uri + "/lightactivities/?elementType=IOTID&sourceRequest=iotapp&sourceId=" + iotappid + "&elementId=" + node.deviceLongId), true);
+                xmlHttp.setRequestHeader("Content-Type", "application/json");
+                xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
+                xmlHttp.onload = function (e) {
+                    if (xmlHttp.readyState === 4) {
+                        if (xmlHttp.status !== 200) {
+                            logger.error(xmlHttp.statusText);
+                        }
+                    } else {
+                        logger.error(xmlHttp.statusText);
+                    }
+                };
+                xmlHttp.onerror = function (e) {
+                    logger.error(xmlHttp.statusText);
+                };
+                xmlHttp.send(null);
+            }
+        }
+    },
+
+    processInput: function (n, msg) {
+        n.url = n.url || msg.url;
+        n.port = n.port || msg.port;
+        n.enid = n.enid || msg.enid || ".*"; //TODO don't allow .* for queryContext (but also for subscribeContext)
+        n.entype = n.entype || msg.entype;
+        n.limit = n.limit || msg.limit || LIMIT;
+        n.userk1 = n.userk1 || msg.userk1;
+        n.passk2 = n.passk2 || msg.passk2;
+        n.tenant = n.tenant || msg.tenant;
+        n.servicepath = n.servicepath || msg.servicepath;
+        n.apikey = n.apikey || msg.apikey;
+        n.basicAuth = n.basicAuth || msg.basicAuth;
+        n.attributes = n.attributes || msg.attributes;
+        n.ispattern = n.ispattern || msg.ispattern || false;
+        n.includeattr = n.includeattr || msg.includeattr;
+
+        n.rtype = n.rtype || msg.rtype;
+        n.rvalue = n.rvalue || msg.rvalue;
+
+        if (n.rtype && !n.rvalue) {
+            n.rvalue = "entity::type";
+        }
+
+        //	n.attributes = n.attributes || '.*';
+        n.attributes = n.attributes || [];
+        if (n.attributes.constructor !== Array) {
+            n.attributes = (n.attributes || "").split(",");
+            for (var i = 0; i < n.attributes.length; i++) {
+                n.attributes[i] = n.attributes[i].trim();
+            }
+        }
+    },
+
     splitUrlInHostnameAndPrefixPath: function (url) {
         var hostname = url;
         var prefixPath = "";

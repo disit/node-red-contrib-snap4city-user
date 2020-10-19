@@ -33,7 +33,7 @@ var subscriptionIDs = new SubscriptionStore()
 var nodeStatus = new NodeStatus()
 var httpRequestOptions = new HttpRequestOptions()
 
-const httpService = http //To set if use http or https in request
+const httpService = http //Set http or https to use in request
 
 module.exports = function (RED) {
     "use strict";
@@ -43,6 +43,17 @@ module.exports = function (RED) {
 
     var token = "";
     var LIMIT = 30;
+
+    /*
+     *This node is not shown by NodeRed but is used by any other node
+     *to make the various http requests (query, subscribe, etc.).
+     */
+    RED.nodes.registerType("Fiware-Orion API v2: Service", OrionServiceV2, {
+        credentials: {
+            user: { type: "text" },
+            password: { type: "password" }
+        }
+    });
 
     function OrionServiceV2(config) {
         RED.nodes.createNode(this, config);
@@ -72,7 +83,7 @@ module.exports = function (RED) {
             });
         };
 
-        this.queryContext = function (node, config, payload) {
+        this.queryContext = function (node, config, queryParams) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
@@ -80,14 +91,14 @@ module.exports = function (RED) {
 
             nodeStatus.querying(node)
 
-            logger.debug(`Querying entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
+            logger.debug(`Querying entity: ${config.enid}`);
 
             return when.promise(function (resolve, reject) {
 
-                getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+                s4cUtility.getContextBrokerListForRegisterActivity( RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
 
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
-                var options = httpRequestOptions.generateForOrionAPIV2Query(hostname, orionBrokerService.port, prefixPath, config, payload, accessToken)
+                var options = httpRequestOptions.generateForOrionAPIV2Query(hostname, orionBrokerService.port, prefixPath, config, queryParams, accessToken)
                 options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
 
                 var msg = {};
@@ -114,7 +125,7 @@ module.exports = function (RED) {
                     reject(err);
                 });
 
-                req.write(JSON.stringify(payload));
+                req.write(JSON.stringify(queryParams));
                 req.end();
             });
         };
@@ -129,7 +140,7 @@ module.exports = function (RED) {
 
             logger.debug(`Updating entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
             return when.promise(function (resolve, reject) {
-                getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+                s4cUtility.getContextBrokerListForRegisterActivity( RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
                 var options = httpRequestOptions.generateForOrionAPIV2Update(hostname, orionBrokerService.port, prefixPath, config, auth, JSON.stringify(payload).length, accessToken)
                 options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED, auth)
@@ -172,7 +183,7 @@ module.exports = function (RED) {
 
             logger.debug(`Subscribing entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
 
-            getContextBrokerListForRegisterActivity(node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+            s4cUtility.getContextBrokerListForRegisterActivity( RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
             var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
             var options = httpRequestOptions.generateForOrionAPIV2Subscribe(hostname, orionBrokerService.port, prefixPath, config, JSON.stringify(payload).length, accessToken)
             options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
@@ -205,7 +216,7 @@ module.exports = function (RED) {
                                         logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs.getSubscriptionOfNode(nodeID));
                                         unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
                                     } else {
-                                        var payload = formatOutput(node, config, req.body.data);//TODO *1 verify formatOutput
+                                        //var payload = formatOutput(node, config, req.body.data);//TODO *1 verify formatOutput
                                         node.send({
                                             payload: req.body.data,//TODO *1
                                             statusCode: 201
@@ -253,17 +264,6 @@ module.exports = function (RED) {
             }
         };
     }
-
-    RED.nodes.registerType("Fiware-Orion API v2: Service", OrionServiceV2, {
-        credentials: {
-            user: {
-                type: "text"
-            },
-            password: {
-                type: "password"
-            }
-        }
-    });
 
     function unsubscribeFromOrion(node, subscriptionId, url, config) {
         const logger = s4cUtility.getLogger(RED, node);
@@ -472,7 +472,7 @@ module.exports = function (RED) {
 
     }
 
-    function getSubscribePayload(node, n) {
+    function generateSubscribePayload(node, n) {
         // prepare payload for context subscription
         // contains node uid and url besides data supplied in node fields
 
@@ -521,131 +521,6 @@ module.exports = function (RED) {
         return orionUrl;
     }
 
-    function request(node, method, payload, url) {
-        var opts = urllib.parse(url);
-
-        opts.method = method;
-        opts.headers = {};
-        opts.headers['Content-Type'] = "application/json";
-        opts.headers["Accept"] = "application/json";
-        payload = JSON.stringify(payload);
-
-        opts.headers['content-length'] = payload.length;
-        if (token) {
-            opts.headers["X-Auth-Token"] = token;
-        }
-
-        return when.promise(function (resolve, reject) {
-            var req = ((/^https/.test(url)) ? https : http).request(opts, function (res) {
-                (node.ret === "bin") ? res.setEncoding('binary') : res.setEncoding('utf8');
-
-                var result = "";
-                res.on('data', function (chunk) {
-                    result += chunk;
-                });
-
-                res.on('end', function () {
-                    resolve(JSON.parse(result));
-                });
-            });
-
-            req.on('error', function (err) {
-                reject(err);
-                node.status({
-                    fill: "red",
-                    shape: "ring",
-                    text: err.code
-                });
-                node.send({
-                    payload: err.toString(),
-                    statusCode: err.code
-                });
-            });
-
-            req.write(payload);
-            req.end();
-        });
-    }
-
-    function getContextBrokerListForRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
-
-        const logger = s4cUtility.getLogger(RED, node);
-        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-        var xmlHttp = new XMLHttpRequest();
-        if (typeof node.currentContextBroker != "undefined" && node.currentContextBroker.accesslink.indexOf(contextBrokerUrl) == -1) {
-            delete node.contextBrokerList;
-        }
-        if (typeof node.contextBrokerList == "undefined") {
-            var uri = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
-            if (accessToken != "" && typeof accessToken != "undefined") {
-                xmlHttp.open("GET", encodeURI(uri + "/api/contextbroker.php?action=get_all_contextbroker&nodered=yes"), true);
-                xmlHttp.setRequestHeader("Content-Type", "application/json");
-                xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
-                xmlHttp.onload = function (e) {
-                    if (xmlHttp.readyState === 4) {
-                        if (xmlHttp.status === 200) {
-                            if (xmlHttp.responseText != "") {
-                                try {
-                                    node.contextBrokerList = JSON.parse(xmlHttp.responseText).data;
-                                } catch (err) {
-                                    node.contextBrokerList = xmlHttp.responseText.data;
-                                }
-                                createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
-                            }
-                        } else {
-                            logger.error(xmlHttp.statusText);
-                        }
-                    }
-                };
-                xmlHttp.onerror = function (e) {
-                    logger.error(xmlHttp.statusText);
-                };
-                xmlHttp.send(null);
-            }
-        } else {
-            createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
-        }
-    }
-
-    function createDeviceLongIdAndRegisterActivity(node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
-
-        const logger = s4cUtility.getLogger(RED, node);
-        var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-        var xmlHttp = new XMLHttpRequest();
-        if (typeof node.deviceLongId == "undefined" || node.deviceLongId.indexOf(deviceName) == -1) {
-            if (typeof node.contextBrokerList != "undefined") {
-                for (var i = 0; i < node.contextBrokerList.length; i++) {
-                    if (node.contextBrokerList[i].accesslink.indexOf(contextBrokerUrl) != -1 && node.contextBrokerList[i].accessport == contextBrokerPort) {
-                        node.deviceLongId = node.contextBrokerList[i].organization + ":" + node.contextBrokerList[i].name + ":" + deviceName;
-                        node.currentContextBroker = node.contextBrokerList[i];
-                    }
-                }
-            }
-        }
-
-        if (typeof node.deviceLongId != "undefined") {
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1");
-            if (accessToken != "" && typeof accessToken != "undefined") {
-                xmlHttp.open("POST", encodeURI(uri + "/lightactivities/?elementType=IOTID&sourceRequest=iotapp&sourceId=" + iotappid + "&elementId=" + node.deviceLongId), true);
-                xmlHttp.setRequestHeader("Content-Type", "application/json");
-                xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
-                xmlHttp.onload = function (e) {
-                    if (xmlHttp.readyState === 4) {
-                        if (xmlHttp.status !== 200) {
-                            logger.error(xmlHttp.statusText);
-                        }
-                    } else {
-                        logger.error(xmlHttp.statusText);
-                    }
-                };
-                xmlHttp.onerror = function (e) {
-                    logger.error(xmlHttp.statusText);
-                };
-                xmlHttp.send(null);
-            }
-        }
-    }
-
     //OrionSubscribeV2 node constructor	
     RED.nodes.registerType("Fiware-Orion API v2: Subscribe", OrionSubscribeV2);
 
@@ -677,7 +552,7 @@ module.exports = function (RED) {
         validateInput(this, n);
 
         node.brokerConn.init(node, n).then(function () {
-            getSubscribePayload(node, n).then(function (payload) {
+            generateSubscribePayload(node, n).then(function (payload) {
                 node.brokerConn.subscribe(node, n, payload);
             });
         });
@@ -746,41 +621,29 @@ module.exports = function (RED) {
     //OrionQueryV2 node constructor	
     RED.nodes.registerType("Fiware-Orion API v2: Query", OrionQueryV2);
 
-    function OrionQueryV2(n) {
-        RED.nodes.createNode(this, n);
-
+    function OrionQueryV2(config) {
+        RED.nodes.createNode(this, config);
         const logger = s4cUtility.getLogger(RED, this);
 
         this.on("input", function (msg) {
-            this.service = n.service;
-            this.brokerConn = RED.nodes.getNode(this.service);
+            this.service = config.service;
+            this.serviceNode = RED.nodes.getNode(this.service);
             var node = this;
 
             // process input from UI and input pipe
-            processInput(this, n, msg);
+            s4cUtility.processInput(config, msg);
 
-            // create json payload for context request
-            var payload = {//TODO to delete 
+            var queryParams = {
                 "entities": [{
-                    "type": n.entype,
-                    "isPattern": true,
-                    "id": n.enid
+                    "type": config.entype,
+                    "id": config.enid
                 }],
-                "attributes": n.attributes
+                "attributes": config.attributes
             };
 
-            if (n.rtype && n.rvalue) {
-                payload.restriction = {
-                    "scopes": [{
-                        "type": n.rtype,
-                        "value": n.rvalue
-                    }]
-                };
-            }
-
             try {
-                node.brokerConn.init(node, n).then(function () {
-                    node.brokerConn.queryContext(node, n, payload).then(
+                node.serviceNode.init(node, config).then(function () {
+                    node.serviceNode.queryContext(node, config, queryParams).then(
                         function (msg) {
                             logger.debug("queryContext result:" + JSON.stringify(msg));
                             nodeStatus.send(node, [JSON.parse(msg.payload)], 200)
@@ -802,64 +665,31 @@ module.exports = function (RED) {
         });
     }
 
-    function processInput(node, n, msg) {
-        n.url = n.url || msg.url;
-        n.port = n.port || msg.port;
-        n.enid = n.enid || msg.enid || ".*"; //TODO don't allow .* for queryContext (but also for subscribeContext)
-        n.entype = n.entype || msg.entype;
-        n.limit = n.limit || msg.limit || LIMIT;
-        n.userk1 = n.userk1 || msg.userk1;
-        n.passk2 = n.passk2 || msg.passk2;
-        n.tenant = n.tenant || msg.tenant;
-        n.servicepath = n.servicepath || msg.servicepath;
-        n.apikey = n.apikey || msg.apikey;
-        n.basicAuth = n.basicAuth || msg.basicAuth;
-        n.attributes = n.attributes || msg.attributes;
-        n.ispattern = n.ispattern || msg.ispattern || false;
-        n.includeattr = n.includeattr || msg.includeattr;
-
-        n.rtype = n.rtype || msg.rtype;
-        n.rvalue = n.rvalue || msg.rvalue;
-
-        if (n.rtype && !n.rvalue) {
-            n.rvalue = "entity::type";
-        }
-
-        //	n.attributes = n.attributes || '.*';
-        n.attributes = n.attributes || [];
-        if (n.attributes.constructor !== Array) {
-            n.attributes = (n.attributes || "").split(",");
-            for (var i = 0; i < n.attributes.length; i++) {
-                n.attributes[i] = n.attributes[i].trim();
-            }
-        }
-    }
-
-    //OrionUpdate node constructor	
+    //OrionUpdate node constructor
     RED.nodes.registerType("Fiware-Orion API v2: Test", OrionUpdateV2Test);
 
-    function OrionUpdateV2Test(nodeConfig) {
-        RED.nodes.createNode(this, nodeConfig);
+    function OrionUpdateV2Test(config) {
+        RED.nodes.createNode(this, config);
 
         const logger = s4cUtility.getLogger(RED, this);
 
         this.on("input", function (msg) {
-            this.service = nodeConfig.service;
-            this.brokerConn = RED.nodes.getNode(this.service);
+            this.service = config.service;
+            this.serviceNode = RED.nodes.getNode(this.service);
             var node = this;
 
             if (typeof msg.auth == "string") {
                 msg.auth = JSON.parse(msg.auth);
             }
 
-            // create json payload for context update
-            var payload = generateUpdatePayload(nodeConfig);
+            var payload = generateUpdatePayload(config);
 
             try {
-                node.brokerConn.init(node, nodeConfig).then(function () {
-                    node.brokerConn.updateContext(node, nodeConfig, payload, msg.auth).then(
-                        function (msg) {
-                            logger.debug("updateContext result:" + JSON.stringify(msg));
+                node.serviceNode.init(node, config).then(function () {
+                    node.serviceNode.updateContext(node, config, payload, msg.auth).then(
+                        function () {
+                            //In API v2 there is no body in response
+                            logger.debug("Entity updated");
                             nodeStatus.send(node, "Success", 200)
                             nodeStatus.success(node)
                         },
@@ -890,12 +720,11 @@ module.exports = function (RED) {
             if (attributesValue[attributesValue.length - 1] === '')
                 attributesName.pop()
             if (attributesName.length !== attributesValue.length)
-                throw "Missing attributes names or values "
+                throw "Missing attributes name or value "
         }
 
         attributesValue.forEach((attrValue, index) => {
             attr = { "value": attrValue, "type": "string" }
-
             if (attrValue.indexOf('.') !== -1 && attrValue === Number.parseFloat(attrValue).toString())
                 attr = { "value": Number.parseFloat(attrValue), "type": "float" }
             if (attrValue === Number.parseInt(attrValue).toString())
@@ -908,17 +737,16 @@ module.exports = function (RED) {
     //OrionOut node constructor	
     RED.nodes.registerType("Fiware-Orion API v2: Update", OrionOutV2);
 
-    function OrionOutV2(n) {
-        RED.nodes.createNode(this, n);
-
+    function OrionOutV2(config) {
         const logger = s4cUtility.getLogger(RED, this);
+        RED.nodes.createNode(this, config);
 
         this.on("input", function (msg) {
-            this.service = n.service;
-            this.brokerConn = RED.nodes.getNode(this.service);
+            this.service = config.service;
+            this.serviceNode = RED.nodes.getNode(this.service);
             var node = this;
-            try {
 
+            try {
                 if (typeof msg.auth == "string") {
                     msg.auth = JSON.parse(msg.auth);
                 }
@@ -933,26 +761,27 @@ module.exports = function (RED) {
                 }
 
                 if (Array.isArray(msg.payload)) {
-                    if ((n.entype == "") || (n.enid == ""))
+                    if ((config.entype == "") || (config.enid == ""))
                         throw ("entype or enid missing");
 
                 } else {
-                    if (((msg.payload.type == undefined) && (n.entype == "")) ||
-                        ((msg.payload.id == undefined) && (n.enid == "")))
+                    if (((msg.payload.type == undefined) && (config.entype == "")) ||
+                        ((msg.payload.id == undefined) && (config.enid == "")))
                         throw ("entype or enid missing");
                 }
                 try {
-                    node.brokerConn.init(node, n).then(() => {
-                        node.brokerConn.updateContext(node, n, msg.payload[0], msg.auth).then(
-                            () => {
-                                nodeStatus.send(node, "Success", 200)
-                                nodeStatus.success(node)
-                            },
-                            function (reason) {
-                                logger.error("updateContext error:" + JSON.stringify(reason));
-                                nodeStatus.getError(node, reason, "failed to update, reason: " + JSON.stringify(reason));
-                            }
-                        );
+                    node.serviceNode.init(node, config).then(() => {
+                        node.serviceNode.updateContext(node, config, msg.payload[0], msg.auth)
+                            .then(
+                                () => {
+                                    nodeStatus.send(node, "Success", 200)
+                                    nodeStatus.success(node)
+                                },
+                                (reason) => {
+                                    logger.error("Update entity error:" + JSON.stringify(reason));
+                                    nodeStatus.getError(node, reason, "failed to update, reason: " + JSON.stringify(reason));
+                                }
+                            );
                     });
                 } catch (err) {
                     nodeStatus.getError(node, err.code, msg);

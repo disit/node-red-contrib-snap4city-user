@@ -48,9 +48,9 @@ class HttpRequestOptions {
         return options
     }
 
-    generateForOrionAPIV2Query(hostname, port, prefixPath, config, payload, accessToken) {
-        var query = `${payload.entities[0].id}/?type=${payload.entities[0].type}`;
-        query += payload.attributes != "" ? `&attrs=${payload.attributes}` : '';
+    generateForOrionAPIV2Query(hostname, port, prefixPath, config, queryParams, accessToken) {
+        var query = `${queryParams.entities[0].id}/?type=${queryParams.entities[0].type}`;
+        query += queryParams.attributes != "" ? `&attrs=${queryParams.attributes}` : '';
         var options = {
             hostname: hostname,
             port: port,
