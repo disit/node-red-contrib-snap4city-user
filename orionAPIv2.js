@@ -28,6 +28,7 @@ var https = require("follow-redirects").https;
 var urllib = require("url");
 var https2 = require('https');
 var when = require('when');
+var fs = require('fs')
 
 var subscriptionIDs = new SubscriptionStore()
 var nodeStatus = new NodeStatus()
@@ -40,10 +41,8 @@ module.exports = function (RED) {
 
     var jsonParser = bodyParser.json();
     var urlencParser = bodyParser.urlencoded({ extended: true });
-
     var token = "";
     var LIMIT = 30;
-
     /*
      *This node is not shown by NodeRed but is used by any other node
      *to make the various http requests (query, subscribe, etc.).
@@ -95,7 +94,7 @@ module.exports = function (RED) {
 
             return when.promise(function (resolve, reject) {
 
-                s4cUtility.getContextBrokerListForRegisterActivity( RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+                s4cUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
 
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
                 var options = httpRequestOptions.generateForOrionAPIV2Query(hostname, orionBrokerService.port, prefixPath, config, queryParams, accessToken)
@@ -140,7 +139,7 @@ module.exports = function (RED) {
 
             logger.debug(`Updating entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
             return when.promise(function (resolve, reject) {
-                s4cUtility.getContextBrokerListForRegisterActivity( RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+                s4cUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
                 var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
                 var options = httpRequestOptions.generateForOrionAPIV2Update(hostname, orionBrokerService.port, prefixPath, config, auth, JSON.stringify(payload).length, accessToken)
                 options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED, auth)
@@ -183,7 +182,7 @@ module.exports = function (RED) {
 
             logger.debug(`Subscribing entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
 
-            s4cUtility.getContextBrokerListForRegisterActivity( RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
+            s4cUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, config.enid, uid, accessToken);
             var [hostname, prefixPath] = s4cUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
             var options = httpRequestOptions.generateForOrionAPIV2Subscribe(hostname, orionBrokerService.port, prefixPath, config, JSON.stringify(payload).length, accessToken)
             options = httpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
@@ -797,4 +796,6 @@ module.exports = function (RED) {
             }
         });
     }
+    s4cUtility.updateServiceNodeListForAPIv2()
+
 }

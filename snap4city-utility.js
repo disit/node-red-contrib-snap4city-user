@@ -1,3 +1,5 @@
+const http = require("http");
+const { v4: uuidv4 } = require('uuid')
 module.exports = {
 
     getLogger: function (RED, node) {
@@ -374,5 +376,107 @@ module.exports = {
             prefixPath = urlWithoutHttp.substring(urlWithoutHttp.indexOf("/"));
         }
         return [hostname, prefixPath];
+    },
+
+    updateServiceNodeListForAPIv2() {
+        const app = this
+        setTimeout(() => {
+            app.getFlows().then(flows => {
+                app.getContextBrokerList().then(contextBrokerList => {
+                    contextBrokerList.forEach(contextBroker => {
+                        var index = flows.findIndex(node => node.url === contextBroker.uri)
+                        if (index === -1)
+                            flows.push(
+                                {
+                                    id: app.generateNodeId(),
+                                    type: "Fiware-Orion API v2: Service",
+                                    z: "",
+                                    name: contextBroker.uri,
+                                    url: contextBroker.uri,
+                                    port: contextBroker.port
+                                },
+                            )
+                    }
+                    )
+                    this.updateContextBlokerList(flows).then(a => console.log("DONE"))
+                })
+            })
+        }, 5000)
+    },
+
+    getFlows() {
+        return new Promise((resolve, reject) => {
+            const req = http.get("http://localhost:1880/flows", res => {
+                res.setEncoding("utf8");
+                let body = "";
+                res.on("data", data => {
+                    body += data;
+                });
+                res.on("end", () => {
+                    body = JSON.parse(body);
+                    resolve(body)
+                });
+            });
+            req.on('error', function (err) {
+                reject(err);
+            });
+        });
+    },
+
+    getContextBrokerList() {
+        return new Promise((resolve, reject) => {
+            resolve(
+                [
+                    {
+                        uri: 'iotobsf',
+                        port: '1026'
+                    },
+                    {
+                        uri: 'iotobsf2',
+                        port: '2222'
+                    },
+                    {
+                        uri: 'iotobsf3',
+                        port: '3333'
+                    },
+                ]
+            )
+        });
+    },
+
+    updateContextBlokerList(flows) {
+        const data = JSON.stringify(flows)
+        const options = {
+            hostname: "localhost",
+            port: "1880",
+            path: "/flows",
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length
+            }
+        }
+
+        return new Promise((resolve, reject) => {
+            const req = http.request(options, res => {
+                console.log(`statusCode: ${res.statusCode}`)
+                res.on('end', function () {
+                    resolve(res);
+                });
+            });
+
+            req.on('error', function (err) {
+                console.log(err)
+
+                reject(err);
+            });
+            req.write(data)
+            req.end()
+        });
+    },
+
+    generateNodeId() {
+        const uuid = uuidv4()
+        return `${uuid.substring(0, 8)}.${uuid.substring(30, 36)}`
     }
 }
