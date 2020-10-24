@@ -65,7 +65,7 @@ class NodeStatus {
             shape: "ring",
             text: this.getErrorMessage(err)
         });
-        node.error(msgLoggedOnDebug);
+        node.error(msgLoggedOnDebug ? msgLoggedOnDebug : err);
     }
 
     //reason is a json
