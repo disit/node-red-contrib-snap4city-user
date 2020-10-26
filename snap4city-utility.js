@@ -12,7 +12,7 @@ module.exports = {
             level: level,
             format: format.combine(
                 format.label({
-                    label: caller
+                    label: callerName
                 }),
                 format.timestamp(),
                 format.printf(({
