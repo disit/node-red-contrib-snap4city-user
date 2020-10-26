@@ -1,6 +1,34 @@
 const http = require("http");
 const { v4: uuidv4 } = require('uuid')
+
 module.exports = {
+    createSimpleLogger: function (callerName, level = 'info') {
+        const {
+            createLogger,
+            format,
+            transports
+        } = require('winston');
+        return createLogger({
+            level: level,
+            format: format.combine(
+                format.label({
+                    label: caller
+                }),
+                format.timestamp(),
+                format.printf(({
+                    level,
+                    message,
+                    label,
+                    timestamp
+                }) => {
+                    return `${timestamp} [${level}][${label}] : ${message}`;
+                })
+            ),
+            transports: [
+                new transports.Console()
+            ],
+        });
+    },
 
     getLogger: function (RED, node) {
         const {
@@ -380,12 +408,14 @@ module.exports = {
 
     updateServiceNodeListForAPIv2() {
         const app = this
+        const logger = this.createSimpleLogger("updateServiceNodeListForAPIv2")
         setTimeout(() => {
+            logger.info("Updating context broker list...")
             app.getFlows().then(flows => {
                 app.getContextBrokerList().then(contextBrokerList => {
                     contextBrokerList.forEach(contextBroker => {
                         var index = flows.findIndex(node => node.url === contextBroker.uri)
-                        if (index === -1)
+                        if (index === -1) {
                             flows.push(
                                 {
                                     id: app.generateNodeId(),
@@ -396,6 +426,8 @@ module.exports = {
                                     port: contextBroker.port
                                 },
                             )
+                            logger.info(`Added context broker: ${contextBroker.uri}:${contextBroker.port}`)
+                        }
                     }
                     )
                     this.updateContextBlokerList(flows).then(a => console.log("DONE"))
@@ -436,7 +468,7 @@ module.exports = {
                         port: '2222'
                     },
                     {
-                        uri: 'iotobsf3',
+                        uri: 'iotobsf4',
                         port: '3333'
                     },
                 ]
