@@ -1,8 +1,9 @@
 var fs = require('fs')
+var path = require('path')
 
 class SubscriptionStore {
-    constructor(jsonFilePath = '/subscriptions.json') {
-        this.jsonFilePath = '../../' + __dirname + jsonFilePath
+    constructor(jsonFilePath = 'subscriptions.json') {
+        this.jsonFilePath = `..${path.sep}..${path.sep}${__dirname}${path.sep}${jsonFilePath}`
         this.subscriptionJson = JSON.parse(fs.readFileSync(this.jsonFilePath));
     }
 
