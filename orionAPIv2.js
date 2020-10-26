@@ -46,6 +46,7 @@ module.exports = function (RED) {
     /*
      *This node is not shown by NodeRed but is used by any other node
      *to make the various http requests (query, subscribe, etc.).
+     *Configuration nodes doc: https://nodered.org/docs/creating-nodes/config-nodes
      */
     RED.nodes.registerType("Fiware-Orion API v2: Service", OrionServiceV2, {
         credentials: {
@@ -502,8 +503,8 @@ module.exports = function (RED) {
                                 },
                                 "attrs": n.attributes
                             },
-                            "expires": new Date(new Date().getTime() + 100000 * 100000).toISOString(),//TODO check n.duration
-                            "throttling": 5 //TODO check parseInt(n.throttle)
+                            "expires": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+                            "throttling": 5
                         });
                 });
             }
