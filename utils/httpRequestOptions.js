@@ -35,7 +35,7 @@ class HttpRequestOptions {
         var options = {
             hostname: hostname,
             port: port,
-            path: prefixPath + "/v2/entities/" + config.enid + "/attrs?elementid=" + config.enid + (k1 ? "&k1=" + k1 : "") + (k2 ? "&k2=" + k2 : ""),
+            path: prefixPath + "/v2/entities/" + config.enid + "/attrs?type=" + config.entype + "&elementid=" + config.enid + (k1 ? "&k1=" + k1 : "") + (k2 ? "&k2=" + k2 : ""),
             method: 'PATCH',
             rejectUnauthorized: false,
             headers: {
