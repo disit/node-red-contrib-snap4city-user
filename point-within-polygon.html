@@ -81,10 +81,12 @@
                 required: false
             },
             pointlatitude: {
+                value: 0,
                 required: false,
                 validate: RED.validators.number()
             },
             pointlongitude: {
+                value: 0,
                 required: false,
                 validate: RED.validators.number()
             },
@@ -161,8 +163,8 @@
 
                 $("#node-input-polygon").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
                     polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
-                    /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
-                    /&/g, ","));
+                        /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
+                            /&/g, ","));
             });
 
             map.on('draw:edited', function (e) {
@@ -182,8 +184,8 @@
 
                 $("#node-input-polygon").val(polygons[node.id].geometry.type.toUpperCase() + JSON.stringify(
                     polygons[node.id].geometry.coordinates).replace(/\],\[/g, "&").replace(
-                    /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
-                    /&/g, ","));
+                        /,/g, " ").replace(/\[\[\[/g, "((").replace(/\]\]\]/g, "))").replace(
+                            /&/g, ","));
             });
 
             map.on('draw:deleted', function (e) {

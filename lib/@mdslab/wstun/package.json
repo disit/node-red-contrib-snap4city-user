@@ -1,0 +1,83 @@
+{
+  "_from": "@mdslab/wstun",
+  "_id": "@mdslab/wstun@1.0.11",
+  "_inBundle": false,
+  "_integrity": "sha512-/Iq+BOC0pVH9GJx6ysZMaV3uKJ1gZtUJA4/38SOdbCDUreoyFGjsLULUH0tl9u711vZzJCd8dpzIN6ddZkhhQQ==",
+  "_location": "/@mdslab/wstun",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "@mdslab/wstun",
+    "name": "@mdslab/wstun",
+    "escapedName": "@mdslab%2fwstun",
+    "scope": "@mdslab",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@mdslab/wstun/-/wstun-1.0.11.tgz",
+  "_shasum": "930febeb90be1d413185f03caf8f626001b8440a",
+  "_spec": "@mdslab/wstun",
+  "_where": "/home/ubuntu/wstun",
+  "author": {
+    "name": "Nicola Peditto",
+    "email": "npeditto@unime.it"
+  },
+  "bin": {
+    "wstun": "./bin/wstun.js"
+  },
+  "bugs": {
+    "url": "https://github.com/MDSLab/wstun/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "Dario Bruneo",
+      "email": "dbruneo@unime.it"
+    },
+    {
+      "name": "Francesco Longo",
+      "email": "flongo@unime.it"
+    },
+    {
+      "name": "Giovanni Merlino",
+      "email": "gmerlino@unime.it"
+    },
+    {
+      "name": "Andrea Rocco Lotronto",
+      "email": "andrealotronto@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "log4js": "<=1.1.1",
+    "node-uuid": "<=1.4.7",
+    "optimist": "<=0.6.1",
+    "under_score": "<=0.1.0",
+    "websocket": "<=1.0.28"
+  },
+  "deprecated": false,
+  "description": "A set of tools to establish TCP tunnels (or TCP reverse tunnels) over WebSocket connections for circumventing the problem of directly connect to hosts behind a strict firewall or without public IP. It also supports WebSocket Secure (wss) connections.",
+  "homepage": "https://github.com/MDSLab/wstun",
+  "keywords": [
+    "tunnel",
+    "reverse",
+    "WebSocket"
+  ],
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "name": "@mdslab/wstun",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MDSLab/wstun.git"
+  },
+  "scripts": {
+    "postinstall": "./scripts/postinst",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.11"
+}

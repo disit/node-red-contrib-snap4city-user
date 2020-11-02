@@ -16,11 +16,12 @@
 module.exports = function (RED) {
 
     function Routing(config) {
-        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
         node.on('input', function (msg) {
-            var uri = "https://www.disit.org/superservicemap/api/v1/";
+            var uri = (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1");
             var startLatitude = (msg.payload.startlatitude ? msg.payload.startlatitude : config.startlatitude);
             var startLongitude = (msg.payload.startlongitude ? msg.payload.startlongitude : config.startlongitude);
             var endLatitude = (msg.payload.endlatitude ? msg.payload.endlatitude : config.endlatitude);
@@ -28,8 +29,8 @@ module.exports = function (RED) {
             var routeType = (msg.payload.routetype ? msg.payload.routetype : config.routetype);
             var tmpDate = (msg.payload.startdatetime ? msg.payload.startdatetime : config.startdatetime);
             var startDatetime = "";
-            var uid = s4cUtility.retrieveAppID(RED);
-            if (tmpDate){
+            const uid = s4cUtility.retrieveAppID(RED);
+            if (tmpDate) {
                 startDatetime = new Date(tmpDate).toISOString();
             } else {
                 startDatetime = new Date().toISOString();
@@ -39,13 +40,20 @@ module.exports = function (RED) {
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri + "shortestpath/?source=" + startLatitude + ";" + startLongitude + "&destination=" + endLatitude + ";" + endLongitude + "&routeType=" + routeType + "&startDatetime=" + startDatetime + "&format=json"));
-            xmlHttp.open("GET", encodeURI(uri + "shortestpath/?source=" + startLatitude + ";" + startLongitude + "&destination=" + endLatitude + ";" + endLongitude + "&routeType=" + routeType + "&startDatetime=" + startDatetime + "&format=json"), true); // false for synchronous request
+            logger.info(encodeURI(uri + "/shortestpath/?source=" + startLatitude + ";" + startLongitude + "&destination=" + endLatitude + ";" + endLongitude + "&routeType=" + routeType + "&startDatetime=" + startDatetime + "&format=json"));
+            xmlHttp.open("GET", encodeURI(uri + "/shortestpath/?source=" + startLatitude + ";" + startLongitude + "&destination=" + endLatitude + ";" + endLongitude + "&routeType=" + routeType + "&startDatetime=" + startDatetime + "&format=json"), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
+                        logger.info("ResponseText: " + xmlHttp.responseText);
                         if (xmlHttp.responseText != "") {
-                            var response = JSON.parse(xmlHttp.responseText);
+                            var response = "";
+                            try {
+                                response = JSON.parse(xmlHttp.responseText);
+                            } catch (error){
+                                logger.error("Problem Parsing data " + xmlHttp.responseText);
+                            }
+                            logger.info("Response: " + response);
                             msg.payload = response;
                         } else {
                             msg.payload = JSON.parse("{\"status\": \"error\"}");
@@ -53,13 +61,13 @@ module.exports = function (RED) {
                         s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msg);
                     } else {
-                        console.error(xmlHttp.statusText);
+                        logger.error(xmlHttp.statusText);
                         node.error(xmlHttp.responseText);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);
+                logger.error(xmlHttp.statusText);
                 node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);

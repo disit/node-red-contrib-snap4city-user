@@ -16,9 +16,10 @@
 module.exports = function (RED) {
 
     function RecommendationsWithinCircle(config) {
-        var s4cUtility = require("./snap4city-utility.js");
         RED.nodes.createNode(this, config);
         var node = this;
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
         node.on('input', function (msg) {
             var uri = "http://screcommender.km4city.org/SmartCityRecommender/";
             var latitude = (msg.payload.latitude ? msg.payload.latitude : config.latitude);
@@ -26,15 +27,16 @@ module.exports = function (RED) {
             var maxDists = (msg.payload.maxdistance ? msg.payload.maxdistance : config.maxdists);
             var language = (msg.payload.lang ? msg.payload.lang : config.lang);
             var profile = (msg.payload.profile ? msg.payload.profile : config.profile);
-            var uid = s4cUtility.retrieveAppID(RED);
+            const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            console.log(encodeURI(uri + "?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
-            xmlHttp.open("GET", encodeURI(uri + "?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "")   + "&appID=iotapp"), true); // false for synchronous request
+            logger.info(encodeURI(uri + "/?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
+            xmlHttp.open("GET", encodeURI(uri + "/?action=recommend&mode=manual&aroundme=true&version=4.4.0&profile=" + profile + "&latitude=" + latitude + "&longitude=" + longitude + "&distance=" + maxDists + "&lang=" + language + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {
                     if (xmlHttp.status === 200) {
+                        logger.info("ResponseText: " + xmlHttp.responseText);
                         if (xmlHttp.responseText != "") {
                             try {
                                 msg.payload = JSON.parse(xmlHttp.responseText);
@@ -47,12 +49,14 @@ module.exports = function (RED) {
                         s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "ASCAPI", uri, "RX");
                         node.send(msg);
                     } else {
-                        console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                        logger.error(xmlHttp.statusText);
+                        node.error(xmlHttp.responseText);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
-                console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+                logger.error(xmlHttp.statusText);
+                node.error(xmlHttp.responseText);
             };
             xmlHttp.send(null);
         });

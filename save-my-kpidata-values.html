@@ -141,7 +141,7 @@
                 success: function (_data) {
                     $.ajax({
                         url: _data.myPersonalDataUrl +
-                            "api/v1/kpidata/?sourceRequest=iotapp&accessToken=" +
+                            "/kpidata/?sourceRequest=iotapp&accessToken=" +
                             accessToken,
                         type: "GET",
                         async: true,
@@ -207,6 +207,10 @@
     A JSON with these parameters:
 
     <dl class="message-properties">
+        <dt>id
+            <span class="property-type">number</span>
+        </dt>
+        <dd> the id of the kpi data (you MUST have the ownership of the kpi data)</dd>
         <dt>value
             <span class="property-type">depends on kpi</span>
         </dt>
@@ -222,8 +226,19 @@
         <dt>datatime
             <span class="property-type">date</span>
         </dt>
-        <dd> (optional) if you want to insert the data of the value</dd>
+        <dd> (optional) if you want to insert the data of the value in the format yyyy-MM-ddTHH:mmX (where X is the timezone) or timestamp</dd>
     </dl>
+
+    <p>An example of the JSON array filled with correct data:</p>
+    <pre>
+{
+    "id": 17849,
+    "datatime": "2020-04-14T16:30Z",
+    "latitude": 43.11,
+    "longitude": 11.34,
+    "value": 5
+}
+    </pre>
 
     <h3>Outputs</h3>
     <dl class="message-properties">

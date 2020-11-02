@@ -379,13 +379,13 @@ RED.nodes.registerType('label',{
 
         /******* ON EDIT PREPARE  START ********/
 
-        oneditprepare: function () {   
-			username="";
-			role="manager";
-			organization="";
-			gpsCentreLatLng="";
-			accessToken = "";
-            
+        oneditprepare: function () {
+            username = "";
+            role = "manager";
+            organization = "";
+            gpsCentreLatLng = "";
+            accessToken = "";
+
             $.ajax({
                 url: "isThereLocalRefreshToken/",
                 type: "GET",
@@ -422,7 +422,7 @@ RED.nodes.registerType('label',{
                             async: false,
                             success: function (_data) {
                                 if (_data.accessToken == "") {
-								
+
                                     $("#deviceTabButton").parent().hide();
                                     $("#Device-based-search").hide();
                                     $("#Value-based-search").hide();
@@ -436,19 +436,19 @@ RED.nodes.registerType('label',{
                     }
                 }
             });
-            
-			
-			
-            if(accessToken!=""){
-				$.ajax({
-					url: "retrieveUsernameAndRole?accessToken="+accessToken,
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						username=resp.username;
-						role=resp.role;
-					}
-				});
+
+
+
+            if (accessToken != "") {
+                $.ajax({
+                    url: "retrieveUsernameAndRole?accessToken=" + accessToken,
+                    type: "GET",
+                    async: false,
+                    success: function (resp) {
+                        username = resp.username;
+                        role = resp.role;
+                    }
+                });
             }
 
             $(".editor-tray").css("width", "700px");
@@ -467,16 +467,9 @@ RED.nodes.registerType('label',{
                 console.log("couldn't get the canvas height: " + err);
             }
 
-
-
-            //serverURL = "https://www.snap4city.org/iotdirectorytest/api/device.php?"; //for testing
-            serverURL = "https://iotdirectory.snap4city.org/api/device.php?"; //official
-            
-            //findOrg_url = "https://www.snap4city.org/iotdirectorytest/api/nodeRedConnection.php?" + "action=get_organization";
-            findOrg_url = "https://iotdirectory.snap4city.org/api/nodeRedConnection.php?" + "action=get_organization";
-            
-            //_serviceIP="https://www.snap4city.org/iotdirectorytest/stubs";//for testing
-            _serviceIP="https://iotdirectory.snap4city.org/stubs";//official
+			//TODO: externalize this source code to the js side, so we can make this parameters configurable via settings
+            //serverURL = "https://www.snap4city.org/iotdirectorytest/"; //testing
+            serverURL = "https://iotdirectory.snap4city.org/"; //produzione
 
             openedTab = "Device-based-search";
             $("#deviceTabButton").simulate("click");
@@ -541,7 +534,7 @@ RED.nodes.registerType('label',{
                 popupAnchor: new L.Point(0, -18)
 
             });
-            
+
             pinkIcon = new L.Icon({
 
                 iconUrl: 'https://www.snap4city.org/iotdirectorytest/markerDelegated.png',
@@ -671,8 +664,6 @@ RED.nodes.registerType('label',{
                         }
                     });
 
-
-
                     drawnItems.eachLayer(function (layer) {
                         var resultsIn = drawSelection(layer, drawnItems, TYPE, allDataIn, 1);
                         var el;
@@ -760,7 +751,7 @@ RED.nodes.registerType('label',{
 
                     lat = Number(selections[k].latitude);
                     lng = Number(selections[k].longitude);
-                    popup = "<b>" + selections[k].label + "</b><br>" + selections[k].entityType + "<br>" +
+                    popup = "<b>" + selections[k].label + "</b><br>" + selections[k].devicetype + "<br>" +
                         selections[k].kind;
                     var m = L.marker([lat, lng], {
                         icon: greenIcon
@@ -806,15 +797,9 @@ RED.nodes.registerType('label',{
                         var long_map = (circles.geometry.coordinates[0]);
                         var center_latlong = new L.LatLng(lat_map, long_map);
                         var rad_map = (circles.properties.radius);
-
-
                         for (var sensorTocheck in data) {
-
-
                             var sensorLatLng = new L.LatLng(Number(data[sensorTocheck]["latitude"]), Number(
                                 data[sensorTocheck]["longitude"]));
-
-
                             if (Math.abs(center_latlong.distanceTo(sensorLatLng) / 1000) <= rad_map) {
 
                                 //results.push(sensorTocheck);
@@ -823,14 +808,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -839,8 +824,6 @@ RED.nodes.registerType('label',{
                             }
                         }
                         break;
-
-
 
                     case 'polygon':
 
@@ -873,14 +856,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -906,14 +889,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -922,8 +905,6 @@ RED.nodes.registerType('label',{
                             }
                         }
                         break;
-
-
 
                     case 'polyline':
 
@@ -950,14 +931,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -1064,8 +1045,6 @@ RED.nodes.registerType('label',{
                             drawnItems2.addLayer(fence);
                         }
                     });
-
-
                     drawnItems2.eachLayer(function (layer) {
                         var resultsIn2 = drawSelection(layer, drawnItems2, TYPE2,
                             allDataIn2, 2);
@@ -1117,8 +1096,6 @@ RED.nodes.registerType('label',{
                                     green_marker_array_2 = [];
                                     marker_selection_2 = [];
                                 }
-
-
                                 drawControl2.addTo(map2);
 
                                 $("#node-input-nodes-target-container-tab2 li").each(
@@ -1174,7 +1151,7 @@ RED.nodes.registerType('label',{
 
 	    	 ****/
             function createRetrievePanel() {
-                var types = getDistinctValues(node.configData, "entityType");
+                var types = getDistinctValues(node.configData, "devicetype");
                 addSelectData('node-input-type-select', types);
                 var kinds = getDistinctValues(node.configData, "kind");
                 addSelectData('node-input-kind-select', kinds);
@@ -1232,18 +1209,14 @@ RED.nodes.registerType('label',{
                 var hasType, hasKind, hasBroker, hasOwnership;
 
                 $("#node-input-nodes-target-container li").each(function () {
-
-
                     hasType = false;
                     if (selTypes.length == 0 || $.inArray("all", selTypes) >= 0 || $.inArray($(this)
-                            .data("type"), selTypes) >= 0) {
+                        .data("type"), selTypes) >= 0) {
                         hasType = true;
                     }
 
                     console.log(selTypes);
                     console.log($.inArray("all", selTypes >= 0));
-
-
 
                     hasKind = false;
                     if (selKind == "all" || $(this).data("kind") == selKind) {
@@ -1252,7 +1225,7 @@ RED.nodes.registerType('label',{
 
                     hasBroker = false;
                     if (selBrokers.length == 0 || $.inArray("all", selBrokers) >= 0 || $.inArray($(
-                            this).data("context-broker"), selBrokers) >= 0) {
+                        this).data("context-broker"), selBrokers) >= 0) {
                         hasBroker = true;
                     }
 
@@ -1302,11 +1275,9 @@ RED.nodes.registerType('label',{
                 var hasType, hasName, hasBroker, hasEditable, hasHealthiness, hasOwnership;
 
                 $("#node-input-nodes-target-container-tab2 li").each(function () {
-
-
                     hasType = false;
                     if (selTypes.length == 0 || $.inArray("all", selTypes) >= 0 || $.inArray($(this)
-                            .data("type"), selTypes) >= 0) {
+                        .data("type"), selTypes) >= 0) {
                         hasType = true;
                     }
 
@@ -1317,7 +1288,7 @@ RED.nodes.registerType('label',{
 
                     hasBroker = false;
                     if (selBrokers.length == 0 || $.inArray("all", selBrokers) >= 0 || $.inArray($(
-                            this).data("context-broker"), selBrokers) >= 0) {
+                        this).data("context-broker"), selBrokers) >= 0) {
                         hasBroker = true;
                     }
                     hasEditable = false;
@@ -1327,7 +1298,7 @@ RED.nodes.registerType('label',{
 
                     hasHealthiness = false;
                     if (selHealthiness.length == 0 || $.inArray("all", selHealthiness) >= 0 || $.inArray(
-                            $(this).data("healthiness"), selHealthiness) >= 0) {
+                        $(this).data("healthiness"), selHealthiness) >= 0) {
                         hasHealthiness = true;
                     }
 
@@ -1335,8 +1306,6 @@ RED.nodes.registerType('label',{
                     if (selOwnership == "all" || $(this).data("visibility") == selOwnership) {
                         hasOwnership = true;
                     }
-
-
                     if (hasType && hasName && hasBroker && hasHealthiness && hasEditable &&
                         hasOwnership) {
                         $(this).show();
@@ -1362,15 +1331,15 @@ RED.nodes.registerType('label',{
                 data = data.sort();
                 $('#' + selectId).html("");
                 $('#' + selectId).append($('<option>', {
-                        value: "all"
-                    })
+                    value: "all"
+                })
                     .text("all"));
 
                 $.each(data, function (key, value) {
                     $('#' + selectId)
                         .append($('<option>', {
-                                value: value
-                            })
+                            value: value
+                        })
                             .text(value));
                 });
 
@@ -1386,15 +1355,15 @@ RED.nodes.registerType('label',{
                 data = data.sort();
                 $('#' + selectId).html("");
                 $('#' + selectId).append($('<option>', {
-                        value: "all"
-                    })
+                    value: "all"
+                })
                     .text("all"));
 
                 $.each(data, function (key, value) {
                     $('#' + selectId)
                         .append($('<option>', {
-                                value: value
-                            })
+                            value: value
+                        })
                             .text(value));
                 });
 
@@ -1501,20 +1470,18 @@ RED.nodes.registerType('label',{
                     var container = $('<li/>', {
                         class: "node-input-target-node"
                     });
-                    container.attr('data-type', data[key]["entityType"]);
+                    container.attr('data-type', data[key]["devicetype"]);
                     container.attr('data-kind', data[key]["kind"]);
                     container.attr('data-context-broker', data[key]["contextBroker"]);
                     container.attr('data-visibility', data[key]["visibility"]);
-
-
                     var row = $('<label/>', {
                         for: "node-input-target-node-" + key
                     }).appendTo(container);
                     $('<input>', {
-                            type: "checkbox",
-                            class: "node-input-target-node-checkbox",
-                            id: "node-input-target-node-" + key
-                        })
+                        type: "checkbox",
+                        class: "node-input-target-node-checkbox",
+                        id: "node-input-target-node-" + key
+                    })
                         .data('node-id', key)
                         .change(function () {
                             var my_id = this.id.replace("node-input-target-node-", '');
@@ -1522,33 +1489,29 @@ RED.nodes.registerType('label',{
                             var item = {};
                             item.latitude = Number(my_selected_device["latitude"]);
                             item.longitude = Number(my_selected_device["longitude"]);
-                            item.entityType = my_selected_device["entityType"];
+                            item.devicetype = my_selected_device["devicetype"];
                             item.kind = my_selected_device["kind"];
                             item.name = my_id;
                             item.label = my_id;
-
-
                             if ($('#' + this.id).prop('checked')) {
                                 marker_selection.push(item);
-                                var popup = "<b>" + item.label + "</b><br>" + item.entityType + "<br>" +
+                                var popup = "<b>" + item.label + "</b><br>" + item.devicetype + "<br>" +
                                     item.kind;
                                 var m = new L.marker([item.latitude, item.longitude], {
                                     icon: greenIcon
                                 }).bindPopup(popup);
                                 green_marker_array.push(m);
-
-
                             } else {
                                 for (var i = 0; i < marker_selection.length; i++) {
                                     console.log(marker_selection[i]);
                                     console.log(marker_selection[i].label == item.label);
                                     console.log(marker_selection[i].longitude == item.longitude);
                                     console.log(marker_selection[i].latitude == item.latitude);
-                                    console.log(marker_selection[i].entityType == item.entityType);
+                                    console.log(marker_selection[i].devicetype == item.devicetype);
                                     console.log(marker_selection[i].kind == item.kind);
                                     if (marker_selection[i].label == item.label && marker_selection[i].longitude ==
                                         item.longitude && marker_selection[i].latitude == item.latitude &&
-                                        marker_selection[i].entityType == item.entityType &&
+                                        marker_selection[i].devicetype == item.devicetype &&
                                         marker_selection[i].kind == item.kind) {
                                         console.log("here");
                                         marker_selection.splice(i, 1);
@@ -1562,7 +1525,7 @@ RED.nodes.registerType('label',{
                                     var lat = Number(marker_selection[k].latitude);
                                     var lng = Number(marker_selection[k].longitude);
                                     var popup = "<b>" + marker_selection[k].label + "</b><br>" +
-                                        marker_selection[k].entityType + "<br>" + marker_selection[k].kind;
+                                        marker_selection[k].devicetype + "<br>" + marker_selection[k].kind;
                                     var m = L.marker([lat, lng], {
                                         icon: greenIcon
                                     }).bindPopup(popup);
@@ -1584,9 +1547,7 @@ RED.nodes.registerType('label',{
                     var labelSpan = $('<span>');
                     var label = key;
                     var sublabel = data[key]["contextBroker"];
-                    var sublabel2 = data[key]["entityType"];
-
-
+                    var sublabel2 = data[key]["devicetype"];
                     $('<span>', {
                         class: "node-input-target-node-label",
                         style: "white-space:nowrap"
@@ -1623,16 +1584,14 @@ RED.nodes.registerType('label',{
                     container.attr('data-editable', data[key]["editable"]);
                     container.attr('data-healthiness', data[key]["healthiness_criteria"]);
                     container.attr('data-visibility', data[key]["visibility"]);
-
-
                     var row = $('<label/>', {
                         for: "node-input-target-node-tab2" + key
                     }).appendTo(container);
                     $('<input>', {
-                            type: "checkbox",
-                            class: "node-input-target-node-checkbox-tab2",
-                            id: "node-input-target-node-tab2" + key
-                        })
+                        type: "checkbox",
+                        class: "node-input-target-node-checkbox-tab2",
+                        id: "node-input-target-node-tab2" + key
+                    })
                         .data('node-id', key)
                         .change(function () {
                             var my_id = this.id.replace("node-input-target-node-tab2", '');
@@ -1640,35 +1599,29 @@ RED.nodes.registerType('label',{
                             var item = {};
                             item.latitude = Number(my_selected_device["latitude"]);
                             item.longitude = Number(my_selected_device["longitude"]);
-                            item.entityType = my_selected_device["value_name"];
+                            item.devicetype = my_selected_device["value_name"];
                             item.kind = my_selected_device["kind"];
                             item.name = my_id;
                             item.label = my_selected_device["device"];
-
-
                             if ($('#' + this.id).prop('checked')) {
                                 marker_selection_2.push(item);
-                                var popup = "<b>" + item.label + "</b><br>" + item.entityType;
+                                var popup = "<b>" + item.label + "</b><br>" + item.devicetype;
                                 var m = new L.marker([item.latitude, item.longitude], {
                                     icon: greenIcon
                                 }).bindPopup(popup);
                                 green_marker_array_2.push(m);
-
-
                             } else {
-
-
                                 for (var i = 0; i < marker_selection_2.length; i++) {
                                     console.log(marker_selection_2[i]);
                                     console.log(marker_selection_2[i].label == item.label);
                                     console.log(marker_selection_2[i].longitude == item.longitude);
                                     console.log(marker_selection_2[i].latitude == item.latitude);
-                                    console.log(marker_selection_2[i].entityType == item.entityType);
+                                    console.log(marker_selection_2[i].devicetype == item.devicetype);
                                     console.log(marker_selection_2[i].kind == item.kind);
 
                                     if (marker_selection_2[i].label == item.label && marker_selection_2[
-                                            i].longitude == item.longitude && marker_selection_2[i].latitude ==
-                                        item.latitude && marker_selection_2[i].entityType == item.entityType
+                                        i].longitude == item.longitude && marker_selection_2[i].latitude ==
+                                        item.latitude && marker_selection_2[i].devicetype == item.devicetype
                                     ) {
                                         console.log("here");
                                         marker_selection_2.splice(i, 1);
@@ -1682,7 +1635,7 @@ RED.nodes.registerType('label',{
                                     var lat = Number(marker_selection_2[k].latitude);
                                     var lng = Number(marker_selection_2[k].longitude);
                                     var popup = "<b>" + marker_selection_2[k].label + "</b><br>" +
-                                        marker_selection_2[k].entityType;
+                                        marker_selection_2[k].devicetype;
                                     var m = L.marker([lat, lng], {
                                         icon: greenIcon
                                     }).bindPopup(popup);
@@ -1706,8 +1659,6 @@ RED.nodes.registerType('label',{
                     var sublabel = data[key]["cb"];
                     var sublabel2 = data[key]["device"];
                     //  var sublabel3 = data[key]["value_name"];
-
-
                     $('<span>', {
                         class: "node-input-target-node-label-tab2",
                         style: "white-space:nowrap"
@@ -1819,8 +1770,8 @@ RED.nodes.registerType('label',{
                     nodeList2.append(li);
                 });
             }
-            
-            
+
+
 
 
             /*********	
@@ -1873,12 +1824,12 @@ RED.nodes.registerType('label',{
                         var item = {};
                         item.latitude = Number(allDataIn[k]["latitude"]);
                         item.longitude = Number(allDataIn[k]["longitude"]);
-                        item.entityType = allDataIn[k]["entityType"];
+                        item.devicetype = allDataIn[k]["devicetype"];
                         item.kind = allDataIn[k]["kind"];
                         item.name = k;
                         item.label = k;
                         marker_selection.push(item);
-                        var popup = "<b>" + item.label + "</b><br>" + item.entityType + "<br>" +
+                        var popup = "<b>" + item.label + "</b><br>" + item.devicetype + "<br>" +
                             item.kind;
                         var m = new L.marker([item.latitude, item.longitude], {
                             icon: greenIcon
@@ -1914,12 +1865,12 @@ RED.nodes.registerType('label',{
                         var item = {};
                         item.latitude = Number(allDataIn2[k]["latitude"]);
                         item.longitude = Number(allDataIn2[k]["longitude"]);
-                        item.entityType = allDataIn2[k]["entityType"];
+                        item.devicetype = allDataIn2[k]["devicetype"];
                         item.kind = allDataIn2[k]["kind"];
                         item.name = k;
                         item.label = allDataIn2[k]["device"];
                         marker_selection_2.push(item);
-                        var popup = "<b>" + item.label + "</b><br>" + item.entityType + "<br>" +
+                        var popup = "<b>" + item.label + "</b><br>" + item.devicetype + "<br>" +
                             item.kind;
                         var m = new L.marker([item.latitude, item.longitude], {
                             icon: greenIcon
@@ -1984,8 +1935,6 @@ RED.nodes.registerType('label',{
                     $("#polygon-wrapper").fadeOut("fast");
                 } else if ($(this).val() == "map") // map search - target
                 {
-
-
                     $("#target-wrapper").fadeIn("fast");
                     $("#retrieve-selected").fadeOut("fast");
                     $("#retrieve-wrapper").fadeOut("fast");
@@ -2125,239 +2074,226 @@ RED.nodes.registerType('label',{
                     //                        accesstoken = resp.accessToken; 
 
                     //*****until here//
-                    
 
-                                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                                                accesstoken != "undefined")
-                                            {
-                                                findOrg_url += "&nodered=yes&token=" + accesstoken;
-                                                findOrg_url +="&username="+username+"&loggedrole="+role;
+					var findOrg_url=serverURL + "api/nodeRedConnection.php?action=get_organization";
+
+                    if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
+                        findOrg_url += "&nodered=yes&token=" + accesstoken;
+                    }
+
+                    console.log("findOrg_url");
+                    console.log(findOrg_url);
+
+                    var jqxhr = $.getJSON(findOrg_url, function (data) {
+                        console.log("findOrg_url success");
+                        console.log(data);
+                    })
+                        .done(function (data) {
+
+                            if (data.status == "ok") {
+                                console.log("findOrg_url second success");
+                                organization = data.content;
+                                info = data.info;
+                                kbUrl = info.kbUrl;
+                                gpsCentreLatLng = info.gpsCentreLatLng;
+                                zoomLevel = info.zoomLevel;
+
+                                if (gpsCentreLatLng != "") {
+                                    try {
+                                        var centerMapArr = gpsCentreLatLng.split(",", 2);
+                                        var centerLat = parseFloat(centerMapArr[0].trim());
+                                        var centerLng = parseFloat(centerMapArr[1].trim());
+                                        map.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
+                                        map2.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
+
+                                    }
+                                    catch (err) {
+                                        console.log("error setting the map viewview");
+                                    }
+
+                                }
+                                console.log(organization);
+                                console.log(kbUrl);
+                                console.log(gpsCentreLatLng);
+                                console.log(zoomLevel);
+
+                                //##################STUBS######################//
+
+                                //console.log("going to call the stub");
+                                //activateStub("orionUNIFI","192.168.1.9:1026","ngsi","dee6c609021814511d117946c2204a33","http://iot-app.snap4city.org/orion-broker/","custom","","","/v2/entities?limit=100", "","internal");
+                                //########################################//            
+
+                                var url = serverURL + "api/device.php?action=get_all_device";
+								//using new api (get_all_device) required that "entityType" has been migrated towards "devicetype"
+								//moreover, old api included also extra info about: cb.`name` and cb.`protocol` as type
+								//and old api also renamed cb.`accesslink` AS ip and cb.`accessport` AS port
+
+                                if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
+                                    url += "&nodered=yes&token=" + accesstoken;
+                                }
+
+                                var jqxhr = $.getJSON(url, function (data) {
+                                    console.log("success");
+                                    console.log(data);
+                                })
+                                    .done(function (data) {
+
+                                        if (data.status == "ok") {
+                                            console.log("second success");
+
+                                            data = data.data;
+                                            allDataIn = data;
+
+                                            // crea lista entiti principale
+                                            node.configData = data;
+                                            createNodeList();
+                                            //crea dati per le select
+                                            createRetrievePanel();
+                                            // crea map
+                                            drawMap();
+
+                                            var marker_array = [];
+
+                                            for (var k in data) {
+
+												console.log(data[k]);
+												console.log(data[k]['id']);
+												console.log(data[k]['devicetype']);
+												console.log(data[k]['kind']);
+
+                                                lat = Number(data[k]["latitude"]); //45.4858914;
+                                                est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                lng = Number(data[k]["longitude"]); //9.202094;
+                                                est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                popup = "<b>" + data[k]['id'] + "</b><br>" + data[k]['devicetype'] + "<br>" + data[k]['kind'];
+
+												console.log("popup is:"+popup);
+
+                                                if (data[k]["visibility"] == "public") {
+
+                                                    m = L.marker([est_lat, est_lng], {
+                                                        icon: blueIcon
+                                                    }).bindPopup(popup);
+                                                } else if (data[k]["visibility"] == "MyOwnPublic" || data[k]["visibility"] == "MyOwnPrivate") {
+                                                    m = L.marker([est_lat, est_lng], {
+                                                        icon: redIcon
+                                                    }).bindPopup(popup);
+                                                } else if (data[k]["visibility"] == "delegated") {
+                                                    m = L.marker([est_lat, est_lng], {
+                                                        icon: pinkIcon
+                                                    }).bindPopup(popup);
+                                                }
+
+                                                marker_array.push(m);
                                             }
 
-                                            console.log("findOrg_url");
-                                            console.log(findOrg_url);
+                                            var markersGroup = L.layerGroup(marker_array);
+                                            markersGroup.addTo(map);
 
-                                            var jqxhr = $.getJSON(findOrg_url, function (data) {
-                                                    console.log("findOrg_url success");
-                                                    console.log(data);
-                                                })
-                                                .done(function (data) {
+                                        } else {
+                                            console.log(data.status);
+                                        }
+                                    })
+                                    .fail(function () {
+                                        console.log("error");
+                                    })
+                                    .always(function () {
+                                        console.log("complete");
+                                    });
 
-                                                    if (data.status == "ok") {
-                                                        console.log("findOrg_url second success");
-                                                        organization = data.content;
-                                                        info=data.info;
-                                                        kbUrl=info.kbUrl;
-                                                        gpsCentreLatLng=info.gpsCentreLatLng;
-                                                        zoomLevel=info.zoomLevel;
+                                var url_values = serverURL + "api/value.php?action=get_all_event_value";
+								//migrated to the new api from value.php. we don't know yet which changes appeared
+								
+                                if (typeof accesstoken != "undefined" && accesstoken != "" &&
+                                    accesstoken != "undefined") {
+                                    url_values += "&nodered=yes&token=" + accesstoken;
+                                }
+                                console.log("url_values");
+                                console.log(url_values);
+                                var jqxhrValues = $.getJSON(url_values,
+                                    function (data) {
+                                        console.log("success");
+                                        console.log(data);
+                                    })
+                                    .done(function (data) {
+                                        if (data.status == "ok") {
+                                            console.log("second success");
+                                            data = data.data;
 
-                                                        if (gpsCentreLatLng!=""){
-                                                            try{
-                                                                var centerMapArr= gpsCentreLatLng.split(",",2);
-                                                                var centerLat= parseFloat(centerMapArr[0].trim());
-                                                                var centerLng= parseFloat(centerMapArr[1].trim());   
-                                                                map.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
-                                                                map2.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
+                                            allDataIn2 = data;
 
-                                                            }
-                                                            catch(err){
-                                                                console.log("error setting the map viewview");
-                                                        }
+                                            // crea lista entiti principale
+                                            node2.configData = data;
+                                            createNodeList2();
+                                            //crea dati per le select
+                                            createRetrievePanel2();
+                                            // crea map
+                                            drawMap2();
 
-                                                        }
-                                                        console.log(organization);
-                                                        console.log(kbUrl);
-                                                        console.log(gpsCentreLatLng);
-                                                        console.log(zoomLevel);
+                                            var marker_array = [];
+                                            for (var k in data) {
 
+                                                lat = Number(data[k]["latitude"]); //45.4858914;
+                                                est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                lng = Number(data[k]["longitude"]); //9.202094;
+                                                est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
+                                                popup = "<b>" + data[k]['device'] + "</b><br>" +
+                                                    data[k]['value_type'];
+                                                if (data[k]["visibility"] == "private") {
 
+                                                    m = L.marker([est_lat, est_lng], {
+                                                        icon: redIcon
+                                                    }).bindPopup(popup);
+                                                }
+                                                else if (data[k]["visibility"] == "delegated") {
+                                                    m = L.marker([est_lat, est_lng], {
+                                                        icon: pinkIcon
+                                                    }).bindPopup(popup);
+                                                }
+                                                else {
+                                                    m = L.marker([est_lat, est_lng], {
+                                                        icon: blueIcon
+                                                    }).bindPopup(popup);
+                                                }
 
-                                            //##################STUBS######################//
-
-                                                        //console.log("going to call the stub");
-                                                        //activateStub("orionUNIFI","192.168.1.9:1026","ngsi","dee6c609021814511d117946c2204a33","http://iot-app.snap4city.org/orion-broker/","custom","","","/v2/entities?limit=100", "","internal");
-                                            //########################################//            
-
-                                            var url = serverURL + "action=get_config_data";
-
-                                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                                                accesstoken != "undefined")
-                                            {
-                                                url += "&nodered=yes&token=" + accesstoken;
-                                                url +="&username="+username+"&loggedrole="+role+"&organization="+organization;
+                                                marker_array.push(m);
                                             }
 
+                                            var markersGroup = L.layerGroup(marker_array);
+                                            markersGroup.addTo(map2);
 
-                                            console.log("url");
-                                            console.log(url);
-
-                                            //console.log("accesstoken: " + resp.accessToken);
-                                            //console.log("refreshtoken: " + resp.refreshToken);
-
-                                            var jqxhr = $.getJSON(url, function (data) {
-                                                    console.log("success");
-                                                    console.log(data);
-                                                })
-                                                .done(function (data) {
-
-                                                    if (data.status == "ok") {
-                                                        console.log("second success");
-
-                                                        data = data.content;
-                                                        allDataIn = data;
-
-                                                        // crea lista entiti principale
-                                                        node.configData = data;
-                                                        createNodeList();
-                                                        //crea dati per le select
-                                                        createRetrievePanel();
-                                                        // crea map
-                                                        drawMap();
-
-                                                        var marker_array = [];
-
-                                                        for (var k in data) {
-
-                                                            lat = Number(data[k]["latitude"]); //45.4858914;
-                                                            est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                                            lng = Number(data[k]["longitude"]); //9.202094;
-                                                            est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                                            popup = "<b>" + data[k]['name'] + "</b><br>" + data[
-                                                                k]['entityType'] + "<br>" + data[k]['kind'];
-
-                                                            if (data[k]["visibility"] == "public") {
-
-                                                                m = L.marker([est_lat, est_lng], {
-                                                                    icon: blueIcon
-                                                                }).bindPopup(popup);
-                                                            } else if (data[k]["visibility"] == "MyOwnPublic" || data[k]["visibility"] == "MyOwnPrivate") {
-                                                                m = L.marker([est_lat, est_lng], {
-                                                                    icon: redIcon
-                                                                }).bindPopup(popup);
-                                                            }else if (data[k]["visibility"] == "delegated") {
-                                                                m = L.marker([est_lat, est_lng], {
-                                                                    icon: pinkIcon
-                                                                }).bindPopup(popup);}
-
-                                                            marker_array.push(m);
-                                                        }
-
-                                                        var markersGroup = L.layerGroup(marker_array);
-                                                        markersGroup.addTo(map);
-
-                                                    } else {
-                                                        console.log(data.status);
+                                        } else {
+                                            console.log(data.status);
+                                        }
+                                    })
+                                    .fail(function () {
+                                        console.log("error");
+                                    })
+                                    .always(function () {
+                                        console.log("complete");
+                                    });
+                                /* },
+                                                    error: function (jqXHR, textStatus, errorThrown) {
+                                                        console.log("ERROR");
                                                     }
-
-
-                                                })
-                                                .fail(function () {
-                                                    console.log("error");
-                                                })
-                                                .always(function () {
-                                                    console.log("complete");
-                                                });
-
-
-
-
-
-                                            var url_values = serverURL + "action=get_config_data_values";
-                                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                                                accesstoken != "undefined")
-                                                {
-                                                url_values += "&nodered=yes&token=" + accesstoken;
-                                                url_values +="&username="+username+"&loggedrole="+role+"&organization="+organization;
-                                            }
-                                            console.log("url_values");
-                                            console.log(url_values);
-                                            var jqxhrValues = $.getJSON(url_values,
-                                                    function (data) {
-                                                        console.log("success");
-                                                        console.log(data);
-                                                    })
-                                                .done(function (data) {
-                                                    if (data.status == "ok") {
-                                                        console.log("second success");
-                                                        data = data.content;
-
-                                                        allDataIn2 = data;
-
-                                                        // crea lista entiti principale
-                                                        node2.configData = data;
-                                                        createNodeList2();
-                                                        //crea dati per le select
-                                                        createRetrievePanel2();
-                                                        // crea map
-                                                        drawMap2();
-
-                                                        var marker_array = [];
-                                                        for (var k in data) {
-
-                                                            lat = Number(data[k]["latitude"]); //45.4858914;
-                                                            est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                                            lng = Number(data[k]["longitude"]); //9.202094;
-                                                            est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
-                                                            popup = "<b>" + data[k]['device'] + "</b><br>" +
-                                                                data[k]['value_type'];
-                                                            if (data[k]["visibility"] == "private") {
-
-                                                                m = L.marker([est_lat, est_lng], {
-                                                                    icon: redIcon
-                                                                }).bindPopup(popup);
-                                                            }
-                                                            else if (data[k]["visibility"] == "delegated") {
-                                                                m = L.marker([est_lat, est_lng], {
-                                                                    icon: pinkIcon
-                                                                }).bindPopup(popup);}
-                                                            else {
-                                                                m = L.marker([est_lat, est_lng], {
-                                                                    icon: blueIcon
-                                                                }).bindPopup(popup);
-                                                            }
-
-                                                            marker_array.push(m);
-                                                        }
-
-                                                        var markersGroup = L.layerGroup(marker_array);
-                                                        markersGroup.addTo(map2);
-
-                                                    } else {
-                                                        console.log(data.status);
-                                                    }
-                                                })
-                                                .fail(function () {
-                                                    console.log("error");
-                                                })
-                                                .always(function () {
-                                                    console.log("complete");
-                                                });
-
-
-                                            /* },
-                                            error: function (jqXHR, textStatus, errorThrown) {
-                                                console.log("ERROR");
-                                            }
-                                        }); */
-                                                        } else {
-                                                        console.log(data.status);
-                                                    }
-
-
-                                                })
-                                                .fail(function () {
-                                                    console.log("error");
-                                                })
-                                                .always(function () {
-                                                    console.log("complete");
-                                                });
-                                        //},
-                                        // 
-                                        // error: function(jqXHR,textStatus,errorThrown) { //******also comment this error block for testing
-                                        //     console.log("ERROR");
-										//
-										//}
-                                     //});
+                                                }); */
+                            } else {
+                                console.log(data.status);
+                            }
+                        })
+                        .fail(function (error) {
+                            console.log("error" + JSON.stringify(error));
+                        })
+                        .always(function () {
+                            console.log("complete");
+                        });
+                    //},
+                    // 
+                    // error: function(jqXHR,textStatus,errorThrown) { //******also comment this error block for testing
+                    //     console.log("ERROR");
+                    //
+                    //}
+                    //});
 
                 } catch (err) {
                     console.log("error creating the token " + err);
@@ -2454,7 +2390,7 @@ RED.nodes.registerType('label',{
                             changedUser = true;
                         }
                     }
-                });   
+                });
 
                 console.log("sensors are:")
                 console.log(sensors);
@@ -2466,7 +2402,7 @@ RED.nodes.registerType('label',{
 
                     for (var i = 0; i < sensors.length; i++) {
 
-                        var t = configData[sensors[i]]["entityType"];
+                        var t = configData[sensors[i]]["devicetype"];
                         if (device_types.length == 0) {
                             device_types.push(t);
                         } else {
@@ -2607,16 +2543,12 @@ RED.nodes.registerType('label',{
                 var idAmount = sensors.length * 4 + 7;
 
                 var jqxhr = $.getJSON("get-id?n=" + idAmount, function (data) {
-                        console.log("success");
-                        console.log(data);
-                    })
+                    console.log("success");
+                    console.log(data);
+                })
                     .done(function (data) {
                         console.log("second success...");
-
-
                         console.log(data);
-
-
 
                         var offsetY = 200;
                         var offsetYstep = 100;
@@ -2642,26 +2574,22 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                         console.log("counterid=" + counter_id);
 
                         var newflow = [];
-
-
                         //link in
                         newflow.push({
-                                "id": link_in_id,
-                                "type": "link in",
-                                "z": curr_flow_id,
-                                "name": "flow" + link_out_id,
-                                "links": [link_out_id],
-                                "x": 200,
-                                "y": 200,
-                                "wires": [
-                                    []
-                                ]
-                            }, ),
+                            "id": link_in_id,
+                            "type": "link in",
+                            "z": curr_flow_id,
+                            "name": "flow" + link_out_id,
+                            "links": [link_out_id],
+                            "x": 200,
+                            "y": 200,
+                            "wires": [
+                                []
+                            ]
+                        }),
 
                             //flow
                             newflow.push({
@@ -2669,8 +2597,6 @@ RED.nodes.registerType('label',{
                                 "type": "tab",
                                 "label": "Flow " + flow_id
                             }),
-
-
                             //link out
                             newflow.push({
                                 "id": link_out_id,
@@ -2682,8 +2608,6 @@ RED.nodes.registerType('label',{
                                 "y": middleY,
                                 "wires": []
                             }),
-
-
 
 
                             //function
@@ -2703,16 +2627,12 @@ RED.nodes.registerType('label',{
                                     ]
                                 ]
                             })
-
-
                         //sensori
 
                         var addInjectNode = false;
 
                         var orion_ids = [];
                         var protocol;
-
-
 
 
                         for (var i = 0; i < sensors.length; i++) {
@@ -2748,8 +2668,6 @@ RED.nodes.registerType('label',{
                                     attributes_string += "'" + attributes[j] + "'";
                                 }
                             }
-
-
                             console.log("looook here");
                             console.log(counter_id);
                             console.log(configData[sensors[i]]["ip"]);
@@ -2769,8 +2687,6 @@ RED.nodes.registerType('label',{
                                         "port": configData[sensors[i]]["port"]
                                     })
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "fiware orion in",
@@ -2779,7 +2695,7 @@ RED.nodes.registerType('label',{
                                         "service": conf_id,
                                         "tls": "",
                                         "throttle": "PT5S",
-                                        "entype": configData[sensors[i]]["entityType"],
+                                        "entype": configData[sensors[i]]["devicetype"],
                                         "enid": sensors[i],
                                         "ispattern": false,
                                         "duration": "P1W",
@@ -2799,9 +2715,7 @@ RED.nodes.registerType('label',{
                                         ]
                                     })
                                     break;
-
-
-                                    //mosquitto
+                                //mosquitto
                                 case "mqtt":
 
                                     newflow.push({
@@ -2827,8 +2741,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "mqtt in",
@@ -2848,9 +2760,9 @@ RED.nodes.registerType('label',{
 
                                     break;
 
-                                    //rabbit
-                                    //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
-                                    //  	$("#node-input-iotype").val(4);
+                                //rabbit
+                                //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
+                                //  	$("#node-input-iotype").val(4);
                                 case "amqp":
                                     newflow.push({
                                         "id": conf_id,
@@ -2891,7 +2803,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL+"stubs"+ "\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 600,
@@ -2918,8 +2830,6 @@ RED.nodes.registerType('label',{
                                     []
                                 ]
                             })
-
-
                             offsetY += offsetYstep;
 
                         }
@@ -2937,8 +2847,6 @@ RED.nodes.registerType('label',{
                             //     	$('#import-tab-new').addClass("selected");
 
                         }, 250);
-
-
 
 
 
@@ -2981,9 +2889,9 @@ RED.nodes.registerType('label',{
                 var idAmount = sensors.length * 4 + 2 + device_types.length * 4;
 
                 var jqxhr = $.getJSON("get-id?n=" + idAmount, function (data) {
-                        console.log("success");
-                        // console.log( data );
-                    })
+                    console.log("success");
+                    // console.log( data );
+                })
                     .done(function (data) {
                         console.log("second success...");
 
@@ -3028,7 +2936,7 @@ RED.nodes.registerType('label',{
                             obj.device_id = data.ids[counter_id++];
                             obj.eventId = data.ids[counter_id++];
                             for (var j = 0; j < linkFunctionDTable.length; j++) {
-                                if (configData[sensors[i]]["entityType"] == linkFunctionDTable[j].link_out_type) {
+                                if (configData[sensors[i]]["devicetype"] == linkFunctionDTable[j].link_out_type) {
                                     obj.link_out_id = linkFunctionDTable[j].link_out_id;
                                     break; //because in this case 1 to 1 relationship
                                 }
@@ -3053,13 +2961,9 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                         //console.log("counterid="+counter_id);
 
                         var newflow = [];
-
-
                         //link in (that appears in the current flow not in the new created one)
                         var off_here = offsetY / 2;
                         if (maxCanvasHeight != 0 && linkFunctionDTable.length > maxCanvasHeight /
@@ -3100,8 +3004,6 @@ RED.nodes.registerType('label',{
                             "type": "tab",
                             "label": "Flow " + flow_id
                         });
-
-
                         //link out
                         for (var i = 0; i < linkFunctionDTable.length; i++) {
                             newflow.push({
@@ -3128,24 +3030,20 @@ RED.nodes.registerType('label',{
                         }
                         console.log("linkFunctionDTable");
                         console.log(linkFunctionDTable);
-
-
                         /* //debug
-    			    newflow.push({
-    			    		"id": debug_id,
-    						"type": "debug",
-    						"z": flow_id,
-    						"name": "",
-    						"active": true,
-    						"console": "false",
-    						"complete": "false",
-    						"x": 1200,
-    						"y": middleY,
-    						"wires": []
-    						})
-                  */
-
-
+                                        newflow.push({
+                                                "id": debug_id,
+                                                "type": "debug",
+                                                "z": flow_id,
+                                                "name": "",
+                                                "active": true,
+                                                "console": "false",
+                                                "complete": "false",
+                                                "x": 1200,
+                                                "y": middleY,
+                                                "wires": []
+                                                })
+                                      */
 
                         //collect
                         /* newflow.push({
@@ -3164,16 +3062,12 @@ RED.nodes.registerType('label',{
     								]
     							]
     						})*/
-
-
                         //sensori
 
                         var addInjectNode = false;
 
                         var orion_ids = [];
                         var protocol;
-
-
 
 
                         for (var i = 0; i < sensors.length; i++) {
@@ -3238,30 +3132,28 @@ RED.nodes.registerType('label',{
                                         "url": configData[sensors[i]]["ip"].replace("https://", "").replace("http://", ""),
                                         "port": configData[sensors[i]]["port"]
                                     })
-
-
                                     /* 
-                                    	                	    newflow.push({
-                                    								"id": node_id,
-                                    								"type": "fiware orion",
-                                    								"z": flow_id,
-                                    								"name":  sensors[i],
-                                    								"service": conf_id,
-                                    								"entype": configData[sensors[i]]["type"],
-                                    								"enid": sensors[i],
-                                    								"attributes": "",
-                                    								"rtype": "",
-                                    								"rvalue": "",
-                                    								"limit": 20,
-                                    								"includeattr": true,
-                                    								"x": 400,
-                                    								"y": offsetY,
-                                    								"wires": [
-                                    									[
-                                    										ev_id
-                                    									]
-                                    								]
-                                    							})*/
+                                                                                    newflow.push({
+                                                                                        "id": node_id,
+                                                                                        "type": "fiware orion",
+                                                                                        "z": flow_id,
+                                                                                        "name":  sensors[i],
+                                                                                        "service": conf_id,
+                                                                                        "entype": configData[sensors[i]]["type"],
+                                                                                        "enid": sensors[i],
+                                                                                        "attributes": "",
+                                                                                        "rtype": "",
+                                                                                        "rvalue": "",
+                                                                                        "limit": 20,
+                                                                                        "includeattr": true,
+                                                                                        "x": 400,
+                                                                                        "y": offsetY,
+                                                                                        "wires": [
+                                                                                            [
+                                                                                                ev_id
+                                                                                            ]
+                                                                                        ]
+                                                                                    })*/
 
                                     newflow.push({
                                         "id": node_id,
@@ -3271,7 +3163,7 @@ RED.nodes.registerType('label',{
                                         "service": conf_id,
                                         "tls": "",
                                         "throttle": "PT5S",
-                                        "entype": configData[sensors[i]]["entityType"],
+                                        "entype": configData[sensors[i]]["devicetype"],
                                         "enid": sensors[i],
                                         "ispattern": false,
                                         "duration": "P1W",
@@ -3291,9 +3183,7 @@ RED.nodes.registerType('label',{
                                         ]
                                     })
                                     break;
-
-
-                                    //mosquitto
+                                //mosquitto
                                 case "mqtt":
 
                                     newflow.push({
@@ -3319,8 +3209,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "mqtt in",
@@ -3340,9 +3228,9 @@ RED.nodes.registerType('label',{
 
                                     break;
 
-                                    //rabbit
-                                    //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
-                                    //  	$("#node-input-iotype").val(4);
+                                //rabbit
+                                //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
+                                //  	$("#node-input-iotype").val(4);
                                 case "AMQP":
                                 case "amqp":
                                     newflow.push({
@@ -3403,7 +3291,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL+"stubs" + "\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 800,
@@ -3413,18 +3301,12 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                             offsetY += offsetYstep;
 
 
 
 
-
-
                         }
-
-
 
                         //inject node //set to false, dunno what that was supposed to be
                         if (addInjectNode) {
@@ -3447,8 +3329,6 @@ RED.nodes.registerType('label',{
 
                                 ]
                             })
-
-
                         }
 
                         //$("#btn-sidemenu").simulate("click");
@@ -3465,8 +3345,6 @@ RED.nodes.registerType('label',{
                             //     	$('#import-tab-new').addClass("selected");
 
                         }, 250);
-
-
 
 
                         console.log("newflow is");
@@ -3486,8 +3364,6 @@ RED.nodes.registerType('label',{
     						Asensors.push(Ssensors[0]);
     						createFlow(Asensors, configData);
     					}*/
-
-
                     })
                     .fail(function () {
                         console.log("error");
@@ -3509,9 +3385,9 @@ RED.nodes.registerType('label',{
                 var idAmount = sensors.length * 4 + 2 + value_types.length * 4;
 
                 var jqxhr = $.getJSON("get-id?n=" + idAmount, function (data) {
-                        console.log("success");
-                        // console.log( data );
-                    })
+                    console.log("success");
+                    // console.log( data );
+                })
                     .done(function (data) {
                         console.log("second success...");
 
@@ -3564,8 +3440,6 @@ RED.nodes.registerType('label',{
                                         //no break because in this case many to many relationship
                                     }
                                 }
-
-
                             }
                             deviceLinkVTable.push(obj);
                             console.log("obj.link_out_ids");
@@ -3579,7 +3453,7 @@ RED.nodes.registerType('label',{
                             for (var j = 0; j < deviceLinkVTable.length; j++) {
                                 for (var k = 0; k < deviceLinkVTable[j].link_out_ids.length; k++) {
                                     if (linkFunctionVTable[i].link_out_id == deviceLinkVTable[j].link_out_ids[
-                                            k]) {
+                                        k]) {
                                         relatedFunctions.push(deviceLinkVTable[j].functionId);
                                         //we do not put break because relationship may be one to many
                                     }
@@ -3593,13 +3467,9 @@ RED.nodes.registerType('label',{
 
                         }
 
-
-
                         //console.log("counterid="+counter_id);
 
                         var newflow = [];
-
-
                         //link in (that appears in the current flow not in the new created one)
                         var off_here = offsetY / 2;
                         if (maxCanvasHeight != 0 && linkFunctionVTable.length > maxCanvasHeight /
@@ -3640,8 +3510,6 @@ RED.nodes.registerType('label',{
                             "type": "tab",
                             "label": "Flow " + flow_id
                         });
-
-
                         //link out
                         for (var i = 0; i < linkFunctionVTable.length; i++) {
                             newflow.push({
@@ -3669,12 +3537,8 @@ RED.nodes.registerType('label',{
                         console.log("linkEventTable");
                         console.log(linkFunctionVTable);
 
-
-
                         var orion_ids = [];
                         var protocol;
-
-
 
                         for (var i = 0; i < sensors.length; i++) {
                             console.log("orion--")
@@ -3739,8 +3603,6 @@ RED.nodes.registerType('label',{
                                     })
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "fiware orion in",
@@ -3749,7 +3611,7 @@ RED.nodes.registerType('label',{
                                         "service": conf_id,
                                         "tls": "",
                                         "throttle": "PT5S",
-                                        "entype": configData[sensors[i]]["entityType"],
+                                        "entype": configData[sensors[i]]["devicetype"],
                                         "enid": sensors[i],
                                         "ispattern": false,
                                         "duration": "P1W",
@@ -3769,9 +3631,7 @@ RED.nodes.registerType('label',{
                                         ]
                                     })
                                     break;
-
-
-                                    //mosquitto
+                                //mosquitto
                                 case "mqtt":
 
                                     newflow.push({
@@ -3797,8 +3657,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "mqtt in",
@@ -3818,9 +3676,9 @@ RED.nodes.registerType('label',{
 
                                     break;
 
-                                    //rabbit
-                                    //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
-                                    //  	$("#node-input-iotype").val(4);
+                                //rabbit
+                                //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
+                                //  	$("#node-input-iotype").val(4);
                                 case "AMQP":
                                 case "amqp":
                                     newflow.push({
@@ -3872,18 +3730,14 @@ RED.nodes.registerType('label',{
                                 "wires": [
                                     [function_id]
                                 ]
-
-
                             })
-
-
                             //function  
                             newflow.push({
                                 "id": function_id,
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\""+sensors[i]+"\", \""+configData[sensors[i]]['contextBroker']+"\",\""+configData[sensors[i]]['model']+"\",\""+organization+"\",\"ngsi\", msg.payload, ["+attributes_string+"], \""+_serviceIP+"\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL+"stubs" + "\" );\r\n \/\/return msg;",
                                 "outputs": corresponding_out_ids.length,
                                 "noerr": 0,
                                 "x": 800,
@@ -3892,14 +3746,8 @@ RED.nodes.registerType('label',{
                             });
 
 
-
-
                             offsetY += offsetYstep;
-
-
                         }
-
-
 
 
                         //$("#btn-sidemenu").simulate("click");
@@ -3918,12 +3766,8 @@ RED.nodes.registerType('label',{
                         }, 250);
 
 
-
-
                         console.log("newflow is");
                         console.log(JSON.stringify(newflow));
-
-
 
                     })
                     .fail(function () {
@@ -4016,19 +3860,19 @@ RED.nodes.registerType('label',{
 
         oneditprepare: function () {
 
-           //release keycloak
-            var KEYCLOACK="https://www.snap4city.org/auth/realms/master/protocol/openid-connect/userinfo";
+            //release keycloak
+            var KEYCLOACK = "https://www.snap4city.org/auth/realms/master/protocol/openid-connect/userinfo";
             //test keycloak
             //var KEYCLOACK="https://www.disit.org/auth/realms/master/protocol/openid-connect/userinfo";
-            
-            var username="";
-            var user_roles=[];
-            var role="manager";
-            var organization="";
-            var gpsCentreLatLng="";
-            
+
+            var username = "";
+            var user_roles = [];
+            var role = "manager";
+            var organization = "";
+            var gpsCentreLatLng = "";
+
             var accessToken = "";
-            
+
             $.ajax({
                 url: "isThereLocalRefreshToken/",
                 type: "GET",
@@ -4078,45 +3922,43 @@ RED.nodes.registerType('label',{
                     }
                 }
             });
-            
-            if(accessToken!=""){
+
+            if (accessToken != "") {
                 $.ajax({
-                            url: KEYCLOACK,
-                            type: "GET",
-                            async: false,
-                            headers:{
-                                Accept:"application/json" ,
-                                Authorization:"Bearer "+ accessToken,
-                                "Access-Control-Allow-Origin":"*"
-                            },
-                            success: function (_data) {
-                                if(_data.preferred_username!="" && _data.preferred_username!=undefined && _data.preferred_username!="undefined")
-                                    username= _data.preferred_username;
-                                else
-                                    username=_data.username;
-                                
-                                
-                                user_roles= _data.roles;
-                                
-                                for(var i=0; i<user_roles.length; i++){
-                                    if(user_roles[i].toLowerCase()=="rootadmin" ||
-                                      user_roles[i].toLowerCase()=="tooladmin"||
-                                      user_roles[i].toLowerCase()=="areamanager")
-                                        
-                                    {
-                                        role=user_roles[i];
-                                        break;
-                                    }
-                                    
-                                }
-                                
+                    url: KEYCLOACK,
+                    type: "GET",
+                    async: false,
+                    headers: {
+                        Accept: "application/json",
+                        Authorization: "Bearer " + accessToken,
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    success: function (_data) {
+                        if (_data.preferred_username != "" && _data.preferred_username != undefined && _data.preferred_username != "undefined")
+                            username = _data.preferred_username;
+                        else
+                            username = _data.username;
+
+
+                        user_roles = _data.roles;
+
+                        for (var i = 0; i < user_roles.length; i++) {
+                            if (user_roles[i].toLowerCase() == "rootadmin" ||
+                                user_roles[i].toLowerCase() == "tooladmin" ||
+                                user_roles[i].toLowerCase() == "areamanager") {
+                                role = user_roles[i];
+                                break;
                             }
-                        });
-                console.log("username: "+ username);
-                console.log("role: "+ role);
-                
+
+                        }
+
+                    }
+                });
+                console.log("username: " + username);
+                console.log("role: " + role);
+
             }
-            
+
             //***for testing uncomment this block
             /*username="fatimaroot";
             accessToken="eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJRczF6Wko2REIyTlp0ajB3RlVHNlFfN2JwZGhuRnRFX1NMZFdHb29CSUFFIn0.eyJqdGkiOiI0Mjc1NWI3YS01NzA3LTQwNmItOTY2Zi01NzczZjNlNmQzZWQiLCJleHAiOjE1NjM5MjYyMTIsIm5iZiI6MCwiaWF0IjoxNTYzOTI0NzEyLCJpc3MiOiJodHRwOi8vd3d3LmRpc2l0Lm9yZy9hdXRoL3JlYWxtcy9tYXN0ZXIiLCJhdWQiOiJwaHAtaW90LWRpcmVjdG9yeS10ZXN0Iiwic3ViIjoiNjQyMDllZmUtYTQwOC00MGM4LTk5Y2YtOGFmYjk4MTRlOTBhIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoicGhwLWlvdC1kaXJlY3RvcnktdGVzdCIsIm5vbmNlIjoiZDBiZWIzN2Y3ZmQyNmRlYWU4YWRmNDcxYzE5MmE2NTUiLCJhdXRoX3RpbWUiOjE1NjI2NzU5NDEsInNlc3Npb25fc3RhdGUiOiJiMjExMTU4Yi0xNTc5LTRiNTEtOWRmMi02NDUwOGQ5YjVkZDkiLCJhY3IiOiIwIiwiYWxsb3dlZC1vcmlnaW5zIjpbXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbInVtYV9hdXRob3JpemF0aW9uIiwiUm9vdEFkbWluIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwicm9sZXMiOlsidW1hX2F1dGhvcml6YXRpb24iLCJvZmZsaW5lX2FjY2VzcyIsIlJvb3RBZG1pbiJdLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJmYXRpbWFyb290IiwiZW1haWwiOiJhbmdlbG8uZGlmaW5vQGdtYWlsLmNvbSJ9.ICzrvGBdbm8E7_vQsYqj9oztpBuwqUSMBL8xC0u3kpTziVWt1t8UZ5VpTLKhPmyZo4wQQy1jEuwGGLj1ZwVnkTmeNIZMHRHnXd0PIBdCqdLR9JDlN-AS8VsqBnJyVntwqw4-oaYhS4TTdp2vxYwR30ZvillOf6NM7PDyLg39FR7oYos5scqauIwt5mqYhbJy6JtEqGP7IGacDQUcUONbC92ztWeg3zkn2L_YwPVbZTx8KrNzQ2T8CqfrMmPfARKum1Hspcgiyc1lvEbO6x4g7XUHE6I134bwGGYQdxjch4L6tmnULC9F0-Xv2IAGE_wClvCgHmpImRA3QVwd2AqqOw";
@@ -4137,12 +3979,10 @@ RED.nodes.registerType('label',{
             } catch (err) {
                 console.log("couldn't get the canvas height: " + err);
             }
-
-             //serverURL= "https://www.snap4city.org/iotdirectorytest/api/device.php?"; //for testing
-            serverURL = "https://iotdirectory.snap4city.org/api/device.php?"; //official
-            
-            //findOrg_url = "https://www.snap4city.org/iotdirectorytest/api/nodeRedConnection.php?" + "action=get_organization";
-            findOrg_url = "https://iotdirectory.snap4city.org/api/nodeRedConnection.php?" + "action=get_organization";
+			
+			//TODO: externalize this source code to the js side, so we can make this parameters configurable via settings
+            //serverURL= "https://www.snap4city.org/iotdirectorytest/"; //for testing
+            serverURL = "https://iotdirectory.snap4city.org/"; //official
 
             openedTab = "Device-based-search";
             $("#deviceTabButton").simulate("click");
@@ -4204,8 +4044,8 @@ RED.nodes.registerType('label',{
                 popupAnchor: new L.Point(0, -18)
 
             });
-            
-             pinkIcon = new L.Icon({
+
+            pinkIcon = new L.Icon({
 
                 iconUrl: 'https://www.snap4city.org/iotdirectorytest/markerDelegated.png',
                 iconSize: new L.Point(32, 32),
@@ -4322,8 +4162,6 @@ RED.nodes.registerType('label',{
                             drawnItems.addLayer(fence);
                         }
                     });
-
-
                     drawnItems.eachLayer(function (layer) {
                         var resultsOut = drawSelection(layer, drawnItems, TYPE, allDataOut,
                             1);
@@ -4407,7 +4245,7 @@ RED.nodes.registerType('label',{
 
                     lat = Number(selections[k].latitude);
                     lng = Number(selections[k].longitude);
-                    popup = "<b>" + selections[k].label + "</b><br>" + selections[k].entityType + "<br>" +
+                    popup = "<b>" + selections[k].label + "</b><br>" + selections[k].devicetype + "<br>" +
                         selections[k].kind;
                     var m = L.marker([lat, lng], {
                         icon: greenIcon
@@ -4456,15 +4294,9 @@ RED.nodes.registerType('label',{
                         var long_map = (circles.geometry.coordinates[0]);
                         var center_latlong = new L.LatLng(lat_map, long_map);
                         var rad_map = (circles.properties.radius);
-
-
                         for (var sensorTocheck in data) {
-
-
                             var sensorLatLng = new L.LatLng(Number(data[sensorTocheck]["latitude"]), Number(
                                 data[sensorTocheck]["longitude"]));
-
-
                             if (Math.abs(center_latlong.distanceTo(sensorLatLng) / 1000) <= rad_map) {
 
                                 //results.push(sensorTocheck);
@@ -4473,14 +4305,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -4489,8 +4321,6 @@ RED.nodes.registerType('label',{
                             }
                         }
                         break;
-
-
 
                     case 'polygon':
 
@@ -4523,14 +4353,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -4556,14 +4386,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -4572,8 +4402,6 @@ RED.nodes.registerType('label',{
                             }
                         }
                         break;
-
-
 
                     case 'polyline':
 
@@ -4600,14 +4428,14 @@ RED.nodes.registerType('label',{
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["entityType"];
+                                    item.devicetype = data[sensorTocheck]["devicetype"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = sensorTocheck;
                                 } else {
                                     item.name = sensorTocheck;
                                     item.latitude = Number(data[sensorTocheck]["latitude"]);
                                     item.longitude = Number(data[sensorTocheck]["longitude"]);
-                                    item.entityType = data[sensorTocheck]["value_name"];
+                                    item.devicetype = data[sensorTocheck]["value_name"];
                                     item.kind = data[sensorTocheck]["kind"];
                                     item.label = data[sensorTocheck]["device"];
                                 }
@@ -4685,8 +4513,6 @@ RED.nodes.registerType('label',{
                         layer = e.layer;
 
                     var resultsOut2 = drawSelection(layer, drawnItems2, TYPE2, allDataOut2, 2);
-
-
                     var el;
                     $("#node-input-nodes-target-container-tab2 li input").prop('checked', false);
                     $("#node-input-nodes-target-container-tab2 li").hide();
@@ -4710,8 +4536,6 @@ RED.nodes.registerType('label',{
                             drawnItems2.addLayer(fence);
                         }
                     });
-
-
                     drawnItems2.eachLayer(function (layer) {
                         var resultsOut2 = drawSelection(layer, drawnItems2, TYPE2,
                             allDataOut2, 2);
@@ -4791,7 +4615,7 @@ RED.nodes.registerType('label',{
             function createRetrievePanel() {
 
 
-                var types = getDistinctValues(node.configData, "entityType");
+                var types = getDistinctValues(node.configData, "devicetype");
                 addSelectData('node-input-type-select', types);
                 var kinds = getDistinctValues(node.configData, "kind");
                 addSelectData('node-input-kind-select', kinds);
@@ -4845,18 +4669,14 @@ RED.nodes.registerType('label',{
                 var hasType, hasKind, hasBroker, hasOwnership;
 
                 $("#node-input-nodes-target-container li").each(function () {
-
-
                     hasType = false;
                     if (selTypes.length == 0 || $.inArray("all", selTypes) >= 0 || $.inArray($(this)
-                            .data("type"), selTypes) >= 0) {
+                        .data("type"), selTypes) >= 0) {
                         hasType = true;
                     }
 
                     console.log(selTypes);
                     console.log($.inArray("all", selTypes >= 0));
-
-
 
                     hasKind = false;
                     if (selKind == "all" || $(this).data("kind") == selKind) {
@@ -4865,7 +4685,7 @@ RED.nodes.registerType('label',{
 
                     hasBroker = false;
                     if (selBrokers.length == 0 || $.inArray("all", selBrokers) >= 0 || $.inArray($(
-                            this).data("context-broker"), selBrokers) >= 0) {
+                        this).data("context-broker"), selBrokers) >= 0) {
                         hasBroker = true;
                     }
 
@@ -4873,8 +4693,6 @@ RED.nodes.registerType('label',{
                     if (selOwnership == "all" || $(this).data("visibility") == selOwnership) {
                         hasOwnership = true;
                     }
-
-
                     console.log("hasOwnership " + hasOwnership);
                     console.log("hasType " + hasType);
                     console.log("hasKind " + hasKind);
@@ -4915,11 +4733,9 @@ RED.nodes.registerType('label',{
                 var hasType, hasName, hasBroker, hasEditable, hasHealthiness, hasOwnership;
 
                 $("#node-input-nodes-target-container-tab2 li").each(function () {
-
-
                     hasType = false;
                     if (selTypes.length == 0 || $.inArray("all", selTypes) >= 0 || $.inArray($(this)
-                            .data("type"), selTypes) >= 0) {
+                        .data("type"), selTypes) >= 0) {
                         hasType = true;
                     }
 
@@ -4930,7 +4746,7 @@ RED.nodes.registerType('label',{
 
                     hasBroker = false;
                     if (selBrokers.length == 0 || $.inArray("all", selBrokers) >= 0 || $.inArray($(
-                            this).data("context-broker"), selBrokers) >= 0) {
+                        this).data("context-broker"), selBrokers) >= 0) {
                         hasBroker = true;
                     }
                     hasEditable = false;
@@ -4940,7 +4756,7 @@ RED.nodes.registerType('label',{
 
                     hasHealthiness = false;
                     if (selHealthiness.length == 0 || $.inArray("all", selHealthiness) >= 0 || $.inArray(
-                            $(this).data("healthiness"), selHealthiness) >= 0) {
+                        $(this).data("healthiness"), selHealthiness) >= 0) {
                         hasHealthiness = true;
                     }
 
@@ -4948,8 +4764,6 @@ RED.nodes.registerType('label',{
                     if (selOwnerships == "all" || $(this).data("visibility") == selOwnerships) {
                         hasOwnership = true;
                     }
-
-
                     if (hasType && hasName && hasBroker && hasHealthiness && hasEditable &&
                         hasOwnership) {
                         $(this).show();
@@ -4971,15 +4785,15 @@ RED.nodes.registerType('label',{
                 data = data.sort();
                 $('#' + selectId).html("");
                 $('#' + selectId).append($('<option>', {
-                        value: "all"
-                    })
+                    value: "all"
+                })
                     .text("all"));
 
                 $.each(data, function (key, value) {
                     $('#' + selectId)
                         .append($('<option>', {
-                                value: value
-                            })
+                            value: value
+                        })
                             .text(value));
                 });
 
@@ -4995,15 +4809,15 @@ RED.nodes.registerType('label',{
                 data = data.sort();
                 $('#' + selectId).html("");
                 $('#' + selectId).append($('<option>', {
-                        value: "all"
-                    })
+                    value: "all"
+                })
                     .text("all"));
 
                 $.each(data, function (key, value) {
                     $('#' + selectId)
                         .append($('<option>', {
-                                value: value
-                            })
+                            value: value
+                        })
                             .text(value));
                 });
 
@@ -5091,7 +4905,7 @@ RED.nodes.registerType('label',{
                     var container = $('<li/>', {
                         class: "node-input-target-node"
                     });
-                    container.attr('data-type', data[key]["entityType"]);
+                    container.attr('data-type', data[key]["devicetype"]);
                     container.attr('data-kind', data[key]["kind"]);
                     container.attr('data-context-broker', data[key]["contextBroker"]);
                     container.attr('data-visibility', data[key]["visibility"]);
@@ -5105,10 +4919,10 @@ RED.nodes.registerType('label',{
                         for: "node-input-target-node-" + key
                     }).appendTo(container);
                     $('<input>', {
-                            type: "checkbox",
-                            class: "node-input-target-node-checkbox",
-                            id: "node-input-target-node-" + key
-                        })
+                        type: "checkbox",
+                        class: "node-input-target-node-checkbox",
+                        id: "node-input-target-node-" + key
+                    })
                         .data('node-id', key)
                         .change(function () {
                             var my_id = this.id.replace("node-input-target-node-", '');
@@ -5116,7 +4930,7 @@ RED.nodes.registerType('label',{
                             var item = {};
                             item.latitude = Number(my_selected_device["latitude"]);
                             item.longitude = Number(my_selected_device["longitude"]);
-                            item.entityType = my_selected_device["entityType"];
+                            item.devicetype = my_selected_device["devicetype"];
                             item.kind = my_selected_device["kind"];
                             item.name = my_id;
                             item.label = my_id;
@@ -5128,14 +4942,12 @@ RED.nodes.registerType('label',{
                             if ($('#' + this.id).prop('checked')) {
                                 console.log("here true");
                                 marker_selection.push(item);
-                                var popup = "<b>" + item.label + "</b><br>" + item.entityType + "<br>" +
+                                var popup = "<b>" + item.label + "</b><br>" + item.devicetype + "<br>" +
                                     item.kind;
                                 var m = new L.marker([item.latitude, item.longitude], {
                                     icon: greenIcon
                                 }).bindPopup(popup);
                                 green_marker_array.push(m);
-
-
                             } else {
                                 console.log("here false");
                                 for (var i = 0; i < marker_selection.length; i++) {
@@ -5143,11 +4955,11 @@ RED.nodes.registerType('label',{
                                     console.log(marker_selection[i].label == item.label);
                                     console.log(marker_selection[i].longitude == item.longitude);
                                     console.log(marker_selection[i].latitude == item.latitude);
-                                    console.log(marker_selection[i].entityType == item.entityType);
+                                    console.log(marker_selection[i].devicetype == item.devicetype);
                                     console.log(marker_selection[i].kind == item.kind);
                                     if (marker_selection[i].label == item.label && marker_selection[i].longitude ==
                                         item.longitude && marker_selection[i].latitude == item.latitude &&
-                                        marker_selection[i].entityType == item.entityType &&
+                                        marker_selection[i].devicetype == item.devicetype &&
                                         marker_selection[i].kind == item.kind) {
                                         console.log("here");
                                         marker_selection.splice(i, 1);
@@ -5161,7 +4973,7 @@ RED.nodes.registerType('label',{
                                     var lat = Number(marker_selection[k].latitude);
                                     var lng = Number(marker_selection[k].longitude);
                                     var popup = "<b>" + marker_selection[k].label + "</b><br>" +
-                                        marker_selection[k].entityType + "<br>" + marker_selection[k].kind;
+                                        marker_selection[k].devicetype + "<br>" + marker_selection[k].kind;
                                     var m = L.marker([lat, lng], {
                                         icon: greenIcon
                                     }).bindPopup(popup);
@@ -5183,9 +4995,7 @@ RED.nodes.registerType('label',{
                     var labelSpan = $('<span>');
                     var label = key;
                     var sublabel = data[key]["contextBroker"];
-                    var sublabel2 = data[key]["entityType"];
-
-
+                    var sublabel2 = data[key]["devicetype"];
                     $('<span>', {
                         class: "node-input-target-node-label",
                         style: "white-space:nowrap"
@@ -5223,16 +5033,14 @@ RED.nodes.registerType('label',{
                     container.attr('data-editable', data[key]["editable"]);
                     container.attr('data-healthiness', data[key]["healthiness_criteria"]);
                     container.attr('data-visibility', data[key]["visibility"]);
-
-
                     var row = $('<label/>', {
                         for: "node-input-target-node-tab2" + key
                     }).appendTo(container);
                     $('<input>', {
-                            type: "checkbox",
-                            class: "node-input-target-node-checkbox-tab2",
-                            id: "node-input-target-node-tab2" + key
-                        })
+                        type: "checkbox",
+                        class: "node-input-target-node-checkbox-tab2",
+                        id: "node-input-target-node-tab2" + key
+                    })
                         .data('node-id', key)
                         .change(function () {
                             var my_id = this.id.replace("node-input-target-node-tab2", '');
@@ -5240,35 +5048,29 @@ RED.nodes.registerType('label',{
                             var item = {};
                             item.latitude = Number(my_selected_device["latitude"]);
                             item.longitude = Number(my_selected_device["longitude"]);
-                            item.entityType = my_selected_device["value_name"];
+                            item.devicetype = my_selected_device["value_name"];
                             item.kind = my_selected_device["kind"];
                             item.name = my_id;
                             item.label = my_selected_device["device"];
-
-
                             if ($('#' + this.id).prop('checked')) {
                                 marker_selection_2.push(item);
-                                var popup = "<b>" + item.label + "</b><br>" + item.entityType;
+                                var popup = "<b>" + item.label + "</b><br>" + item.devicetype;
                                 var m = new L.marker([item.latitude, item.longitude], {
                                     icon: greenIcon
                                 }).bindPopup(popup);
                                 green_marker_array_2.push(m);
-
-
                             } else {
-
-
                                 for (var i = 0; i < marker_selection_2.length; i++) {
                                     console.log(marker_selection_2[i]);
                                     console.log(marker_selection_2[i].label == item.label);
                                     console.log(marker_selection_2[i].longitude == item.longitude);
                                     console.log(marker_selection_2[i].latitude == item.latitude);
-                                    console.log(marker_selection_2[i].entityType == item.entityType);
+                                    console.log(marker_selection_2[i].devicetype == item.devicetype);
                                     console.log(marker_selection_2[i].kind == item.kind);
 
                                     if (marker_selection_2[i].label == item.label && marker_selection_2[
-                                            i].longitude == item.longitude && marker_selection_2[i].latitude ==
-                                        item.latitude && marker_selection_2[i].entityType == item.entityType
+                                        i].longitude == item.longitude && marker_selection_2[i].latitude ==
+                                        item.latitude && marker_selection_2[i].devicetype == item.devicetype
                                     ) {
                                         console.log("here");
                                         marker_selection_2.splice(i, 1);
@@ -5282,7 +5084,7 @@ RED.nodes.registerType('label',{
                                     var lat = Number(marker_selection_2[k].latitude);
                                     var lng = Number(marker_selection_2[k].longitude);
                                     var popup = "<b>" + marker_selection_2[k].label + "</b><br>" +
-                                        marker_selection_2[k].entityType;
+                                        marker_selection_2[k].devicetype;
                                     var m = L.marker([lat, lng], {
                                         icon: greenIcon
                                     }).bindPopup(popup);
@@ -5306,8 +5108,6 @@ RED.nodes.registerType('label',{
                     var sublabel = data[key]["cb"];
                     var sublabel2 = data[key]["device"];
                     //       var sublabel3 = data[key]["value_name"];
-
-
                     $('<span>', {
                         class: "node-input-target-node-label-tab2",
                         style: "white-space:nowrap"
@@ -5463,12 +5263,12 @@ RED.nodes.registerType('label',{
                         var item = {};
                         item.latitude = Number(allDataOut[k]["latitude"]);
                         item.longitude = Number(allDataOut[k]["longitude"]);
-                        item.entityType = allDataOut[k]["entityType"];
+                        item.devicetype = allDataOut[k]["devicetype"];
                         item.kind = allDataOut[k]["kind"];
                         item.name = k;
                         item.label = k;
                         marker_selection.push(item);
-                        var popup = "<b>" + item.label + "</b><br>" + item.entityType + "<br>" +
+                        var popup = "<b>" + item.label + "</b><br>" + item.devicetype + "<br>" +
                             item.kind;
                         var m = new L.marker([item.latitude, item.longitude], {
                             icon: greenIcon
@@ -5504,12 +5304,12 @@ RED.nodes.registerType('label',{
                         var item = {};
                         item.latitude = Number(allDataOut2[k]["latitude"]);
                         item.longitude = Number(allDataOut2[k]["longitude"]);
-                        item.entityType = allDataOut2[k]["entityType"];
+                        item.devicetype = allDataOut2[k]["devicetype"];
                         item.kind = allDataOut2[k]["kind"];
                         item.name = k;
                         item.label = allDataOut2[k]["device"];
                         marker_selection_2.push(item);
-                        var popup = "<b>" + item.label + "</b><br>" + item.entityType + "<br>" +
+                        var popup = "<b>" + item.label + "</b><br>" + item.devicetype + "<br>" +
                             item.kind;
                         var m = new L.marker([item.latitude, item.longitude], {
                             icon: greenIcon
@@ -5571,8 +5371,6 @@ RED.nodes.registerType('label',{
                     $("#polygon-wrapper").fadeOut("fast");
                 } else if ($(this).val() == "map") // map search - target
                 {
-
-
                     $("#target-wrapper").fadeIn("fast");
                     $("#retrieve-selected").fadeOut("fast");
                     $("#retrieve-wrapper").fadeOut("fast");
@@ -5695,14 +5493,14 @@ RED.nodes.registerType('label',{
             if (accessToken != "") {
                 console.log("ACCESS TOKEN: " + accessToken);
                 var accesstoken = accessToken;
-                
+
                 try {
                     console.log("in retrieving access tokennn");
                     console.log("this.id " + this.id);
 
                     //var accesstokenOut = "";
                     //*** for testing comment this block, don't forget the ending brackets
-                     $.ajax({
+                    $.ajax({
                         url: "deviceregistration/" + this.id,
                         type: "GET",
                         async: false,
@@ -5710,47 +5508,45 @@ RED.nodes.registerType('label',{
                             console.log(resp);
                             //accesstoken = resp.accessToken;
                             //accesstoken = resp.refreshToken;
-                            accesstoken = resp.accessToken; 
-                            
+                            accesstoken = resp.accessToken;
+
                             //**until here
 
-                            if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                                accesstoken != "undefined")
-                            {
+							var findOrg_url=serverURL + "api/nodeRedConnection.php?action=get_organization";
+
+                            if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                 findOrg_url += "&nodered=yes&token=" + accesstoken;
-                                findOrg_url +="&username="+username+"&loggedrole="+role;
                             }
 
                             console.log("findOrg_url");
                             console.log(findOrg_url);
 
                             var jqxhr = $.getJSON(findOrg_url, function (data) {
-                                    console.log("findOrg_url success");
-                                    console.log(data);
-                                })
+                                console.log("findOrg_url success");
+                                console.log(data);
+                            })
                                 .done(function (data) {
 
                                     if (data.status == "ok") {
                                         console.log("findOrg_url second success");
                                         organization = data.content;
-                                        info=data.info;
-                                        kbUrl=info.kbUrl;
-                                        gpsCentreLatLng=info.gpsCentreLatLng;
-                                        zoomLevel=info.zoomLevel;
+                                        info = data.info;
+                                        kbUrl = info.kbUrl;
+                                        gpsCentreLatLng = info.gpsCentreLatLng;
+                                        zoomLevel = info.zoomLevel;
 
-                                        if (gpsCentreLatLng!=""){
-                                            try{
-                                                var centerMapArr= gpsCentreLatLng.split(",",2);
-                                                var centerLat= parseFloat(centerMapArr[0].trim());
-                                                var centerLng= parseFloat(centerMapArr[1].trim());   
+                                        if (gpsCentreLatLng != "") {
+                                            try {
+                                                var centerMapArr = gpsCentreLatLng.split(",", 2);
+                                                var centerLat = parseFloat(centerMapArr[0].trim());
+                                                var centerLng = parseFloat(centerMapArr[1].trim());
                                                 map.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
                                                 map2.setView(new L.LatLng(centerLat, centerLng), zoomLevel);
 
                                             }
-                                            catch(err){
+                                            catch (err) {
                                                 console.log("error setting the map viewview");
-                                        }
-
+                                            }
                                         }
                                         console.log(organization);
                                         console.log(kbUrl);
@@ -5758,32 +5554,24 @@ RED.nodes.registerType('label',{
                                         console.log(zoomLevel);
 
 
+                                        var url = serverURL + "api/device.php?action=get_all_device";
+										//using new api (get_all_device) required that "entityType" has been migrated towards "devicetype"
+										//moreover, old api included also extra info about: cb.`name` and cb.`protocol` as type
+										//and old api also renamed cb.`accesslink` AS ip and cb.`accessport` AS port
 
-
-                                        var url = serverURL + "action=get_config_data";
-
-                                        if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                                            accesstoken != "undefined")
-                                            {
+                                        if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                             url += "&nodered=yes&token=" + accesstoken;
-                                            url +="&username="+username+"&loggedrole="+role+"&organization="+organization;
                                         }
 
-                                        console.log("url");
-                                        console.log(url);
-
-                                        /* console.log("accesstoken: " + resp.accessToken);
-                                        console.log("refreshtoken: " + resp.refreshToken); */
-
                                         var jqxhr = $.getJSON(url, function (data) {
-                                                console.log("success");
-                                                console.log(data);
-                                            })
+                                            console.log("success");
+                                            console.log(data);
+                                        })
                                             .done(function (data) {
                                                 console.log("second success");
                                                 if (data.status == "ok") {
 
-                                                    data = data.content;
+                                                    data = data.data;
                                                     allDataOut = data;
                                                     // crea lista entiti principale
                                                     node.configData = data;
@@ -5796,12 +5584,14 @@ RED.nodes.registerType('label',{
                                                     var marker_array = [];
                                                     for (var k in data) {
 
+														console.log(data[k]);
+
                                                         lat = Number(data[k]["latitude"]); //45.4858914;
                                                         est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
                                                         lng = Number(data[k]["longitude"]); //9.202094;
                                                         est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
                                                         popup = "<b>" + data[k]['name'] + "</b><br>" + data[
-                                                            k]['entityType'] + "<br>" + data[k]['kind'];
+                                                            k]['devicetype'] + "<br>" + data[k]['kind'];
                                                         if (data[k]["visibility"] == "public") {
 
                                                             m = L.marker([est_lat, est_lng], {
@@ -5811,7 +5601,7 @@ RED.nodes.registerType('label',{
                                                             m = L.marker([est_lat, est_lng], {
                                                                 icon: redIcon
                                                             }).bindPopup(popup);
-                                                        }else if (data[k]["visibility"] == "delegated") {
+                                                        } else if (data[k]["visibility"] == "delegated") {
                                                             m = L.marker([est_lat, est_lng], {
                                                                 icon: pinkIcon
                                                             }).bindPopup(popup);
@@ -5833,28 +5623,23 @@ RED.nodes.registerType('label',{
                                             .always(function () {
                                                 console.log("complete");
                                             });
-
-
-                                        var url_values = serverURL + "action=get_config_data_values";
-                                        if (typeof accesstoken != "undefined" && accesstoken != "" &&
-                                            accesstoken != "undefined")
-                                            {
+                                        var url_values = serverURL + "api/value.php?action=get_all_event_value";
+										//migrated to the new api from value.php. we don't know yet which changes appeared
+										
+                                        if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                             url_values += "&nodered=yes&token=" + accesstoken;
-                                            url_values +="&username="+username+"&loggedrole="+role+"&organization="+organization;
                                         }
 
                                         console.log(url_values);
                                         var jqxhrValues = $.getJSON(url_values,
-                                                function (data) {
-                                                    console.log("success");
-                                                    console.log(data);
-                                                })
+                                            function (data) {
+                                                console.log("success");
+                                                console.log(data);
+                                            })
                                             .done(function (data) {
                                                 if (data.status == "ok") {
                                                     console.log("second success");
-
-
-                                                    data = data.content;
+                                                    data = data.data;
                                                     allDataOut2 = data;
 
                                                     // crea lista entiti principale
@@ -5883,7 +5668,8 @@ RED.nodes.registerType('label',{
                                                         else if (data[k]["visibility"] == "delegated") {
                                                             m = L.marker([est_lat, est_lng], {
                                                                 icon: pinkIcon
-                                                            }).bindPopup(popup);}
+                                                            }).bindPopup(popup);
+                                                        }
                                                         else {
                                                             m = L.marker([est_lat, est_lng], {
                                                                 icon: blueIcon
@@ -5897,8 +5683,6 @@ RED.nodes.registerType('label',{
                                                     markersGroup.addTo(map2);
 
                                                 }
-
-
                                             })
                                             .fail(function () {
                                                 console.log("error");
@@ -5906,14 +5690,10 @@ RED.nodes.registerType('label',{
                                             .always(function () {
                                                 console.log("complete");
                                             });
-
-
                                     } else {
                                         console.log(data.status);
 
                                     }
-
-
                                 })
                                 .fail(function () {
                                     console.log("error");
@@ -5923,9 +5703,9 @@ RED.nodes.registerType('label',{
                                 });
 
                         }
-                     }); 
-                }   
-                
+                    });
+                }
+
                 catch (err) {
                     console.log("error creating the token " + err);
                     accesstoken = "";
@@ -6021,7 +5801,7 @@ RED.nodes.registerType('label',{
 
                     for (var i = 0; i < sensors.length; i++) {
 
-                        var t = configData[sensors[i]]["entityType"];
+                        var t = configData[sensors[i]]["devicetype"];
                         if (device_types.length == 0) {
                             device_types.push(t);
                         } else {
@@ -6143,7 +5923,7 @@ RED.nodes.registerType('label',{
                         changedUser = true;
                     }
                 }
-            });        
+            });
 
             /*** array di sensori  selezionati da pannello di configurazione  ***/
 
@@ -6164,16 +5944,12 @@ RED.nodes.registerType('label',{
                 var idAmount = sensors.length * 3 + 7;
 
                 var jqxhr = $.getJSON("get-id?n=" + idAmount, function (data) {
-                        console.log("success");
-                        console.log(data);
-                    })
+                    console.log("success");
+                    console.log(data);
+                })
                     .done(function (data) {
                         console.log("second success...");
-
-
                         console.log(data);
-
-
 
                         var offsetY = 200;
                         var offsetYstep = 100;
@@ -6199,8 +5975,6 @@ RED.nodes.registerType('label',{
                         console.log("counterid=" + counter_id);
 
                         var newflow = [];
-
-
                         //link in
                         /*   newflow.push({
                                "id": link_in_id,
@@ -6221,9 +5995,7 @@ RED.nodes.registerType('label',{
                                "type": "tab",
                                "label": "Flow " + flow_id
                            }),
-
-
-                           //link out
+       //link out
                            newflow.push(    {
                                "id": link_out_id,
                                "type": "link out",
@@ -6234,8 +6006,6 @@ RED.nodes.registerType('label',{
                                "y": middleY,
                                "wires": []
                            })*/
-
-
                         //debug
                         /*   newflow.push({
    			    		"id": debug_id,
@@ -6251,8 +6021,6 @@ RED.nodes.registerType('label',{
    						})*/
 
 
-
-
                         //sensori
 
                         var addInjectNode = false;
@@ -6263,8 +6031,6 @@ RED.nodes.registerType('label',{
                         var sensor_ids = [];
                         var log_ids = [];
                         var protocol;
-
-
 
                         for (var i = 0; i < sensors.length; i++) {
                             console.log("orion--")
@@ -6277,8 +6043,6 @@ RED.nodes.registerType('label',{
                             var conf_id = data.ids[counter_id++];
                             var log_id = data.ids[counter_id++];
                             var node_id = data.ids[counter_id++];
-
-
 
                             console.log(counter_id);
                             //orion
@@ -6341,7 +6105,7 @@ RED.nodes.registerType('label',{
                                         "name": "",
                                         "service": conf_id,
                                         "tls": "",
-                                        "entype": configData[sensors[i]]["entityType"],
+                                        "entype": configData[sensors[i]]["devicetype"],
                                         "enid": sensors[i],
                                         "userk1": configData[sensors[i]]["k1"],
                                         "passk2": configData[sensors[i]]["k2"],
@@ -6349,7 +6113,7 @@ RED.nodes.registerType('label',{
                                         "y": offsetY,
                                         "wires": [
                                             [
-                                                
+
                                             ]
                                         ]
                                     })
@@ -6374,12 +6138,8 @@ RED.nodes.registerType('label',{
                                         ]
 
                                     }) */
-
-
                                     break;
-
-
-                                    //mosquitto
+                                //mosquitto
                                 case "mqtt":
                                     mosquitto_ids.push(node_id);
                                     newflow.push({
@@ -6405,8 +6165,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "mqtt out",
@@ -6427,9 +6185,9 @@ RED.nodes.registerType('label',{
 
                                     break;
 
-                                    //rabbit
-                                    //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
-                                    //  	$("#node-input-iotype").val(4);
+                                //rabbit
+                                //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
+                                //  	$("#node-input-iotype").val(4);
                                 case "amqp":
                                 case "AMQP":
                                     rabbit_ids.push(node_id);
@@ -6489,15 +6247,11 @@ RED.nodes.registerType('label',{
                             })
                             offsetY += offsetYstep;
 
-
-
                         }
                         //function
                         sensor_ids = orion_ids.concat(mosquitto_ids).concat(rabbit_ids);
 
                         var b = "";
-
-
                         if (idValueArray.length > 1) {
                             for (var j = 0; j < idValueArray.length; j++) {
                                 b +=
@@ -6520,8 +6274,6 @@ RED.nodes.registerType('label',{
                                     b += 'var js' + (j + 1) + ' = {id:"' + idValueArray[j].id +
                                         '", type: "command", attributes};\n';
                                 }
-
-
                                 b += 'var jsonstrg' + (j + 1) + ' = JSON.stringify(js' + (j + 1) +
                                     ');\n';
                             }
@@ -6530,8 +6282,6 @@ RED.nodes.registerType('label',{
                             for (var j = 0; j < sensors.length; j++) {
                                 b +=
                                     '\n \/\/ please check and complete the following \r\n\/\/ attributes with the value arriving from \r\n\/\/ the payload\r\nvar attributes={};\n';
-
-
                                 try {
                                     pro = configData[sensors[j]]["protocol"];
                                 } catch (err) {
@@ -6550,8 +6300,6 @@ RED.nodes.registerType('label',{
                         }
 
 
-
-
                         var functionBody = 'var temp= msg.payload;\n ' + b +
                             '\n\nvar head = {};\nhead["Content-Type"]= \'application/json\';\n';
                         functionBody += "var messages = [";
@@ -6563,14 +6311,10 @@ RED.nodes.registerType('label',{
                             } else {
                                 functionBody += "{ payload:jsonstrg" + (i + 1) + "}";
                             }
-
-
                             if (i < sensors.length - 1) {
                                 functionBody += ",";
                             }
                         }
-
-
 
                         functionBody += "];\n"
                         functionBody += "return messages;"
@@ -6589,20 +6333,18 @@ RED.nodes.registerType('label',{
                                 log_ids
                             ]
                         })
-
-
                         newflow.push({
-                                "id": link_in_id,
-                                "type": "link out",
-                                "z": curr_flow_id,
-                                "name": "",
-                                "links": [inject_id],
-                                "x": 200,
-                                "y": 200,
-                                "wires": [
-                                    []
-                                ]
-                            }, ),
+                            "id": link_in_id,
+                            "type": "link out",
+                            "z": curr_flow_id,
+                            "name": "",
+                            "links": [inject_id],
+                            "x": 200,
+                            "y": 200,
+                            "wires": [
+                                []
+                            ]
+                        }),
 
                             //flow
                             newflow.push({
@@ -6610,8 +6352,6 @@ RED.nodes.registerType('label',{
                                 "type": "tab",
                                 "label": "Flow " + flow_id
                             }),
-
-
                             //link out
                             newflow.push({
                                 "id": inject_id,
@@ -6623,8 +6363,6 @@ RED.nodes.registerType('label',{
                                 "y": middleY,
                                 "wires": [function_id]
                             })
-
-
 
 
 
@@ -6674,16 +6412,12 @@ RED.nodes.registerType('label',{
                 var idAmount = sensors.length * 4 + 2 + value_types.length * 4;
 
                 var jqxhr = $.getJSON("get-id?n=" + idAmount, function (data) {
-                        console.log("success");
-                        console.log(data);
-                    })
+                    console.log("success");
+                    console.log(data);
+                })
                     .done(function (data) {
                         console.log("second success...");
-
-
                         console.log(data);
-
-
 
                         var offsetY = 200;
                         var offsetYstep = 100;
@@ -6734,14 +6468,10 @@ RED.nodes.registerType('label',{
                                         //no break because in this case many to many relationship
                                     }
                                 }
-
-
                             }
                             deviceLinkVTable.push(obj);
                             console.log("obj.link_out_ids");
                             console.log(obj.link_out_ids);
-
-
                         }
 
                         //update the linkFunctionVTable
@@ -6761,11 +6491,7 @@ RED.nodes.registerType('label',{
                             linkFunctionVTable[i].correspondingLinkIn = data.ids[counter_id++];
                         }
 
-
-
                         var newflow = [];
-
-
                         //sensori
 
                         var addInjectNode = false;
@@ -6775,8 +6501,6 @@ RED.nodes.registerType('label',{
                         var rabbit_ids = [];
                         var sensor_ids = [];
                         var protocol;
-
-
 
                         for (var i = 0; i < sensors.length; i++) {
                             console.log("orion--")
@@ -6790,15 +6514,11 @@ RED.nodes.registerType('label',{
                             var node_id;
 
 
-
-
                             for (var j = 0; j < deviceLinkVTable.length; j++) {
                                 if (sensors[i] == deviceLinkVTable[j].device) {
                                     node_id = deviceLinkVTable[j].device_id;
                                 }
                             }
-
-
                             var attributes = [];
                             console.log("idValueArray is " + idValueArray);
                             console.log("sensors[i] " + sensors[i]);
@@ -6821,8 +6541,6 @@ RED.nodes.registerType('label',{
                             switch (protocol) {
                                 case "ngsi":
                                     orion_ids.push(node_id);
-
-
                                     newflow.push({
                                         "id": conf_id,
                                         "type": "orion-service",
@@ -6840,7 +6558,7 @@ RED.nodes.registerType('label',{
                                         "name": "",
                                         "service": conf_id,
                                         "tls": "",
-                                        "entype": configData[sensors[i]]["entityType"],
+                                        "entype": configData[sensors[i]]["devicetype"],
                                         "enid": sensors[i],
                                         "userk1": configData[sensors[i]]["k1"],
                                         "passk2": configData[sensors[i]]["k2"],
@@ -6848,36 +6566,32 @@ RED.nodes.registerType('label',{
                                         "y": offsetY,
                                         "wires": [
                                             [
-                                                
+
                                             ]
                                         ]
                                     })
-                                   /*  newflow.push({
-                                        "id": node_id,
-                                        "type": "http request",
-                                        "z": flow_id,
-                                        "name": sensors[i],
-                                        "method": "POST",
-                                        "ret": "txt",
-                                        "url": "http://" + configData[sensors[i]]["ip"] + ":" +
-                                            configData[sensors[i]]["port"] + "/v2/entities/" +
-                                            sensors[i] + "/attrs/",
-                                        "tls": "",
-                                        "x": 800,
-                                        "y": offsetY,
-                                        "wires": [
-                                            [
-
-                                            ]
-                                        ]
-
-                                    }) */
-
-
+                                    /*  newflow.push({
+                                         "id": node_id,
+                                         "type": "http request",
+                                         "z": flow_id,
+                                         "name": sensors[i],
+                                         "method": "POST",
+                                         "ret": "txt",
+                                         "url": "http://" + configData[sensors[i]]["ip"] + ":" +
+                                             configData[sensors[i]]["port"] + "/v2/entities/" +
+                                             sensors[i] + "/attrs/",
+                                         "tls": "",
+                                         "x": 800,
+                                         "y": offsetY,
+                                         "wires": [
+                                             [
+ 
+                                             ]
+                                         ]
+ 
+                                     }) */
                                     break;
-
-
-                                    //mosquitto
+                                //mosquitto
                                 case "mqtt":
                                     mosquitto_ids.push(node_id);
                                     newflow.push({
@@ -6903,8 +6617,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "mqtt out",
@@ -6925,9 +6637,9 @@ RED.nodes.registerType('label',{
 
                                     break;
 
-                                    //rabbit
-                                    //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
-                                    //  	$("#node-input-iotype").val(4);
+                                //rabbit
+                                //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
+                                //  	$("#node-input-iotype").val(4);
                                 case "amqp":
                                 case "AMQP":
                                     rabbit_ids.push(node_id);
@@ -6966,11 +6678,7 @@ RED.nodes.registerType('label',{
                                     break;
 
                             }
-
-
                             offsetY += offsetYstep;
-
-
 
                         }
                         //function
@@ -6980,8 +6688,6 @@ RED.nodes.registerType('label',{
                             off_here = maxCanvasHeight / (linkFunctionVTable.length + 10);
                         }
                         for (var i = 0; i < linkFunctionVTable.length; i++) {
-
-
                             sensor_ids = orion_ids.concat(mosquitto_ids).concat(rabbit_ids);
 
                             var b = "";
@@ -6998,8 +6704,6 @@ RED.nodes.registerType('label',{
 
                             var count = 0;
                             for (var j = 0; j < idValueArray.length; j++) {
-
-
                                 var proceed = false;
                                 for (var k = 0; k < devicesNamesForFunction.length; k++) {
                                     if (idValueArray[j].id == devicesNamesForFunction[k]) {
@@ -7039,15 +6743,11 @@ RED.nodes.registerType('label',{
                                     b += 'var js' + (count + 1) + ' = {id:"' + idValueArray[j].id +
                                         '", type: "command", attributes};\n';
                                 }
-
-
                                 b += 'var jsonstrg' + (count + 1) + ' = JSON.stringify(js' + (count + 1) +
                                     ');\n';
 
                                 count++;
                             }
-
-
 
 
                             var functionBody = 'var temp= msg.payload;\n ' + b +
@@ -7062,14 +6762,10 @@ RED.nodes.registerType('label',{
                                 } else {
                                     functionBody += "{ payload:jsonstrg" + (j + 1) + "}";
                                 }
-
-
                                 if (j < devicesNamesForFunction.length - 1) {
                                     functionBody += ",";
                                 }
                             }
-
-
 
                             functionBody += "];\n"
                             functionBody += "return messages;"
@@ -7093,8 +6789,6 @@ RED.nodes.registerType('label',{
 
                                 ]
                             });
-
-
                             newflow.push({
                                 "id": linkFunctionVTable[i].fun_id,
                                 "type": "function",
@@ -7109,8 +6803,6 @@ RED.nodes.registerType('label',{
                                 "wires": [linkFunctionVTable[i].relatedDevices]
 
                             });
-
-
 
 
 
@@ -7153,8 +6845,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                         //$("#btn-sidemenu").simulate("click");
                         console.log("simulate click")
 
@@ -7169,8 +6859,6 @@ RED.nodes.registerType('label',{
                             //      	$('#import-tab-new').addClass("selected");
 
                         }, 250);
-
-
                         console.log("newflow is");
                         console.log(JSON.stringify(newflow));
 
@@ -7204,16 +6892,12 @@ RED.nodes.registerType('label',{
                 var idAmount = sensors.length * 3 + 7;
 
                 var jqxhr = $.getJSON("get-id?n=" + idAmount, function (data) {
-                        console.log("success");
-                        console.log(data);
-                    })
+                    console.log("success");
+                    console.log(data);
+                })
                     .done(function (data) {
                         console.log("second success...");
-
-
                         console.log(data);
-
-
 
                         var offsetY = 200;
                         var offsetYstep = 100;
@@ -7248,7 +6932,7 @@ RED.nodes.registerType('label',{
                             obj.device = sensors[i];
                             obj.device_id = data.ids[counter_id++];
                             for (var j = 0; j < linkFunctionDTable.length; j++) {
-                                if (configData[sensors[i]]["entityType"] == linkFunctionDTable[j].link_type) {
+                                if (configData[sensors[i]]["devicetype"] == linkFunctionDTable[j].link_type) {
                                     obj.fun_id = linkFunctionDTable[j].fun_id;
                                     break;
                                 }
@@ -7270,11 +6954,7 @@ RED.nodes.registerType('label',{
                             linkFunctionDTable[i].relatedDevices = relatedDevices;
                             linkFunctionDTable[i].correspondingLinkIn = data.ids[counter_id++];
                         }
-
-
                         var newflow = [];
-
-
                         //sensori
 
                         var addInjectNode = false;
@@ -7284,8 +6964,6 @@ RED.nodes.registerType('label',{
                         var rabbit_ids = [];
                         var sensor_ids = [];
                         var protocol;
-
-
 
                         for (var i = 0; i < sensors.length; i++) {
 
@@ -7300,15 +6978,11 @@ RED.nodes.registerType('label',{
                             var node_id;
 
 
-
-
                             for (var j = 0; j < deviceLinkDTable.length; j++) {
                                 if (sensors[i] == deviceLinkDTable[j].device) {
                                     node_id = deviceLinkDTable[j].device_id;
                                 }
                             }
-
-
                             var attributes = [];
                             console.log("idValueArray is " + idValueArray);
                             console.log("sensors[i] " + sensors[i]);
@@ -7348,7 +7022,7 @@ RED.nodes.registerType('label',{
                                         "name": "",
                                         "service": conf_id,
                                         "tls": "",
-                                        "entype": configData[sensors[i]]["entityType"],
+                                        "entype": configData[sensors[i]]["devicetype"],
                                         "enid": sensors[i],
                                         "userk1": configData[sensors[i]]["k1"],
                                         "passk2": configData[sensors[i]]["k2"],
@@ -7359,34 +7033,28 @@ RED.nodes.registerType('label',{
                                             ]
                                         ]
                                     })
-
-
                                     /* newflow.push({
-                                        "id": node_id,
-                                        "type": "http request",
-                                        "z": flow_id,
-                                        "name": sensors[i],
-                                        "method": "POST",
-                                        "ret": "txt",
-                                        "url": "http://" + configData[sensors[i]]["ip"] + ":" +
-                                            configData[sensors[i]]["port"] + "/v2/entities/" +
-                                            sensors[i] + "/attrs/",
-                                        "tls": "",
-                                        "x": 800,
-                                        "y": offsetY,
-                                        "wires": [
-                                            [
-
-                                            ]
-                                        ]
-
-                                    }) */
-
-
+                                                            "id": node_id,
+                                                            "type": "http request",
+                                                            "z": flow_id,
+                                                            "name": sensors[i],
+                                                            "method": "POST",
+                                                            "ret": "txt",
+                                                            "url": "http://" + configData[sensors[i]]["ip"] + ":" +
+                                                                configData[sensors[i]]["port"] + "/v2/entities/" +
+                                                                sensors[i] + "/attrs/",
+                                                            "tls": "",
+                                                            "x": 800,
+                                                            "y": offsetY,
+                                                            "wires": [
+                                                                [
+                    
+                                                                ]
+                                                            ]
+                    
+                                                        }) */
                                     break;
-
-
-                                    //mosquitto
+                                //mosquitto
                                 case "mqtt":
                                     mosquitto_ids.push(node_id);
                                     newflow.push({
@@ -7412,8 +7080,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                                     newflow.push({
                                         "id": node_id,
                                         "type": "mqtt out",
@@ -7434,9 +7100,9 @@ RED.nodes.registerType('label',{
 
                                     break;
 
-                                    //rabbit
-                                    //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
-                                    //  	$("#node-input-iotype").val(4);
+                                //rabbit
+                                //	$("#node-input-ioname").val(rabbitNodes[rabbitCount]["sensorId"]);
+                                //  	$("#node-input-iotype").val(4);
                                 case "amqp":
                                 case "AMQP":
                                     rabbit_ids.push(node_id);
@@ -7475,11 +7141,7 @@ RED.nodes.registerType('label',{
                                     break;
 
                             }
-
-
                             offsetY += offsetYstep;
-
-
 
                         }
                         //function
@@ -7489,8 +7151,6 @@ RED.nodes.registerType('label',{
                             off_here = maxCanvasHeight / (linkFunctionDTable.length + 10);
                         }
                         for (var i = 0; i < linkFunctionDTable.length; i++) {
-
-
                             sensor_ids = orion_ids.concat(mosquitto_ids).concat(rabbit_ids);
 
                             var b = "";
@@ -7516,8 +7176,6 @@ RED.nodes.registerType('label',{
                                 if (!proceed) continue;
                                 b +=
                                     '\n \/\/ please check and complete the following \r\n\/\/ attributes with the value arriving from \r\n\/\/ the payload\r\nvar attributes={};\n';
-
-
                                 try {
                                     pro = configData[sensors[j]]["protocol"];
                                 } catch (err) {
@@ -7539,8 +7197,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                             var functionBody = 'var temp= msg.payload;\n ' + b +
                                 '\n\nvar head = {};\nhead["Content-Type"]= \'application/json\';\n';
                             functionBody += "var messages = [";
@@ -7553,14 +7209,10 @@ RED.nodes.registerType('label',{
                                 } else {
                                     functionBody += "{ payload:jsonstrg" + (j + 1) + "}";
                                 }
-
-
                                 if (j < devicesNamesForFunction.length - 1) {
                                     functionBody += ",";
                                 }
                             }
-
-
 
                             functionBody += "];\n"
                             functionBody += "return messages;"
@@ -7584,8 +7236,6 @@ RED.nodes.registerType('label',{
 
                                 ]
                             });
-
-
                             newflow.push({
                                 "id": linkFunctionDTable[i].fun_id,
                                 "type": "function",
@@ -7600,8 +7250,6 @@ RED.nodes.registerType('label',{
                                 "wires": [linkFunctionDTable[i].relatedDevices]
 
                             });
-
-
 
 
 
@@ -7644,8 +7292,6 @@ RED.nodes.registerType('label',{
 
 
 
-
-
                         //$("#btn-sidemenu").simulate("click");
                         console.log("simulate click")
 
@@ -7660,8 +7306,6 @@ RED.nodes.registerType('label',{
                             //      	$('#import-tab-new').addClass("selected");
 
                         }, 250);
-
-
                         console.log("newflow is");
                         console.log(JSON.stringify(newflow));
 
@@ -8100,7 +7744,7 @@ RED.nodes.registerType('label',{
 </script>
 
 <script>
-   
+
     function openTab(evt, cityName) {
         openedTab = cityName;
 
@@ -8122,8 +7766,8 @@ RED.nodes.registerType('label',{
             window.node_input_map_2.invalidateSize(true);
         };
     }
-    
-    
+
+
 </script>
 
 <script type="text/x-red" data-help-name="iot-directory-in">
@@ -8778,10 +8422,10 @@ RED.nodes.registerType('label',{
                     for: "node-input-link-node-" + n.id
                 }).appendTo(container);
                 $('<input>', {
-                        type: "checkbox",
-                        class: "node-input-link-node-checkbox",
-                        id: "node-input-link-node-" + n.id
-                    })
+                    type: "checkbox",
+                    class: "node-input-link-node-checkbox",
+                    id: "node-input-link-node-" + n.id
+                })
                     .data('node-id', n.id)
                     .prop('checked', isChecked)
                     .appendTo(row);

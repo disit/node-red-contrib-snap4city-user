@@ -278,11 +278,16 @@
 
 	var refreshButtonsSelection = function (accessToken, buttonList) {
 		$("#node-input-buttonName").empty();
+
+		var urlprefix = RED.settings.iotdirectoryUri ? RED.settings.iotdirectoryUri : "https://iotdirectory.snap4city.org/api/";
+		//console.log("---------->URL "+urlprefix);
+
 		if (buttonList != "") {
 			createButtonsSelection(buttonList);
 		} else if (accessToken != "" && buttonList == "") {
 			$.ajax({
-				url: "https://iotdirectory.snap4city.org/api/device.php?action=get_config_data&nodered=yes&token=" +
+				//TODO pass here also username or update iotdirectory api to use info from JWT
+				url: urlprefix + "device.php?action=get_config_data&nodered=yes&token=" +
 					accessToken,
 				type: "GET",
 				async: true,
@@ -312,7 +317,7 @@
 			$("#node-input-buttonName").empty();
 			for (var i = 0; i < buttonsList.length; i++) {
 				$("<option value='" + JSON.stringify(buttonsList[i]) + "'>" +
-						buttonsList[i].deviceNameId + "</option>")
+					buttonsList[i].deviceNameId + "</option>")
 					.appendTo($("#node-input-buttonName"));
 			}
 			$('#node-input-buttonName').val("");

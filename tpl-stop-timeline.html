@@ -30,19 +30,6 @@
                 required: false
             }
         },
-        oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
-        },
         oneditresize: function () {
             if ($("#node-input-authentication").children().length > 1) {
                 $("#node-input-authentication option[value='_ADD_']").remove();
@@ -55,10 +42,21 @@
             return this.name || "tpl-stop-timeline";
         },
         oneditprepare: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
             var node = this;
             $("#node-input-agency").empty();
             $.ajax({
-                url: "https://www.disit.org/superservicemap/api/v1/tpl/agencies/",
+                url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/agencies/",
                 type: "GET",
                 async: false,
                 dataType: "json",
@@ -79,7 +77,7 @@
                 if ($("#node-input-agency").val() != null) {
                     $("#node-input-line").empty();
                     $.ajax({
-                        url: "https://www.disit.org/superservicemap/api/v1/tpl/bus-lines/?agency=" +
+                        url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/bus-lines/?agency=" +
                             $("#node-input-agency").val(),
                         type: "GET",
                         async: false,
@@ -104,7 +102,7 @@
                 if ($("#node-input-line").val() != null) {
                     $("#node-input-route").empty();
                     $.ajax({
-                        url: "https://www.disit.org/superservicemap/api/v1/tpl/bus-routes/?line=" +
+                        url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/bus-routes/?line=" +
                             $("#node-input-line").val(),
                         type: "GET",
                         async: false,
@@ -130,7 +128,7 @@
                 if ($("#node-input-route").val() != null) {
                     $("#node-input-stop").empty();
                     $.ajax({
-                        url: "https://www.disit.org/superservicemap/api/v1/tpl/bus-stops/?route=" +
+                        url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/bus-stops/?route=" +
                             $("#node-input-route").val(),
                         type: "GET",
                         async: false,

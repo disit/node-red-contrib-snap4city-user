@@ -21,6 +21,8 @@ module.exports = function (RED) {
 	function EventLog(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
 		node.on('input', function (msg) {
 			var uri = RED.settings.eventLogUri;
 			if (uri != null) {
@@ -50,22 +52,24 @@ module.exports = function (RED) {
 				var message = (msg.payload.message ? msg.payload.message : config.message);
 				var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 				var xmlHttp = new XMLHttpRequest();
-				xmlHttp.open("GET", encodeURI(uri + "?p=log" + "&pid=" + pidlocal + "&tmstmp=" + timestamp + "&modCom=" + modcom + "&IP_local=" + iplocal + "&IP_ext=" + ipext +
+				xmlHttp.open("GET", encodeURI(uri + "/?p=log" + "&pid=" + pidlocal + "&tmstmp=" + timestamp + "&modCom=" + modcom + "&IP_local=" + iplocal + "&IP_ext=" + ipext +
 					"&payloadSize=" + payloadsize + "&agent=" + agent + "&motivation=" + motivation + "&lang=" + lang + "&lat=" + (typeof lat != "undefined" ? lat : 0.0) + "&lon=" + (typeof lon != "undefined" ? lon : 0.0) + "&serviceUri=" + serviceuri + "&message=" + message), true); // false for synchronous request
 				xmlHttp.onload = function (e) {
 					if (xmlHttp.readyState === 4) {
 						if (xmlHttp.status === 200) {
 							msgs[1].payload = xmlHttp.responseText;
 						} else {
-							console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+							logger.error(xmlHttp.statusText);
+							node.error(xmlHttp.responseText);
 						}
 					}
 					msgs[0].payload = msg.payload;
 					node.send(msgs);
 				};
 				xmlHttp.onerror = function (e) {
-					console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
-					
+					logger.error(xmlHttp.statusText);
+					node.error(xmlHttp.responseText);
+
 				};
 				xmlHttp.send(null);
 			} else {

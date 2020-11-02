@@ -85,7 +85,7 @@
                 value: "car"
             },
             startdatetime: {
-                value:  ""
+                value: ""
             },
             startpoint: {
                 value: ""
@@ -175,8 +175,8 @@
             L.control.layers(startMapLayers, {
                 'drawlayer': startDrawnItems
             }, {
-                    collapsed: true
-                }).addTo(startMap);
+                collapsed: true
+            }).addTo(startMap);
 
             startMap.on(L.Draw.Event.CREATED, function (e) {
                 var fence = e.layer;
@@ -193,19 +193,19 @@
                     markers[layer.nodeID] = layer.toGeoJSON();
                 });
 
-                
 
 
-                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+
+                console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
                 $.ajax({
-                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
                     timeout: 10000,
                     method: "GET",
                     dataType: "json",
                     success: function (data) {
-                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json")
                         $.ajax({
-                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json"),
                             timeout: 10000,
                             method: "GET",
                             dataType: "json",
@@ -244,16 +244,16 @@
                     markers[layer.nodeID] = layer.toGeoJSON();
                 });
 
-                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
                 $.ajax({
-                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
                     timeout: 10000,
                     method: "GET",
                     dataType: "json",
                     success: function (data) {
-                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json")
                         $.ajax({
-                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json"),
                             timeout: 10000,
                             method: "GET",
                             dataType: "json",
@@ -326,8 +326,8 @@
             L.control.layers(endMapLayers, {
                 'drawlayer': endDrawnItems
             }, {
-                    collapsed: true
-                }).addTo(endMap);
+                collapsed: true
+            }).addTo(endMap);
 
             endMap.on(L.Draw.Event.CREATED, function (e) {
                 var fence = e.layer;
@@ -344,16 +344,16 @@
                     markers[layer.nodeID] = layer.toGeoJSON();
                 });
 
-                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
                 $.ajax({
-                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
                     timeout: 10000,
                     method: "GET",
                     dataType: "json",
                     success: function (data) {
-                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json")
                         $.ajax({
-                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json"),
                             timeout: 10000,
                             method: "GET",
                             dataType: "json",
@@ -392,16 +392,16 @@
                     markers[layer.nodeID] = layer.toGeoJSON();
                 });
 
-                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
                 $.ajax({
-                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
                     timeout: 10000,
                     method: "GET",
                     dataType: "json",
                     success: function (data) {
-                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json")
                         $.ajax({
-                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json"),
                             timeout: 10000,
                             method: "GET",
                             dataType: "json",
@@ -427,16 +427,16 @@
 
             endMap.on('draw:deleted', function (e) {
                 endDrawControl.addTo(endMap);
-                console.log("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
+                console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]);
                 $.ajax({
-                    url: encodeURI("https://www.disit.org/superservicemap/api/v1/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
+                    url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/location/?position=" + markers[node.id].geometry.coordinates[1] + ";" + markers[node.id].geometry.coordinates[0]),
                     timeout: 10000,
                     method: "GET",
                     dataType: "json",
                     success: function (data) {
-                        console.log("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json")
+                        console.log((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json")
                         $.ajax({
-                            url: encodeURI("https://www.disit.org/superservicemap/api/v1/?serviceUri=" + data.addressUri + "&format=json"),
+                            url: encodeURI((RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/?serviceUri=" + data.addressUri + "&format=json"),
                             timeout: 10000,
                             method: "GET",
                             dataType: "json",
