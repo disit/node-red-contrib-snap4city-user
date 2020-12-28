@@ -30,7 +30,6 @@ module.exports = function (RED) {
 	var http = require("follow-redirects").http;
 	var https = require("follow-redirects").https;
 	var urllib = require("url");
-	var util = require('util');
 	var https2 = require('https');
 
 	var testSubscriptionIDs = {}; //PB fix
@@ -76,13 +75,18 @@ module.exports = function (RED) {
 		};
 
 		this.queryContext = function (node, config, payload) {
+			
+			var s4cUtility = require("./snap4city-utility.js");
+			const logger = s4cUtility.getLogger(RED, node);
+			
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "Querying data"
 			});
-			util.log("queryContext");
-			//elementID = payload.entities[0].id;
+			logger.info("queryContext, entityID: " + config.enid);
+			logger.info("queryContext, payload: " + JSON.stringify(payload));
+
 			var orionBrokerService = RED.nodes.getNode(config.service);
 			return when.promise(function (resolve, reject) {
 
@@ -106,8 +110,6 @@ module.exports = function (RED) {
 					headers: {}
 				};
 
-				console.log(options);
-
 				if (config.apikey != null && config.apikey != "") {
 					options.headers.apikey = config.apikey;
 				}
@@ -126,7 +128,7 @@ module.exports = function (RED) {
 					}
 				}
 
-				console.log(options);
+				logger.debug("queryContext options:" + JSON.stringify(options));
 
 				var msg = {};
 
@@ -163,14 +165,18 @@ module.exports = function (RED) {
 		}
 
 		this.createContext = function (node, config, payload) {
+
+			var s4cUtility = require("./snap4city-utility.js");
+			const logger = s4cUtility.getLogger(RED, node);
+
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "sending request"
 			});
-			//util.log("updateContext PAYLOAD: " + JSON.stringify(payload));
-			//elementID = payload.contextElements[0].id;
 
+			logger.info("createContext, entityID: " + payload.contextElements[0].id);
+			logger.debug("createContext, payload: " + JSON.stringify(payload));
 			var orionBrokerService = RED.nodes.getNode(config.service);
 			return when.promise(function (resolve, reject) {
 
@@ -215,12 +221,11 @@ module.exports = function (RED) {
 					}
 				}
 
-				//util.log(options);
-
+				logger.debug("createContext options:" + JSON.stringify(options));
 
 				var req = https2.request(options, function (res) {
 					var client = res.client;
-					//util.log("updateContext RESULT: " + res.statusMessage + " " + client.authorizationError);
+					logger.debug("createContext RESULT: " + res.statusMessage + " " + client.authorizationError);
 					if (res.statusCode != 200) {
 						node.status({
 							fill: "red",
@@ -238,7 +243,7 @@ module.exports = function (RED) {
 				});
 
 				req.on('error', function (e) {
-					console.error(e);
+					logger.error(e);
 					node.status({
 						fill: "red",
 						shape: "ring",
@@ -255,15 +260,18 @@ module.exports = function (RED) {
 		};
 
 		this.subscribe = function (node, config, payload) {
+			
+			var s4cUtility = require("./snap4city-utility.js");
+			const logger = s4cUtility.getLogger(RED, node);
+			
 			node.status({
 				fill: "blue",
 				shape: "dot",
 				text: "subscribing"
 			});
-			util.log("subscribeContext in: " + orionUrl + " with node id: " + node.id);
+			logger.info("subscribeContext, entityID: " + payload.contextElements[0].id);
+			logger.debug("subscribeContext, payload: " + JSON.stringify(payload));
 			var reference = payload.notification.http.url;
-
-			//elementID = payload.entities[0].id;
 
 			var orionBrokerService = RED.nodes.getNode(config.service);
 			var hostname = orionBrokerService.url;
@@ -308,7 +316,7 @@ module.exports = function (RED) {
 				}
 			}
 
-			console.log(options);
+			logger.debug("subscribeContext options:" + JSON.stringify(options));
 
 			var msg = {};
 
@@ -322,13 +330,12 @@ module.exports = function (RED) {
 				});
 				res.on('end', function () {
 
-					util.log("subscriptions RESULT: " + res.statusMessage);
+					logger.info("subscribeContext result:" + res.statusMessage);
 
 					if (res.headers.location != null) {
 						var subscriptionID = res.headers.location.substring(res.headers.location.lastIndexOf("/") + 1);
 
 						var nodeID = (node.id + "").replace('.', '');
-						util.log("elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs[nodeID] + " newSubId: " + subscriptionID);
 						var idToUnsubscribe = subscriptionIDs[nodeID];
 						if (typeof subscriptionIDs[nodeID] != "undefined") {
 							setTimeout(function () {
@@ -365,7 +372,7 @@ module.exports = function (RED) {
 			});
 
 			if (payload) {
-				util.log(JSON.stringify(payload));
+				logger.debug("subscribeContext payload:" + JSON.stringify(payload));
 				req.write(JSON.stringify(payload));
 			}
 
@@ -373,9 +380,9 @@ module.exports = function (RED) {
 
 			var nodeID = (node.id + "").replace('.', '');
 			listenOnUrl(nodeID, function (req, res) {
-				util.log(req.body);
+				logger.debug(req.body);
 				if (req.body.subscriptionId != subscriptionIDs[nodeID]) {
-					util.log("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
+					logger.debug("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs[nodeID]);
 					unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
 				} else {
 					var payload = formatOutput(node, config, req.body);
@@ -401,13 +408,15 @@ module.exports = function (RED) {
 	});
 
 	function unsubscribeFromOrion(node, subscriptionId, url, config) {
-		node.log("in unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
+		var s4cUtility = require("./snap4city-utility.js");
+		const logger = s4cUtility.getLogger(RED, node);
+		
+		logger.debug("unsubscribeFromOrion with: " + JSON.stringify(subscriptionId));
 
 		var payload = {
 			"subscriptionId": subscriptionId
 		};
 
-		util.log("elementid " + config.enid + " k1 " + config.userk1 + " k2 " + config.passk2);
 		var orionBrokerService = RED.nodes.getNode(config.service);
 		return when.promise(function (resolve, reject) {
 			var hostname = orionBrokerService.url;
@@ -438,8 +447,6 @@ module.exports = function (RED) {
 				options.headers.Authorization = config.basicAuth;
 			}
 
-			util.log(options);
-
 			var tlsNode = RED.nodes.getNode(config.tls);
 
 			if (tlsNode != null) {
@@ -450,6 +457,8 @@ module.exports = function (RED) {
 				}
 			}
 
+			logger.debug("unsubscribeContext options:" + JSON.stringify(options));
+
 			var req = https2.request(options, function (res) {
 				(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 				var response = "";
@@ -457,7 +466,7 @@ module.exports = function (RED) {
 					response += chunk;
 				});
 				res.on('end', function () {
-					util.log("elementId: " + config.enid + " Unsubscribed: " + subscriptionId + " Response: " + response + " " + res.statusMessage);
+					logger.debug("elementId: " + config.enid + " Unsubscribed: " + subscriptionId + " Response: " + response + " " + res.statusMessage);
 					resolve({});
 				});
 			});
@@ -470,7 +479,7 @@ module.exports = function (RED) {
 				});
 				reject(err.toString());
 			});
-			util.log("SEND DATA FOR UNSUBSCRIBE: " + JSON.stringify(payload));
+			logger.debug("unsubscribeContext payload:" + JSON.stringify(payload));
 			//req.write(JSON.stringify(payload));
 			req.end();
 		});
@@ -478,6 +487,9 @@ module.exports = function (RED) {
 
 	// retrieve token from context broker
 	function getToken(node, orionUrl, credentials) {
+		var s4cUtility = require("./snap4city-utility.js");
+		const logger = s4cUtility.getLogger(RED, node);
+		
 		var tokenUrl = orionUrl + "/token";
 		if (tokenUrl.indexOf("http://") >= 0) {
 			tokenUrl = "https://" + tokenUrl.substring(7);
@@ -505,7 +517,7 @@ module.exports = function (RED) {
 			if (!credentials.user) {
 				resolve();
 			} else {
-				util.log("--requesting token using payload: " + payload);
+				logger.debug("--requesting token using payload: " + payload);
 				var req = (https).request(opts, function (res) {
 					(node.ret === "bin") ? res.setEncoding('binary'): res.setEncoding('utf8');
 
@@ -514,7 +526,7 @@ module.exports = function (RED) {
 					});
 
 					res.on('end', function () {
-						util.log("--resolved token: " + token);
+						logger.debug("--resolved token: " + token);
 						resolve(token);
 					});
 				});
@@ -540,7 +552,6 @@ module.exports = function (RED) {
 
 	function formatOutput(node, n, msg) {
 
-		util.log("MSG: " + JSON.stringify(msg));
 		if (Array.isArray(msg)) {
 			var contextResponses = msg;
 		} else {
@@ -700,7 +711,7 @@ module.exports = function (RED) {
 	}
 
 	function request(node, method, payload, url) {
-		util.log("URL:  " + url);
+
 		var opts = urllib.parse(url);
 
 		opts.method = method; //"POST";
@@ -769,18 +780,18 @@ module.exports = function (RED) {
 
 				/*PB commentato forza la validazione
 				if(result.subscriptionId != testSubscriptionID){
-                	util.log(nodeID+" result.subscriptionId: " + result.subscriptionId + "!=" + testSubscriptionID);
+                	console.log(nodeID+" result.subscriptionId: " + result.subscriptionId + "!=" + testSubscriptionID);
                 	node.error("Communication with context broker failed: received wrong subId");
 					unsubscribeFromOrion(node, result.subscriptionId, orionUrl).then(function(res){
-						util.log("Unsubscribed invalid subscription: " + result.subscriptionId + " res: " + JSON.stringify(res));
+						console.log("Unsubscribed invalid subscription: " + result.subscriptionId + " res: " + JSON.stringify(res));
 					});
 					unsubscribeFromOrion(node, testSubscriptionID, orionUrl).then(function(res){
-						util.log("Unsubscribed test subscription: " + testSubscriptionID + " res: " + JSON.stringify(res));
+						console.log("Unsubscribed test subscription: " + testSubscriptionID + " res: " + JSON.stringify(res));
 					});
 					
                 	reject("Communication with context broker failed");
                 }else{
-				util.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
+				console.log(nodeID + " result.subscriptionId: " + result.subscriptionId + "==" + testSubscriptionID);
 				resolve();
 				//}
 			});
@@ -792,7 +803,7 @@ module.exports = function (RED) {
 
 						try {
 							var testSubscriptionID = subscription.subscribeResponse.subscriptionId
-							util.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
+							console.log(node.id + " " + nodeID + " pre test:" + testSubscriptionIDs[nodeID]);
 							testSubscriptionIDs[nodeID] = testSubscriptionID;
 
 							if (testSubscriptionID) {
@@ -814,7 +825,7 @@ module.exports = function (RED) {
 	} */
 
 	/* function validateOrionConnectivityOneWay(node, orionUrl, createElementPayload) {
-		util.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
+		console.log("in validateOrionConnectivityOneWay with createElementPayload: " + JSON.stringify(createElementPayload));
 
 		return when.promise(function (resolve, reject) {
 			request(node, "POST", createElementPayload, orionUrl + "/v1/updateContext").then(function (result) {
@@ -905,7 +916,7 @@ module.exports = function (RED) {
 		return when.promise(
 			function (resolve, reject) {
 				getMyUri(node).then(function (myUri) {
-					util.log("myUri: " + myUri);
+					console.log("myUri: " + myUri);
 					resolve({
 						"entities": [{
 							"type": "Test",
@@ -928,7 +939,9 @@ module.exports = function (RED) {
 	function getMyUri(node) {
 		return when.promise(
 			function (resolve, reject) {
-
+				var s4cUtility = require("./snap4city-utility.js");
+        		const logger = s4cUtility.getLogger(RED, node);
+		
 				// first try to get user specified uri, TODO: many input validations...
 				var myUri = node.noderedhost;
 				if (myUri) {
@@ -943,7 +956,7 @@ module.exports = function (RED) {
 							var app = JSON.parse(process.env.VCAP_APPLICATION);
 							myUri = app['application_uris'][0];
 						} catch (e) {
-							util.log("Probably not running in bluemix...");
+							logger.log("Probably not running in bluemix...");
 						}
 					}
 				}
@@ -972,6 +985,8 @@ module.exports = function (RED) {
 	//////Orion-request node constructor
 	function OrionQueryV2(n) {
 		RED.nodes.createNode(this, n);
+		var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, this);
 
 		this.on("input", function (msg) {
 			this.service = n.service;
@@ -1004,6 +1019,7 @@ module.exports = function (RED) {
 				node.brokerConn.init(node, n).then(function () {
 					node.brokerConn.queryContext(node, n, payload).then(
 						function (msg) {
+							logger.debug("queryContext result:" + JSON.stringify(msg));
 							msg = formatOutput(node, n, JSON.parse(msg.payload));
 
 							node.status({
@@ -1011,14 +1027,6 @@ module.exports = function (RED) {
 								shape: "dot",
 								text: "success"
 							});
-
-							/*var cred_json = {
-					        	   "key1": snap_key1,
-					        	   "key2": snap_key2
-					           	};
-								
-								var topic =  JSON.stringify(cred_json);
-								util.log("TOPIC" + topic);*/
 
 							node.send({
 								payload: msg,
@@ -1091,7 +1099,7 @@ module.exports = function (RED) {
 	}
 
 	function generateCreateElementPayload(node, n, msg) {
-		util.log("msg: " + JSON.stringify(msg));
+		console.log("msg: " + JSON.stringify(msg));
 
 		var attributes = [];
 		if (n.attrkey && n.attrvalue) {
@@ -1101,15 +1109,17 @@ module.exports = function (RED) {
 				name,
 				value
 			});
-		} else {
+		} else if (typeof msg.attributes != "undefined"){
 			attributes = msg.attributes;
+		} else if (typeof msg.payload.attributes != "undefined"){
+			attributes = msg.payload.attributes;
 		}
 
 		if (!attributes) {
 			throw "Missing 'attributes' property";
 		}
 
-		util.log("attributes2: " + attributes);
+		console.log("attributes2: " + attributes);
 		var payload = {
 			"contextElements": [{
 				"type": n.entype,

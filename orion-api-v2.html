@@ -1,0 +1,1560 @@
+<!-- NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. -->
+
+//////////////////////////////////////////////////// ORION CONTEXT BROKER SERVICE CONFIG NODE
+////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-service-api-v2">
+	<input type="hidden" id="node-config-input-selectedContextbroker">
+	<div class="form-row">
+        <label for="node-config-input-contextbroker">Contextbroker</label>
+        <select id="node-config-input-contextbroker" style="width: 55%;">
+        </select>
+    </div>
+	<div class="form-row">
+		<label for="node-config-input-url">
+			<i class="fa fa-cloud"></i> Broker URI</label>
+		<input type="text" id="node-config-input-url" disabled>
+	</div>
+	<div class="form-row">
+		<label for="node-config-input-port">
+			<i class="fa fa-globe"></i>
+			<span>Port</span>
+		</label>
+		<input type="text" id="node-config-input-port" style="width: 50px" disabled>
+	</div>
+	<!--	<div class="form-row">
+	    <label>&nbsp;</label>
+	    <input type="checkbox" id="node-config-input-useAuth" style="display: inline-block; width: auto; vertical-align: top;">
+	    <label style="width: 70%;"><span>Authorization required</span></label>
+    </div>
+	<div class="form-row node-config-input-useAuth-row">
+		<label for="node-config-input-user"><i class="fa fa-user"></i> <span>key 1</span></label>
+		<input type="text" id="node-config-input-user">
+	</div>
+	<div class="form-row node-config-input-useAuth-row">
+		<label for="node-config-input-password"><i class="fa fa-lock"></i> <span>key 2</span></label>
+		<input type="password" id="node-config-input-password">
+	</div>-->
+	<div class="form-row">
+		<label for="node-config-input-name">
+			<i class="fa fa-tag"></i>
+			<span data-i18n="node-red:common.label.name"></span>
+		</label>
+		<input type="text" id="node-config-input-name" data-i18n="[placeholder]node-red:common.label.name" disabled>
+	</div>
+</script>
+
+//////////////////////////////////////////////////// ORION CONTEXT BROKER SUBSCRIBE NODE
+////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-subscribe-api-v2">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tls">
+			<i class="fa fa-cloud"></i> Certificates</label>
+		<input type="text" id="node-input-tls">
+	</div>
+	<div class="form-row">
+		<label for="node-input-entype">
+			<i class="fa fa-globe"></i>
+			<span>Device Type</span>
+		</label>
+		<input type="text" id="node-input-entype">
+	</div>
+	<div class="form-row">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Device Identifier</span>
+		</label>
+		<input type="text" id="node-input-enid">
+	</div>
+	<div class="form-row">
+		<label for="node-input-userk1">
+			<i class="fa fa-globe"></i>
+			<span>key 1</span>
+		</label>
+		<input type="text" id="node-input-userk1">
+	</div>
+	<div class="form-row">
+		<label for="node-input-passk2">
+			<i class="fa fa-globe"></i>
+			<span>key 2</span>
+		</label>
+		<input type="text" id="node-input-passk2">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tenant">
+			<i class="fa fa-globe"></i>
+			<span>Service/Tenant</span>
+		</label>
+		<input type="text" id="node-input-tenant">
+	</div>
+	<div class="form-row">
+		<label for="node-input-servicepath">
+			<i class="fa fa-globe"></i>
+			<span>Service Path</span>
+		</label>
+		<input type="text" id="node-input-servicepath">
+	</div>	
+	<div class="form-row">
+		<label for="node-input-apikey">
+			<i class="fa fa-globe"></i>
+			<span>apikey</span>
+		</label>
+		<input type="text" id="node-input-apikey">
+	</div>
+	<div class="form-row">
+		<label for="node-input-basicAuth">
+			<i class="fa fa-globe"></i>
+			<span>auth</span>
+		</label>
+		<input type="text" id="node-input-basicAuth">
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-ispattern" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>is pattern</span>
+		</label>
+	</div>
+	<div class="form-row">
+		<label for="node-input-attributes">
+			<i class="fa fa-globe"></i>
+			<span>attributes</span>
+		</label>
+		<input type="text" id="node-input-attributes" placeholder="comma-separated values, leave empty for all atributes">
+	</div>
+	<div class="form-row">
+		<label for="node-input-condvalues">
+			<i class="fa fa-globe"></i>
+			<span>cond. values</span>
+		</label>
+		<input type="text" id="node-input-condvalues" placeholder="comma-separated condition values, leave empty for all">
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-includeattr" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>include attributes metadata in output</span>
+		</label>
+	</div>
+	<div class="form-row">
+		<label for="node-input-throttle">
+			<i class="fa fa-tasks"></i>
+			<span>throttle</span>
+		</label>
+		<select type="text" id="node-input-throttle" style="width:52%;">
+			<option value="0">OFF</option>
+			<option value="1">PT1S</option>
+			<option value="5">PT5S</option>
+			<option value="10">PT10S</option>
+			<option value="30">PT30S</option>
+			<option value="60">PT1M</option>
+			<option value="300">PT5M</option>
+		</select>
+	</div>
+	<div class="form-row">
+		<label for="node-input-duration">
+			<i class="fa fa-tasks"></i>
+			<span>duration</span>
+		</label>
+		<select type="text" id="node-input-duration" style="width:52%;">
+			<option value="1">P1D</option>
+			<option value="7">P1W</option>
+			<option value="30">P1M</option>
+			<option value="90">P3M</option>
+			<option value="120">P6M</option>
+			<option value="365">P1Y</option>
+			<option value="730">P2Y</option>
+			<option value="1095">P3Y</option>
+		</select>
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-noderedhostauto" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>Find node-red routable hostname automatically</span>
+		</label>
+	</div>
+	<div class="form-row node-input-noderedhost-row">
+		<label for="node-input-noderedhost">
+			<i class="fa fa-lock"></i>
+			<span>node-red hostname</span>
+		</label>
+		<input type="text" id="node-input-noderedhost">
+	</div>
+	<div class="form-row">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+////////////////////////////////////////////////////// ORION CONTEXT BROKER QUERY NODE
+//////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-query-api-v2">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tls">
+			<i class="fa fa-cloud"></i> Certificates</label>
+		<input type="text" id="node-input-tls">
+	</div>
+	<div class="form-row">
+		<label for="node-input-entype">
+			<i class="fa fa-globe"></i>
+			<span>Device Type</span>
+		</label>
+		<input type="text" id="node-input-entype">
+	</div>
+	<div class="form-row">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Device Identifier</span>
+		</label>
+		<input type="text" id="node-input-enid">
+	</div>
+	<div class="form-row">
+		<label for="node-input-userk1">
+			<i class="fa fa-globe"></i>
+			<span>key 1</span>
+		</label>
+		<input type="text" id="node-input-userk1">
+	</div>
+	<div class="form-row">
+		<label for="node-input-passk2">
+			<i class="fa fa-globe"></i>
+			<span>key 2</span>
+		</label>
+		<input type="text" id="node-input-passk2">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tenant">
+			<i class="fa fa-globe"></i>
+			<span>Service/Tenant</span>
+		</label>
+		<input type="text" id="node-input-tenant">
+	</div>
+	<div class="form-row">
+		<label for="node-input-servicepath">
+			<i class="fa fa-globe"></i>
+			<span>Service Path</span>
+		</label>
+		<input type="text" id="node-input-servicepath">
+	</div>	
+	<div class="form-row">
+		<label for="node-input-apikey">
+			<i class="fa fa-globe"></i>
+			<span>apikey</span>
+		</label>
+		<input type="text" id="node-input-apikey">
+	</div>
+	<div class="form-row">
+		<label for="node-input-basicAuth">
+			<i class="fa fa-globe"></i>
+			<span>auth</span>
+		</label>
+		<input type="text" id="node-input-basicAuth">
+	</div>
+	<div class="form-row">
+		<label for="node-input-attributes">
+			<i class="fa fa-globe"></i>
+			<span>Attributes</span>
+		</label>
+		<input type="text" id="node-input-attributes" placeholder="comma-separated values, leave empty for all atributes">
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-useFiltering" style="display: inline-block; width: auto; vertical-align: top;">
+		<label for="node-input-useFiltering" style="width: 70%;">
+			<span>Use filtering?</span>
+		</label>
+	</div>
+	<div class="form-row node-input-rtype-row">
+		<label for="node-input-rtype">
+			<i class="fa fa-tasks"></i>
+			<span>Filter type</span>
+		</label>
+		<select type="text" id="node-input-rtype" style="width:52%;">
+			<option value="FIWARE::StringQuery">StringQuery</option>
+			<option value="FIWARE::Filter::Existence">Existence</option>
+			<option value="FIWARE::Filter::Not::Existence">Not Existence</option>
+		</select>
+	</div>
+	<div class="form-row node-input-rvalue-row">
+		<label for="node-input-rvalue">
+			<i class="fa fa-globe"></i>
+			<span>Restriction value</span>
+		</label>
+		<input type="text" id="node-input-rvalue" placeholder="Restriction scope value">
+	</div>
+	<div class="form-row">
+		<label for="node-input-limit">
+			<i class="fa fa-globe"></i>
+			<span>Limit</span>
+		</label>
+		<input type="text" id="node-input-limit" placeholder="Results limit">
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-includeattr" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>include attributes metadata in output</span>
+		</label>
+	</div>
+	<div class="form-row">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>Name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+////////////////////////////////////////////////////// ORION CONTEXT BROKER UPDATE NODE
+//////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-update-api-v2">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tls">
+			<i class="fa fa-cloud"></i> Certificates</label>
+		<input type="text" id="node-input-tls">
+	</div>
+	<div class="form-row">
+		<label for="node-input-entype">
+			<i class="fa fa-globe"></i>
+			<span>Device Type</span>
+		</label>
+		<input type="text" id="node-input-entype">
+	</div>
+	<div class="form-row">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Device Identifier</span>
+		</label>
+		<input type="text" id="node-input-enid">
+	</div>
+	<div class="form-row">
+		<label for="node-input-userk1">
+			<i class="fa fa-globe"></i>
+			<span>key 1</span>
+		</label>
+		<input type="text" id="node-input-userk1">
+	</div>
+	<div class="form-row">
+		<label for="node-input-passk2">
+			<i class="fa fa-globe"></i>
+			<span>key 2</span>
+		</label>
+		<input type="text" id="node-input-passk2">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tenant">
+			<i class="fa fa-globe"></i>
+			<span>Service/Tenant</span>
+		</label>
+		<input type="text" id="node-input-tenant">
+	</div>
+	<div class="form-row">
+		<label for="node-input-servicepath">
+			<i class="fa fa-globe"></i>
+			<span>Service Path</span>
+		</label>
+		<input type="text" id="node-input-servicepath">
+	</div>	
+	<div class="form-row">
+		<label for="node-input-apikey">
+			<i class="fa fa-globe"></i>
+			<span>apikey</span>
+		</label>
+		<input type="text" id="node-input-apikey">
+	</div>
+	<div class="form-row">
+		<label for="node-input-basicAuth">
+			<i class="fa fa-globe"></i>
+			<span>auth</span>
+		</label>
+		<input type="text" id="node-input-basicAuth">
+	</div>
+	<div class="form-row">
+		<label for="node-input-attrkey">
+			<i class="fa fa-globe"></i>
+			<span>Attribute key</span>
+		</label>
+		<input type="text" id="node-input-attrkey">
+	</div>
+	<div class="form-row">
+		<label for="node-input-attrvalue">
+			<i class="fa fa-globe"></i>
+			<span>Attribute value</span>
+		</label>
+		<input type="text" id="node-input-attrvalue">
+	</div>
+	<div class="form-row">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>Name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+////////////////////////////////////////////////////// ORION CONTEXT BROKER OUT UPDATE NODE
+//////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-out-api-v2">
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tls">
+			<i class="fa fa-cloud"></i> Certificates</label>
+		<input type="text" id="node-input-tls">
+	</div>
+	<div class="form-row">
+		<label for="node-input-entype">
+			<i class="fa fa-globe"></i>
+			<span>Device Type</span>
+		</label>
+		<input type="text" id="node-input-entype">
+	</div>
+	<div class="form-row">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Device Identifier</span>
+		</label>
+		<input type="text" id="node-input-enid">
+	</div>
+	<div class="form-row">
+		<label for="node-input-userk1">
+			<i class="fa fa-globe"></i>
+			<span>key 1</span>
+		</label>
+		<input type="text" id="node-input-userk1">
+	</div>
+	<div class="form-row">
+		<label for="node-input-passk2">
+			<i class="fa fa-globe"></i>
+			<span>key 2</span>
+		</label>
+		<input type="text" id="node-input-passk2">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tenant">
+			<i class="fa fa-globe"></i>
+			<span>Service/Tenant</span>
+		</label>
+		<input type="text" id="node-input-tenant">
+	</div>
+	<div class="form-row">
+		<label for="node-input-servicepath">
+			<i class="fa fa-globe"></i>
+			<span>Service Path</span>
+		</label>
+		<input type="text" id="node-input-servicepath">
+	</div>	
+	<div class="form-row">
+		<label for="node-input-apikey">
+			<i class="fa fa-globe"></i>
+			<span>apikey</span>
+		</label>
+		<input type="text" id="node-input-apikey">
+	</div>
+	<div class="form-row">
+			<label for="node-input-basicAuth">
+				<i class="fa fa-globe"></i>
+				<span>auth</span>
+			</label>
+			<input type="text" id="node-input-basicAuth">
+		</div>
+	<div class="form-row">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>Name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+	
+<script type="text/x-red" data-help-name="orion-out-api-v2">
+	<p>Provides a node for sending generic json payload to Fiware Orion context broker Version 2.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)
+		</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device Type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (optional)</dd>
+		
+		<dt>Device Identifier
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional)</dd>	
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.auth.k1</code>
+		(see example below)</dd>
+		
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.auth.k2</code> (see example below)</dd>
+		
+		<dt>Service/Tenant
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Tenant of the Device to be specified if the context broker support Multi-Tenancy (optional)</dd>
+		
+		<dt>Service Path
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Service Path of the Device to be specified if the context broker support Multi-Tenancy/Service Path hierarchy (optional)</dd>	
+		
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.auth.apikey</code> (see example below)</dd>
+		
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). It can be passed in <code>msg.auth.basicAuth</code> (see example below)
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) 
+		the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+		
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+	
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the payload to send to the Fiware Orion context broker. Can be:
+		<ul>
+			<li>the complete contextElements (not an array):
+				<code>
+					msg.payload ={"id":"test-edge-device","type":"test-edge-device","temperature":{"value":"14","type":"float"},"noise":{"value":"14","type":"integer"}};
+				</code></br>
+				NOTE: if msg.payload.type and msg.payload.id are not present, the "Device Type" and "Device Identifier" has to be specified in the Configuration section (<b>mandatory</b>)</li>
+			<li>the simple attributes (an array)
+				<code>
+					msg.payload = [{"temperature":{"value":"16","type":"float"},"noise":{"value":"16","type":"integer"}}];
+				</code></br>
+				NOTE: the "Device Type" and "Device Identifier" has to be specified in the Configuration section (<b>mandatory</b>)</li>
+		</ul>
+		An optional JSON representing the set of Credentials (used just if not specified in UI)
+		<code>
+			msg.auth={"k1": "1ef0e5e8-bf0c-48d4-9462-0aa4cfcf5e19","k2": "b2b34425-9d97-4fc5-818d-2d6cac2314a6","apikey":"apikey","basicAuth": "basicAuthKey"};
+		</code>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node receive a JSON as described in the Inputs section and send a message to the Fiware Broker context broker based on the specified Configuration.
+			If the values are not present in the input JSON an error is generated.</p>
+	</dl>
+</script>
+
+<script type="text/x-red" data-help-name="orion-service-api-v2"></script>
+
+<!-- Update -->
+<script type="text/x-red" data-help-name="orion-update-api-v2">
+	<p>Provides a node for sending specific data to Fiware Orion context broker Version 2.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device Type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>)</dd>
+		
+		<dt>Device Identifier
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (<b>mandatory</b>)</dd>		
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.auth.k1</code></dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.auth.k2</code></dd>
+
+		<dt>Service/Tenant
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Tenant of the Device to be specified if the context broker support Multi-Tenancy (optional)</dd>
+		
+		<dt>Service Path
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Service Path of the Device to be specified if the context broker support Multi-Tenancy/Service Path hierarchy (optional)</dd>		
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.auth.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). . It can be passed in <code>msg.auth.basicAuth</code>
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>Attribute key
+			<span class="property-type">string</span>
+		</dt>
+		<dd>name of the sensor to update (<b>mandatory</b>)</dd>
+		
+		<dt>Attribute key
+			<span class="property-type">string</span>
+		</dt>
+		<dd>new value of the sensor to update (<b>mandatory</b>)</dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+	
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> is the body of the response ("Success" in case everything went well)</li>
+			<li>
+				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+		</ul>
+	</dl>
+</script>
+
+<!-- Subscribe -->
+<script type="text/x-red" data-help-name="orion-subscribe-api-v2">
+	<p>Provides a node for subscribing on Fiware Orion context broker Version 2 and listening changes.</p>
+
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>.
+		</dd>
+	
+		<dt>Device Type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>)</dd>
+		
+		<dt>Device Identifier
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (<b>mandatory</b>)</dd>				
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+
+		<dt>Service/Tenant
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Tenant of the Device to be specified if the context broker support Multi-Tenancy (optional)</dd>
+		
+		<dt>Service Path
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Service Path of the Device to be specified if the context broker support Multi-Tenancy/Service Path hierarchy (optional)</dd>		
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional)</dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>is pattern
+			<span class="property-type">boolean</span>
+		</dt>
+		<dd>Specify whether entity ID is pattern, default is false (optional)</dd>
+
+		<dt>attributes
+			<span class="property-type">string</span>
+		</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all (optional)</dd>
+			
+		<dt>condvalues
+			<span class="property-type">string</span>
+		</dt>
+		<dd>the "triggering attributes" (attributes that upon change due to Update context elements trigger the notification) (optional)</dd>
+
+		<dt>includeattr
+			<span class="property-type">string</span>
+		</dt>
+		<dd>include all element attributes in the output, default is true (optional)</code>
+
+		<dt>throttle
+			<span class="property-type">multiple choice</span>
+		</dt>
+		<dd>used to specify a minimum inter-notification arrival time, default value 5 seconds (<b>mandatory</b>)</dd>
+
+		<dt>duration
+			<span class="property-type">multiple choice</span>
+		</dt>
+		<dd>time until subscription will expire (<b>mandatory</b>)</dd>
+		
+		<dt>Find node-red routable hostname automatically
+			<span class="property-type">boolean</span>
+		</dt>
+		<dd>Automatic route the hostname (optional)</dd>
+		
+		<dt>node-red hostname
+			<span class="property-type">string</span>
+		</dt>
+		<dd>name of the host this nodered is reacheable (optional)</dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> is the body of the response containing list of requested elements</li>
+			<li>
+				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+		</ul>
+	</dl>
+</script>
+
+<!-- Query -->
+<script type="text/x-red" data-help-name="orion-query-api-v2">
+	<p>Provides a node for making requests to Fiware Orion context broker Version 2.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+		<dt>Authentication (only available on edge scenario)</dt>	
+		<dd>Configuration options for Snap4city Authentication (optional)</dd>
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device Type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>). It can be passed in <code>msg.enid</code></dd>
+		
+		<dt>Device Identifier
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional). It can be passed in <code>msg.entype</code></dd>
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.userk1</code></dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.passk2</code></dd>
+
+		<dt>Service/Tenant
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Tenant of the Device to be specified if the context broker support Multi-Tenancy (optional). It can be passed in <code>msg.tenant</code></dd>
+		
+		<dt>Service Path
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Service Path of the Device to be specified if the context broker support Multi-Tenancy/Service Path hierarchy (optional). It can be passed in <code>msg.tenant</code></dd>		
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). It can be passed in <code>msg.basicAuth</code>
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>attributes</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all elements (optional)</dd>
+
+		<dt>limit
+			<span class="property-type">integer</span>
+		</dt>
+		<dd>limit number of returned elements (optional). It can be passed in <code>msg.limit</code></dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the Configuration. Can be:
+				<code>
+					msg = {"enid" : "angelo-mydevice001","entype": "test-device"};
+				</code>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node (optionally) can receive a JSON as described in the Inputs section and send a query message to the Fiware Broker context broker based on the specified Configuration.
+			The Configuration specified in the Input JSON are considered just if <i>not</i> insert the UI</p>
+	</dl>
+
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> is the body of the response containing list of requested elements</li>
+			<li>
+				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+		</ul>
+	</dl>
+</script>
+
+<script type="text/javascript">
+	(function () {
+		RED.nodes.registerType('orion-service-api-v2', {
+			category: 'config',
+			defaults: {
+				contextbroker: {
+					value: ""
+				},
+				selectedContextbroker: {
+					value: ""
+				},
+				name: {
+					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},
+				url: {
+					required: true
+				},
+				port: {
+					validate: RED.validators.number(),
+					required: true
+				}
+			},
+			credentials: {
+				user: {
+					type: "text",
+					required: false
+				},
+				password: {
+					type: "password",
+					required: false
+				}
+			},
+			label: function () {
+				return this.name || this.namespace || "Orion Service";
+			},
+			oneditprepare: function () {
+				$("#node-config-input-contextbroker").val("");
+				var accessToken = "";
+				var contextbrokerDataList = "";		
+			
+			    $.ajax({
+					url: "isThereLocalRefreshToken/",
+					type: "GET",
+					async: false,
+					success: function (resp) {
+						if (resp.result) {
+							$("#rowAuthentication").hide();
+							$("#tipAuthentication").hide();
+							$.ajax({
+								url: "myContextbrokerDataList",
+								type: "GET",
+								async: false,
+								success: function (_data) {
+									contextbrokerDataList = _data.contextbrokerDataList;
+								}
+							});
+						} else {
+							$.ajax({
+								url: "setChangedUser/",
+								async: false,
+								type: "POST",
+								dataType: "json",
+								data: {
+									"changedUser": "false"
+								}
+							});
+							$.ajax({
+								url: "retrieveAccessTokenAuthentication",
+								type: "GET",
+								async: false,
+								success: function (_data) {
+									if (_data.accessToken == "") {
+										$("#noAuthenticationContainer").hide();
+										$('#tipAuthenticationWrong').show();
+										$('#tipAuthentication').hide();
+									} else {
+										accessToken = _data.accessToken;
+									};
+								}
+							});
+						}
+					}
+				});
+				refreshContextbrokerSelection(accessToken, contextbrokerDataList);
+				
+				/*if (this.credentials.user || this.credentials.password) {
+					$('#node-config-input-useAuth').prop('checked', true);
+					$(".node-config-input-useAuth-row").show();
+				} else {
+					$('#node-config-input-useAuth').prop('checked', false);
+					$(".node-config-input-useAuth-row").hide();
+					$('#node-config-input-user').val('');
+					$('#node-config-input-password').val('');
+				}
+
+				$("#node-config-input-useAuth").change(function () {
+					if ($(this).is(":checked")) {
+						$('#node-config-input-user').val('');
+						$('#node-config-input-password').val('');
+						$(".node-config-input-useAuth-row").show();
+					} else {
+						$('#node-config-input-user').val('');
+						$('#node-config-input-password').val('');
+						$(".node-config-input-useAuth-row").hide();
+					}
+				});*/
+			},
+			oneditsave: function () {
+				$("#node-config-input-selectedContextbroker").val($("#node-config-input-contextbroker").val());
+			
+				if ($("#node-config-input-useAuth").is(":checked")) {
+					$(".node-config-input-useAuth-row").show();
+				} else {
+					$(".node-config-input-useAuth-row").hide();
+					$('#node-config-input-user').val('');
+					$('#node-config-input-password').val('');
+				}
+			}
+		});
+		RED.nodes.registerType('orion-subscribe-api-v2', {
+			category: 'S4CIoT',
+			color: "rgb(221, 181, 164)",
+			defaults: {
+				name: {
+					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},
+				service: {
+					type: "orion-service-api-v2",
+					required: true
+				},
+				tls: {
+					type: "tls-config",
+					required: false
+				},
+				throttle: {
+					value: "0"
+				},
+				entype: {
+					value: ""
+				},
+				enid: {
+					value: ""
+				},
+				userk1: {
+					value: ""
+				},
+				passk2: {
+					value: ""
+				},
+                tenant: {
+                    value: ""
+                },
+                servicepath: {
+                    value: ""
+                },				
+				apikey: {
+					value: ""
+				},
+				basicAuth: {
+					value: ""
+				},
+				ispattern: {
+					value: false
+				},
+				duration: {
+					value: "365"
+				},
+				attributes: {
+					value: ""
+				},
+				condvalues: {
+					value: ""
+				},
+				includeattr: {
+					value: true
+				},
+				noderedhost: {
+					value: ""
+				},
+				noderedhostauto: {
+					value: true
+				}
+			},
+			inputs: 0,
+			outputs: 1,
+			icon: "orioncb.png",
+			label: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion subscribe api v2";
+				}
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion subscribe api v2";
+				}
+			},
+			labelStyle: function () {
+				return this.name ? "node_label_italic" : "";
+			},
+			oneditprepare: function () {
+				$.ajax({
+					url: "isThereLocalRefreshToken/",
+					type: "GET",
+					async: false,
+					success: function (resp) {
+						if (resp.result) {
+							$("#rowAuthentication").hide();
+							$("#tipAuthentication").hide();
+						}
+					}
+				});
+				/*if (this.credentials.includeattr) {
+					$('#node-input-includeattr').prop('checked', true);
+				}*/
+
+				$("#node-input-noderedhostauto").change(function () {
+					if ($(this).is(":checked")) {
+						$(".node-input-noderedhost-row").hide();
+						$('#node-input-noderedhost').val('');
+					} else {
+						$(".node-input-noderedhost-row").show();
+					}
+				});
+			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+				}
+			},
+		});
+
+		RED.nodes.registerType('orion-query-api-v2', {
+			category: 'S4CIoT',
+			color: "rgb(221, 181, 164)",
+			defaults: {
+				name: {
+					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},
+				service: {
+					type: "orion-service-api-v2",
+					required: true
+				},
+				tls: {
+					type: "tls-config",
+					required: false
+				},
+				entype: {
+					value: ""
+				},
+				enid: {
+					value: ".*"
+				},
+				userk1: {
+					value: ""
+				},
+				passk2: {
+					value: ""
+				},
+                tenant: {
+                    value: ""
+                },
+                servicepath: {
+                    value: ""
+                },				
+				apikey: {
+					value: ""
+				},
+				basicAuth: {
+					value: ""
+				},
+				attributes: {
+					value: ""
+				},
+				rtype: {
+					value: ""
+				},
+				rvalue: {
+					value: ""
+				},
+				limit: {
+					value: 20,
+					validate: RED.validators.number()
+				},
+				includeattr: {
+					value: true
+				}
+			},
+			inputs: 1,
+			outputs: 1,
+			icon: "orioncb.png",
+			label: function () {
+				return this.name || "fiware orion query api v2";
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion query api v2";
+				}
+			},
+			labelStyle: function () {
+				return this.name ? "node_label_italic" : "";
+			},
+			oneditprepare: function () {
+				$.ajax({
+					url: "isThereLocalRefreshToken/",
+					type: "GET",
+					async: false,
+					success: function (resp) {
+						if (resp.result) {
+							$("#rowAuthentication").hide();
+							$("#tipAuthentication").hide();
+						}
+					}
+				});
+				if (this.rtype || this.rvalue) {
+					$('#node-input-useFiltering').prop('checked', true);
+					$(".node-input-rtype-row").show();
+
+					if ($('#node-input-rtype').val() !== 'FIWARE::StringQuery') {
+						$(".node-input-rvalue-row").hide();
+					} else {
+						$(".node-input-rvalue-row").show();
+					}
+
+				} else {
+					$('#node-input-useFiltering').prop('checked', false);
+					$(".node-input-rtype-row").hide();
+					$(".node-input-rvalue-row").hide();
+
+					$('#node-input-rtype').val('');
+					$('#node-input-rvalue').val('');
+				}
+
+				/*if (this.credentials.includeattr) {
+					$('#node-input-includeattr').prop('checked', true);
+				}*/
+
+				$("#node-input-useFiltering").change(function () {
+					if ($(this).is(":checked")) {
+						$('#node-input-rtype').val('FIWARE::StringQuery');
+						$(".node-input-rtype-row").show();
+						$('#node-input-rvalue').val('');
+						$(".node-input-rvalue-row").show();
+					} else {
+						$(".node-input-rtype-row").hide();
+						$(".node-input-rvalue-row").hide();
+						$('#node-input-rtype').val('');
+						$('#node-input-rvalue').val('');
+					}
+				});
+
+				$("#node-input-rtype").change(function () {
+					if ($('#node-input-rtype').val() === "FIWARE::StringQuery") {
+						$(".node-input-rvalue-row").show();
+					} else {
+						$(".node-input-rvalue").val('');
+						$(".node-input-rvalue-row").hide();
+					}
+				});
+			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+				}
+			},
+		});
+		RED.nodes.registerType('orion-update-api-v2', {
+			category: 'S4CIoT',
+			color: "rgb(221, 181, 164)",
+			defaults: {
+				name: {
+					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},
+				service: {
+					type: "orion-service-api-v2",
+					required: true
+				},
+				tls: {
+					type: "tls-config",
+					required: false
+				},
+				entype: {
+					value: ""
+				},
+				enid: {
+					value: ""
+				},
+				userk1: {
+					value: ""
+				},
+				passk2: {
+					value: ""
+				},
+                tenant: {
+                    value: ""
+                },
+                servicepath: {
+                    value: ""
+                },				
+				apikey: {
+					value: ""
+				},
+				basicAuth: {
+					value: ""
+				},
+				attrkey: {
+					value: ""
+				},
+				attrvalue: {
+					value: ""
+				}
+			},
+			inputs: 1,
+			outputs: 1,
+			icon: "orioncb.png",
+			oneditprepare: function () {
+				$.ajax({
+					url: "isThereLocalRefreshToken/",
+					type: "GET",
+					async: false,
+					success: function (resp) {
+						if (resp.result) {
+							$("#rowAuthentication").hide();
+							$("#tipAuthentication").hide();
+						}
+					}
+				});
+			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+				}
+			},
+			label: function () {
+				return this.name || "fiware orion update api v2";
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion update api v2";
+				}
+			},
+			labelStyle: function () {
+				return this.name ? "node_label_italic" : "";
+			}
+		});
+
+		RED.nodes.registerType('orion-out-api-v2', {
+			category: 'S4CIoT',
+			color: "rgb(12, 181, 12)",
+			defaults: {
+				name: {
+					value: ""
+				},
+				authentication: {
+					type: "snap4city-authentication",
+					required: false
+				},
+				tls: {
+					type: "tls-config",
+					required: false
+				},
+				service: {
+					type: "orion-service-api-v2",
+					required: true
+				},
+				entype: {
+					value: ""
+				},
+				enid: {
+					value: ""
+				},
+				userk1: {
+					value: ""
+				},
+				passk2: {
+					value: ""
+				},
+                tenant: {
+                    value: ""
+                },
+                servicepath: {
+                    value: ""
+                },				
+				apikey: {
+					value: ""
+				},
+				basicAuth: {
+					value: ""
+				}
+			},
+			inputs: 1,
+			outputs: 0,
+			icon: "orioncb.png",
+			oneditprepare: function () {
+				$.ajax({
+					url: "isThereLocalRefreshToken/",
+					type: "GET",
+					async: false,
+					success: function (resp) {
+						if (resp.result) {
+							$("#rowAuthentication").hide();
+							$("#tipAuthentication").hide();
+						}
+					}
+				});
+			},
+			oneditresize: function () {
+				if ($("#node-input-authentication").children().length > 1) {
+					$("#node-input-authentication option[value='_ADD_']").remove();
+				}
+			},
+			label: function () {
+				return this.name || "fiware orion out api v2";
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "fiware orion out api v2";
+				}
+			},
+			labelStyle: function () {
+				return this.name ? "node_label_italic" : "";
+			}
+		});
+	})();
+	
+	
+	var refreshContextbrokerSelection = function (accessToken, contextbrokerDataList) {
+        $("#node-config-input-contextbroker").empty();
+        if (contextbrokerDataList != "") {
+            createContextbrokerSelection(contextbrokerDataList);
+        } else if (accessToken != "" && contextbrokerDataList == "") {
+            $.ajax({
+                url: "iotDirectoryUrl",
+                type: "GET",
+                async: false,
+                success: function (_data) {
+                    $.ajax({
+                        url: _data.iotDirectoryUrl +
+                            "/api/contextbroker.php?action=get_all_contextbroker&nodered=yes&token=" +
+                            accessToken,
+                        type: "GET",
+                        async: true,
+                        dataType: "json",
+                        success: function (_data) {
+                            createContextbrokerSelection(_data.data);
+                        },
+                        error: function (err) {
+                            console.log(err);
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    var createContextbrokerSelection = function (currentContextbrokerList) {
+        currentContextbrokerList.sort(function (a, b) {
+            if (a.name < b.name) { return -1; }
+            if (a.name > b.name) { return 1; }
+            return 0;
+        });
+        if (currentContextbrokerList.length != 0) {
+            var node = this;
+            node.currentContextbrokerList = currentContextbrokerList;
+            $("#node-config-input-contextbroker").empty();
+            var currentValue = $("#node-config-input-selectedContextbroker").val();
+            for (var i = 0; i < currentContextbrokerList.length; i++) {
+                $("<option value='" + currentContextbrokerList[i].name + "'>" + currentContextbrokerList[i].name + "</option>").appendTo($("#node-config-input-contextbroker"));
+            }
+            $("#node-config-input-contextbroker").val(currentValue);
+
+            $("#node-config-input-contextbroker").change(function () {
+				var currentValue = $("#node-config-input-contextbroker").val();
+				for (var i = 0; i < node.currentContextbrokerList.length; i++) {
+                    if (currentValue == node.currentContextbrokerList[i].name) {
+						$("#node-config-input-url").val(node.currentContextbrokerList[i].accesslink);
+						$("#node-config-input-port").val(node.currentContextbrokerList[i].accessport);
+						$("#node-config-input-name").val(node.currentContextbrokerList[i].name);					
+                        break;
+                    }
+                }
+            });
+        }
+    }
+	
+</script>

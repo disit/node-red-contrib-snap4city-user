@@ -16,16 +16,15 @@
 
 /* NODE-RED-CONTRIB-SNAP4CITY-USER    Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence     This program is free software: you can redistribute it and/or modify    it under the terms of the GNU Affero General Public License as    published by the Free Software Foundation, either version 3 of the    License, or (at your option) any later version.     This program is distributed in the hope that it will be useful,    but WITHOUT ANY WARRANTY; without even the implied warranty of    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    GNU Affero General Public License for more details.     You should have received a copy of the GNU Affero General Public License    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
+
 	"use strict";
 	var util = require('util');
 	var when = require('when');
-	var https2 = require('https');
 	var bodyParser = require("body-parser");
 	var jsonParser = bodyParser.json();
 	var urlencParser = bodyParser.urlencoded({
 		extended: true
 	});
-	var util = require('util');
 	var https2 = require('https');
 	var subscriptionIDs = {};
 
@@ -137,6 +136,7 @@ module.exports = function (RED) {
 	}
 
 	function Snap4allButton(n) {
+
 		RED.nodes.createNode(this, n);
 		this.service = n.service;
 		this.brokerConn = RED.nodes.getNode(this.service);
@@ -163,6 +163,7 @@ module.exports = function (RED) {
 		validateInput(this, n);
 
 		node.brokerConn.init(node, n).then(function () {
+
 			getSubscribePayload(node, n).then(function (payload) {
 				node.status({
 					fill: "blue",
@@ -368,28 +369,53 @@ module.exports = function (RED) {
 		var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 		var xmlHttp = new XMLHttpRequest();
 		var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
-		var url = "https://iotdirectory.snap4city.org/api/";
-		xmlHttp.open("GET", encodeURI(url + "device.php?action=get_config_data&nodered=yes&token=" + accessToken), true); // false for synchronous request
-		xmlHttp.onload = function (e) {
-			if (xmlHttp.readyState === 4) {
-				if (xmlHttp.status === 200) {
-					if (xmlHttp.responseText != "") {
-						try {
-							res.send(JSON.parse(xmlHttp.responseText).content);
-						} catch (e) {
-							res.send("");
+		var url = RED.settings.iotdirectoryUri ? RED.settings.iotdirectoryUri : "https://iotdirectory.snap4city.org/api/";
+
+		//console.log("---------->URL "+url);
+		if (accessToken != "" && url != "") {
+			xmlHttp.open("GET", encodeURI(url + "device.php?action=get_config_data&nodered=yes&token=" + accessToken), true); // false for synchronous request
+			xmlHttp.onload = function (e) {
+				if (xmlHttp.readyState === 4) {
+					if (xmlHttp.status === 200) {
+						if (xmlHttp.responseText != "") {
+							try {
+								res.send(JSON.parse(xmlHttp.responseText).content);
+							} catch (e) {
+								res.status(500).send({
+									"error": "Parsing Error of the list"
+								});
+							}
+						} else {
+							console.log("Empty Response Text");
+							res.status(500).send({
+								"error": "Empty Response Text"
+							});
 						}
+					} else {
+						console.log(xmlHttp.statusText);
+						res.status(xmlHttp.status).send({
+							"error": "The status returned from the service that provide the list"
+						});
 					}
 				} else {
-					console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
+					console.log(xmlHttp.statusText);
+					res.status(500).send({
+						"error": "Something goes wrong. XMLHttpRequest.readyState = " + xmlHttp.readyState
+					});
 				}
-			}
-		};
-		xmlHttp.onerror = function (e) {
-			console.error(xmlHttp.statusText);   node.error(xmlHttp.responseText);
-		};
-		xmlHttp.send(null);
-
+			};
+			xmlHttp.onerror = function (e) {
+				console.log(xmlHttp.statusText);
+				res.status(500).send({
+					"error": "Cannot call the url to get the list"
+				});
+			};
+			xmlHttp.send(null);
+		} else {
+			res.status(500).send({
+				"error": "Cannot get the accessToken"
+			});
+		}
 	});
 
 }

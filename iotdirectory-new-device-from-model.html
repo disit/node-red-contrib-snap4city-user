@@ -1,0 +1,588 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/javascript">
+    $.ajax({
+        url: "s4c/js/jquery.fancytree-all.min.js",
+        async: false,
+        dataType: "script"
+    });
+
+    RED.nodes.registerType('iotdirectory-new-device-from-model', {
+        category: 'S4CIoT',
+        color: '#a6bbcf',
+        defaults: {
+            name: {
+                value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
+            devicename: {
+                value: ""
+            },
+            latitude: {
+                value: ""
+            },
+            longitude: {
+                value: ""
+            },
+            k1: {
+                value: ""
+            },
+            k2: {
+                value: ""
+            },
+            model: {
+                value: ""
+            },
+            selectedModel: {
+                value: ""
+            },
+            staticAttributeList: { value: [] }
+        },
+        oneditresize: function () {
+            if ($("#node-input-authentication").children().length > 1) {
+                $("#node-input-authentication option[value='_ADD_']").remove();
+            }
+        },
+        outputs: 1,
+        inputs: 1,
+        icon: "marker.png",
+        label: function () {
+            return this.name || "iotdirectory-new-device-from-model";
+        },
+        oneditprepare: function () {
+            $("#node-input-model").val("");
+            var accessToken = "";
+            var modelDataList = "";
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                        $.ajax({
+                            url: "myModelDataList",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                modelDataList = _data.modelDataList;
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: "setChangedUser/",
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                "changedUser": "false"
+                            }
+                        });
+                        $.ajax({
+                            url: "retrieveAccessTokenAuthentication",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    $("#noAuthenticationContainer").hide();
+                                    $('#tipAuthenticationWrong').show();
+                                    $('#tipAuthentication').hide();
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    }
+                }
+            });
+            refreshModelSelection(accessToken, modelDataList);
+
+            $.ajax({
+                url: "getkeys",
+                type: "GET",
+                async: false,
+                success: function (_data) {
+                    if (_data.k1 != "") {
+                        $("#node-input-k1").val(_data.k1);
+                        $("#node-input-k2").val(_data.k2);
+                    };
+                }
+
+            });
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.js",
+                async: false,
+                dataType: "script"
+            });
+            $.ajax({
+                url: "s4c/js/leaflet.draw.js",
+                async: false,
+                dataType: "script"
+            });
+            node = this;
+            map = L.map('node-input-map').setView([43.78, 11.23], 9);
+            L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            window.node_input_map = map;
+
+            var mapLayers = {};
+
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            var editControl = new L.Control.Draw({
+                draw: false,
+                edit: {
+                    featureGroup: drawnItems
+                }
+            });
+            map.addControl(editControl);
+
+            drawControl = new L.Control.Draw({
+                draw: {
+                    position: 'topleft',
+                    polyline: false,
+                    marker: {
+                        icon: new L.DivIcon({
+                            iconSize: new L.Point(8, 8),
+                            className: 'leaflet-div-icon leaflet-editing-icon test'
+                        })
+                    },
+                    circlemarker: false,
+                    circle: false,
+                    polygon: false,
+                    rectangle: false
+                }
+            });
+            map.addControl(drawControl);
+
+            L.control.layers(mapLayers, {
+                'drawlayer': drawnItems
+            }, {
+                collapsed: true
+            }).addTo(map);
+
+            map.on(L.Draw.Event.CREATED, function (e) {
+                var fence = e.layer;
+                fence.nodeID = node.id;
+                if (drawnItems.hasLayer(fence) == false) {
+                    drawnItems.addLayer(fence);
+                }
+
+                drawControl.remove();
+
+                markers = {};
+
+                drawnItems.eachLayer(function (layer) {
+                    markers[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                $("#node-input-latitude").val(markers[node.id].geometry.coordinates[1]);
+                $("#node-input-longitude").val(markers[node.id].geometry.coordinates[0]);
+            });
+
+            map.on('draw:edited', function (e) {
+                var fences = e.layers;
+                fences.eachLayer(function (fence) {
+                    fence.shape = "geofence";
+                    if (drawnItems.hasLayer(fence) == false) {
+                        drawnItems.addLayer(fence);
+                    }
+                });
+
+                markers = {};
+
+                drawnItems.eachLayer(function (layer) {
+                    markers[layer.nodeID] = layer.toGeoJSON();
+                });
+
+                $("#node-input-latitude").val(markers[node.id].geometry.coordinates[1]);
+                $("#node-input-longitude").val(markers[node.id].geometry.coordinates[0]);
+            });
+
+            map.on('draw:deleted', function (e) {
+                drawControl.addTo(map);
+                $("#node-input-latitude").val(0);
+                $("#node-input-longitude").val(0);
+            });
+
+
+            $("#node-input-staticAttribute-container").css('min-height', '300px').css('min-width', '300px').css('width', '80%').editableList({
+                addItem: function (container, i, opt) {
+                    if (!opt.hasOwnProperty('p')) {
+                        opt.p = {};
+                    }
+                    var staticAttribute = opt.p;
+
+                    container.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+
+
+                    var row = $('<div/>').appendTo(container);
+                    var uriStaticAttributeField = $('<input/>', { class: "node-input-staticAttribute-uri", type: "hidden", style: "margin-left: 5px;" }).appendTo(row);
+                    var labelField = $('<input/>', { class: "node-input-staticAttribute-label", type: "text", disabled: "true", style: "margin-left: 5px;width: 24%;" }).appendTo(row);
+                    var valueField = $('<input/>', { class: "node-input-staticAttribute-value", type: "text", style: "margin-left: 5px;width: 75%;", placeholder: "Static Attribute Value" }).appendTo(row);
+
+                    if (typeof staticAttribute.uri != "undefined" && staticAttribute.uri != "") {
+                        uriStaticAttributeField.val(staticAttribute.uri);
+                    }
+
+                    if (typeof staticAttribute.label != "undefined" && staticAttribute.label != "") {
+                        labelField.val(staticAttribute.label);
+                    }
+
+                    if (typeof staticAttribute.value != "undefined" && staticAttribute.value != "") {
+                        valueField.val(staticAttribute.value);
+                    }
+
+                },
+                removable: true,
+                addButton: false
+            });
+
+            for (var i = 0; i < this.staticAttributeList.length; i++) {
+                var staticAttribute = this.staticAttributeList[i];
+                $("#node-input-staticAttribute-container").editableList('addItem', { p: staticAttribute, i: i });
+            }
+
+        },
+        oneditsave: function () {
+            $("#node-input-selectedModel").val($("#node-input-model").val());
+            var staticAttributeList = $("#node-input-staticAttribute-container").editableList('items');
+            var node = this;
+            node.staticAttributeList = [];
+            staticAttributeList.each(function (i) {
+                var staticAttribute = $(this);
+                var p = {};
+                p.uri = staticAttribute.find(".node-input-staticAttribute-uri").val();
+                p.label = staticAttribute.find(".node-input-staticAttribute-label").val();
+                p.value = staticAttribute.find(".node-input-staticAttribute-value").val();
+                node.staticAttributeList.push(p);
+            });
+        },
+        oneditresize: function () {
+            if (window.node_input_map) {
+                window.node_input_map.invalidateSize(true);
+            }
+
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (!resp.result) {
+                        if ($("#node-input-authentication").children().length > 1) {
+                            $("#node-input-authentication option[value='_ADD_']").remove();
+                        }
+                        $.ajax({
+                            url: "getChangedUser/",
+                            type: "GET",
+                            async: false,
+                            success: function (resp) {
+                                if (resp.changedUser == "true") {
+                                    $("#tipAuthentication").hide();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").show();
+                                    $("#noAuthenticationContainer").hide();
+                                }
+                            },
+                            error: function (err) {
+                                if (err.status == 404) {
+                                    $("#tipAuthentication").show();
+                                    $("#tipAuthenticationDeployFirstTime").show();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").hide();
+                                    $("#noAuthenticationContainer").hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    var refreshModelSelection = function (accessToken, modelDataList) {
+        $("#node-input-model").empty();
+        if (modelDataList != "") {
+            createModelSelection(modelDataList);
+        } else if (accessToken != "" && modelDataList == "") {
+            $.ajax({
+                url: "iotDirectoryUrl",
+                type: "GET",
+                async: false,
+                success: function (_data) {
+                    $.ajax({
+                        url: _data.iotDirectoryUrl +
+                            "/api/model.php?action=get_all_models_simple&nodered=yes&token=" +
+                            accessToken,
+                        type: "GET",
+                        async: true,
+                        dataType: "json",
+                        success: function (_data) {
+                            createModelSelection(_data);
+                        },
+                        error: function (err) {
+                            console.log(err);
+                        }
+                    });
+                }
+            });
+        }
+
+    }
+
+    var createModelSelection = function (currentModelList) {
+        console.log(currentModelList);
+        currentModelList.content.sort(function (a, b) {
+            if (a.name < b.name) { return -1; }
+            if (a.name > b.name) { return 1; }
+            return 0;
+        });
+        currentModelList = currentModelList.content;
+        if (currentModelList.length != 0) {
+            var node = this;
+            node.currentModelList = currentModelList;
+            $("#node-input-model").empty();
+            var currentValue = $("#node-input-selectedModel").val();
+            for (var i = 0; i < currentModelList.length; i++) {
+                $("<option value='" + currentModelList[i].name + "'>" + currentModelList[i].name + "</option>").appendTo($("#node-input-model"));
+            }
+            $("#node-input-model").val(currentValue);
+
+            $("#node-input-model").change(function () {
+                $("#node-input-staticAttribute-container").editableList('empty');
+                var currentValue = $("#node-input-model").val();
+                var currentSubNature = null;
+                var modelStaticAttributeList = null;
+                for (var i = 0; i < node.currentModelList.length; i++) {
+                    if (currentValue == node.currentModelList[i].name) {
+                        currentSubNature = node.currentModelList[i].subnature;
+                        modelStaticAttributeList = node.currentModelList[i].static_attributes;
+                        break;
+                    }
+                }
+                $.ajax({
+                    url: "knowledgeBaseUrl",
+                    type: "GET",
+                    async: false,
+                    success: function (_data) {
+                        $.ajax({
+                            url: _data.knowledgeBaseUrl +
+                                "iot/list-static-attr?subnature=" +
+                                currentSubNature,
+                            type: "GET",
+                            async: true,
+                            dataType: "json",
+                            success: function (_data) {
+                                createStaticAttributeListEditor(_data, JSON.parse(modelStaticAttributeList));
+                            },
+                            error: function (err) {
+                                console.log(err);
+                            }
+                        });
+                    }
+                });
+            });
+        }
+    }
+
+    var createStaticAttributeListEditor = function (subnatureStaticAttributeList, modelStaticAttributeList) {
+        console.log(subnatureStaticAttributeList);
+        console.log(modelStaticAttributeList);
+        var currentStaticAttributeList = [];
+        var staticAttributeList = $("#node-input-staticAttribute-container").editableList('items');
+        staticAttributeList.each(function (i) {
+            var staticAttribute = $(this);
+            var p = {};
+            p.uri = staticAttribute.find(".node-input-staticAttribute-uri").val();
+            p.label = staticAttribute.find(".node-input-staticAttribute-label").val();
+            p.value = staticAttribute.find(".node-input-staticAttribute-value").val();
+            currentStaticAttributeList.push(p);
+        });
+
+        for (var i = 0; i < subnatureStaticAttributeList.length; i++) {
+            var found = false;
+            for (var j = 0; j < currentStaticAttributeList.length; j++) {
+                if (subnatureStaticAttributeList[i].uri == currentStaticAttributeList[j].uri) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found && subnatureStaticAttributeList[i].type == "http://www.w3.org/2001/XMLSchema#string") {
+                currentStaticAttributeList.push({
+                    "uri": subnatureStaticAttributeList[i].uri,
+                    "label": subnatureStaticAttributeList[i].label
+                });
+            }
+        }
+
+        for (var i = 0; i < modelStaticAttributeList.length; i++) {
+            for (var j = 0; j < currentStaticAttributeList.length; j++) {
+                if (modelStaticAttributeList[i][0] == currentStaticAttributeList[j].uri) {
+                    if (typeof currentStaticAttributeList[j].value == "undefined" || (typeof currentStaticAttributeList[j].value == "undefined" && currentStaticAttributeList[j].value == "")) {
+                        currentStaticAttributeList[j].value = modelStaticAttributeList[i][1];
+                    }
+                }
+            }
+        }
+
+        for (var i = 0; i < currentStaticAttributeList.length; i++) {
+            var staticAttribute = currentStaticAttributeList[i];
+            $("#node-input-staticAttribute-container").editableList('addItem', { p: staticAttribute, i: i });
+        }
+
+
+        var node = this;
+        node.staticAttributeList = currentStaticAttributeList;
+
+    }	
+</script>
+
+
+<script type="text/x-red" data-template-name="iotdirectory-new-device-from-model">
+    <input type="hidden" id="node-input-selectedModel">
+    <div class="form-row" id="rowAuthentication">
+    <label for="node-input-authentication">Authentication</label>
+    <input type="text" id="node-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+        You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
+    </div>
+    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to access the other configuration fields.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to access the other configuration fields.
+    </div>
+    <div id="noAuthenticationContainer">
+    <div class="form-row">
+    <label for="node-input-devicename">devicename</label>
+    <input type="text" autocomplete="off" id="node-input-devicename" placeholder="devicename">
+    </div>
+    <div class="form-row">
+    <label for="node-input-latitude">latitude</label>
+    <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
+    </div>
+    <div class="form-row">
+    <label for="node-input-longitude">longitude</label>
+    <input type="text" autocomplete="off" id="node-input-longitude" placeholder="Longitude" disabled>
+    </div>
+    <div class="form-row">
+    <link rel="stylesheet" href="s4c/css/leaflet.css" />
+    <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
+    <div id="node-input-map" style="width: 80%; height: 300px"></div>
+    </div>
+    <div class="form-row">
+    <label for="node-input-k1">k1</label>
+    <input type="text" autocomplete="off" id="node-input-k1" placeholder="k1">
+    </div>
+    <div class="form-row">
+    <label for="node-input-k2">k2</label>
+    <input type="text" autocomplete="off" id="node-input-k2" placeholder="k2">
+    </div>
+	<div class="form-row">
+        <label for="node-input-model">Model</label>
+        <select id="node-input-model" style="width: 55%;">
+        </select>
+    </div>
+    <div class="form-row node-input-staticAttribute-container-row">
+        <ol id="node-input-staticAttribute-container"></ol>
+    </div>
+</div>
+</script>
+
+<script type="text/x-red" data-help-name="iotdirectory-new-device-from-model">
+    <p>It allows to create a device from model</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+    <dt>devicename
+    <span class="property-type">string</span>
+    </dt>
+    <dd>The name of the device you want to create</dd>
+    <dt>latitude
+    <span class="property-type">number</span>
+    </dt>
+    <dd>latitude of a GPS position</dd>
+    <dt>longitude
+    <span class="property-type">number</span>
+    </dt>
+    <dd>longitude of a GPS position</dd>
+    <dt>k1
+    <span class="property-type">UUID v4 format</span>
+    </dt>
+    <dd>K1 and K2 are the keys necessary to read and write access to the device. They must be different from each other.</dd>
+    <dt>k2
+    <span class="property-type">UUID v4 format</span>
+    </dt>
+    <dd>K1 and K2 are the keys necessary to read and write access to the device. They must be different from each other.</dd>
+    <dt>model
+    <span class="property-type">string</span>
+    </dt>
+    <dd>The name of the model</dd>
+    <dt>staticAttributes
+        <span class="property-type">array</span>
+        </dt>
+        <dd>A vector containing as elements the data of the static attributes associated with the device. Each element must contain the URI of the attribute and the value.</dd>
+        <pre>
+"staticAttributes": [
+    {
+        "uri": "http://schema.org/addressLocality",
+        "value": "Florence"
+    },
+    {
+        "uri": "http://schema.org/addressRegion",
+        "value": "Tuscany"
+    }
+]
+            </pre>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+    <dd> Returns the k1 and k2 of device created</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+    If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+    in either part, an error is generated for the necessary parameters.</p>
+
+</script>

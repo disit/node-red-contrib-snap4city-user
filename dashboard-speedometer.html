@@ -30,12 +30,11 @@
         category: 'S4CDashboard',
         color: '#00a2d3',
         defaults: {
-            selectedDashboard: {
+            selectedDashboardId: {
                 value: "",
             },
-            createNewClicked: {
-                value: "",
-            },
+
+
             flowName: {
                 value: ""
             },
@@ -50,7 +49,8 @@
                 value: "",
                 required: true
             },
-            dashboardTitle: {
+
+            dashboardId: {
                 value: "",
                 required: true
             },
@@ -78,79 +78,19 @@
         },
         align: 'right',
         oneditprepare: function () {
-            $("#node-input-dashboardTitle").val("");
-            var accessToken = "";
-            var username = "";
-            var dashboardList = "";
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "dashboardList",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                dashboardList = _data.dashboardList;
-                                username = _data.username;
-                            }
-                        });
-                    } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#selectDashboardContainer").hide();
-                                    $("#selectWidgetName").hide();
-                                    $('#node-dashboard-view').hide();
-                                    $('#node-dashboard-edit').hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    username = _data.username;
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
-                }
-            });
+            var accessToken = getDashboardUserInfoAndCreateSelection();
             $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
             $('#node-dashboard-edit').click(function () {
-                if ($('#node-input-dashboardTitle').val() != null && $('#node-input-dashboardTitle')
+                if ($('#node-input-dashboardId').val() != null && $('#node-input-dashboardId')
                     .val() != "") {
-                    var dashboardTitle = $('#node-input-dashboardTitle').val();
-                    try {
-                        var dashboardTitleJson = JSON.parse(dashboardTitle);
-                        dashboardTitle = dashboardTitleJson.title;
-                    } catch (e) {
-                        //NOTHING TO DO
-                    }
                     $.ajax({
                         url: "dashboardManagerBaseUrl",
                         type: "GET",
                         async: true,
                         success: function (_data) {
                             window.open(_data.dashboardManagerBaseUrl +
-                                "/controllers/openNRDashboardEditor.php?username=" +
-                                username +
-                                "&dashboardTitle=" +
-                                encodeURIComponent(dashboardTitle),
+                                "/controllers/openNRDashboardEditor.php?dashboardId=" +
+                                $('#node-input-dashboardId').val(),
                                 '_blank');
                         }
                     });
@@ -160,26 +100,17 @@
             });
 
             $('#node-dashboard-view').click(function () {
-                if ($('#node-input-dashboardTitle').val() != null && $(
-                        '#node-input-dashboardTitle')
+                if ($('#node-input-dashboardId').val() != null && $(
+                    '#node-input-dashboardId')
                     .val() != "") {
-                    var dashboardTitle = $('#node-input-dashboardTitle').val();
-                    try {
-                        var dashboardTitleJson = JSON.parse(dashboardTitle);
-                        dashboardTitle = dashboardTitleJson.title;
-                    } catch (e) {
-                        //NOTHING TO DO
-                    }
                     $.ajax({
                         url: "dashboardManagerBaseUrl",
                         type: "GET",
                         async: true,
                         success: function (_data) {
                             window.open(_data.dashboardManagerBaseUrl +
-                                "/controllers/openNRDashboardViewer.php?username=" +
-                                username +
-                                "&dashboardTitle=" +
-                                encodeURIComponent(dashboardTitle),
+                                "/controllers/openNRDashboardViewer.php?dashboardId=" +
+                                $('#node-input-dashboardId').val(),
                                 '_blank'
                             );
                         }
@@ -190,16 +121,17 @@
             });
 
             $("#createNewDashboardTitle").click(function () {
-                $("#node-input-dashboardTitleNew").show();
-                $("#node-input-dashboardTitle").hide();
+                $("#node-input-dashboardId").hide();
+                $("#node-input-dashboardId").val("");
                 $("#createNewDashboardTitle").hide();
+                $("#node-input-dashboardTitle").show();
+                $("#createNewDashboardButton").show();
                 $("#backDashboardTitle").show();
-                $("#node-input-dashboardTitle").attr("id", "node-input-dashboardTitleOld");
-                $("#node-input-dashboardTitleNew").attr("id", "node-input-dashboardTitle");
                 $("#node-dashboard-view").hide();
                 $("#node-dashboard-edit").hide();
                 $("#node-input-tip").show();
-                $("#node-input-createNewClicked").val("true");
+
+                $("#node-input-dashboardTitle").val($("#node-input-dashboardTitleInserted").val());
                 $('#node-input-dashboardTitle').keypress(function (e) {
                     var txt = String.fromCharCode(e.which);
                     if (!txt.match(/[A-Za-z0-9&. ]/)) {
@@ -209,24 +141,92 @@
             });
 
             $("#backDashboardTitle").click(function () {
-                $("#node-input-dashboardTitle").attr("id", "node-input-dashboardTitleNew");
-                $("#node-input-dashboardTitleOld").attr("id", "node-input-dashboardTitle");
-                $("#node-input-dashboardTitleNew").val("");
-                $("#node-input-dashboardTitleNew").hide();
-                $("#node-input-dashboardTitle").show();
+                $("#node-input-dashboardTitle").val("");
+                $("#node-input-dashboardTitle").hide();
+                $("#node-input-dashboardId").show();
                 $("#createNewDashboardTitle").show();
+                $("#createNewDashboardButton").hide();
                 $("#backDashboardTitle").hide();
                 $("#node-dashboard-view").show();
                 $("#node-dashboard-edit").show();
                 $("#node-input-tip").hide();
-                $("#node-input-createNewClicked").val("false");
+
             });
 
-            $("#node-input-username").val(username);
-            refreshDashboardSelection(username, accessToken, dashboardList);
+            $("#createNewDashboardButton").click(function () {
+                if ($("#node-input-dashboardTitle").val() != "") {
+                    if (accessToken != "") {
+                        $.ajax({
+                            url: "dashboardManagerBaseUrl",
+                            type: "GET",
+                            async: true,
+                            success: function (_data) {
+                                $.ajax({
+                                    url: _data.dashboardManagerBaseUrl + "/controllers/createDashboardFromNR.php?dashboardTitle="
+                                        + encodeURIComponent($("#node-input-dashboardTitle").val()) + "&accessToken=" + accessToken,
+                                    type: "GET",
+                                    async: true,
+                                    success: function (_data) {
+                                        try {
+                                            _data = JSON.parse(_data)
+                                        } catch (e) {
+                                            console.log(e);
+                                        }
+                                        if (_data.result) {
+                                            if (_data.result.toLowerCase() == "ok") {
+                                                $("#node-input-selectedDashboardId").val(_data.dashboardId);
+                                                getDashboardUserInfoAndCreateSelection();
+                                            } else {
+                                                alert(_data.errormsg);
+                                            }
+                                        }
+                                    },
+                                    error: function (_error) {
+                                        console.log(_error);
+                                    }
+                                });
+                            },
+                            error: function (_error) {
+                                console.log(_error);
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: "createDashboard/",
+                            type: "POST",
+                            async: true,
+                            dataType: "json",
+							data: {
+                                "dashboardTitle": $("#node-input-dashboardTitle").val()
+                            },
+                            success: function (_data) {
+                                try {
+                                    _data = JSON.parse(_data)
+                                } catch (e) {
+                                    console.log(e);
+                                }
+                                if (_data.result) {
+                                    if (_data.result.toLowerCase() == "ok") {
+                                        $("#node-input-selectedDashboardId").val(_data.dashboardId);
+                                        getDashboardUserInfoAndCreateSelection();
+                                    } else {
+                                        alert(_data.errormsg);
+                                    }
+                                }
+                            },
+                            error: function (_error) {
+                                console.log(_error);
+                            }
+                        });
+                    }
+                } else {
+                    alert("To create a new dashboard you must insert the name of the dashboard");
+                }
+            });
         },
         oneditsave: function () {
-            $("#node-input-selectedDashboard").val($("#node-input-dashboardTitle").val());
+            $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
+
         },
         oneditresize: function () {
             $.ajax({
@@ -271,77 +271,14 @@
             });
         }
     });
-
-    var refreshDashboardSelection = function (username, accessToken, dashboardList) {
-        $("#node-input-dashboardTitle").empty();
-        if (dashboardList != "") {
-            createSelection(dashboardList);
-        } else if (username != "" && accessToken != "" && dashboardList == "") {
-            $.ajax({
-                url: "dashboardManagerBaseUrl",
-                type: "GET",
-                async: false,
-                success: function (_data) {
-                    $.ajax({
-                        url: _data.dashboardManagerBaseUrl +
-                            "/api/nodeRedDashboardsApi.php?v3&secret=" + _data.dashboardSecret +
-                            "&username=" + username + "&accessToken=" +
-                            accessToken,
-                        type: "GET",
-                        async: true,
-                        dataType: "json",
-                        success: function (_data) {
-                            createSelection(_data);
-                        },
-                        error: function (err) {
-                            $("#createNewDashboardTitle").click();
-                            $("#node-input-dashboardTitle").val($(
-                                "#node-input-selectedDashboard").val());
-                            console.log(err);
-                        }
-                    });
-                }
-            });
-        }
-
-    }
-
-    var createSelection = function (currentDashboardList) {
-        if (currentDashboardList.length != 0) {
-            $('#node-dashboard-view').show();
-            $('#node-dashboard-edit').show();
-            $("#node-input-dashboardTitle").empty();
-            var currentValue = $("#node-input-selectedDashboard").val();
-            for (var i = 0; i < currentDashboardList.length; i++) {
-                $("<option value='" + JSON.stringify(currentDashboardList[i]) + "'>" +
-                        decodeURI(currentDashboardList[i].title.replace(
-                            /\+/g, " ")) + "</option>")
-                    .appendTo($("#node-input-dashboardTitle"));
-                if (JSON.stringify(currentDashboardList[i]) == $(
-                        "#node-input-selectedDashboard").val() || decodeURI(currentDashboardList[i].title.replace(
-                        /\+/g, " ")) == $(
-                        "#node-input-selectedDashboard").val()) {
-                    currentValue = JSON.stringify(currentDashboardList[i]);
-                    $("#node-input-createNewClicked").val("false");
-                }
-            }
-            if ($("#node-input-createNewClicked").val() != null && $(
-                    "#node-input-createNewClicked").val() == "true") {
-                $("#createNewDashboardTitle").click();
-            }
-            $("#node-input-dashboardTitle").val(currentValue);
-        } else {
-            $("#createNewDashboardTitle").click();
-            $("#node-input-dashboardTitle").val($(
-                "#node-input-selectedDashboard").val());
-        }
-    }
 </script>
 
 <script type="text/x-red" data-template-name="speedometer">
-    <input type="hidden" id="node-input-username"><input type="hidden" id="node-input-flowName">
-    <input type="hidden" id="node-input-createNewClicked">
-    <input type="hidden" id="node-input-selectedDashboard">
+    <input type="hidden" id="node-input-username">
+    <input type="hidden" id="node-input-flowName">
+    
+    <input type="hidden" id="node-input-selectedDashboardId">
+    
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">
@@ -349,10 +286,11 @@
     <div class="form-row" id="selectDashboardContainer">
         <label for="node-input-dashboardTitle">
             <i class="fa fa-dashboard"></i>Dashboard Name</label>
-        <input type="text" autocomplete="off" id="node-input-dashboardTitleNew" placeholder="Dashboard Name" style="display:none; width: 55%;">
-        <select id="node-input-dashboardTitle" style="width: 55%;">
+        <input type="text" autocomplete="off" id="node-input-dashboardTitle" placeholder="Dashboard Name" style="display:none; width: 55%;">
+        <select id="node-input-dashboardId" style="width: 55%;">
         </select>
-        <button id="createNewDashboardTitle">Create New</button>
+        <button id="createNewDashboardTitle" >New Dashboard</button>
+        <button id="createNewDashboardButton" style="display:none">Create</button>
         <button id="backDashboardTitle" style="display:none">Show list</button>
     </div>
     <div class="form-row" id="selectWidgetName">
@@ -368,8 +306,7 @@
             View Dashboard
         </button>
     </div>
-    <div id="node-input-tip" class="form-tips" style="display:none">The new dashboard is created entering the title and saving the node (with "Done" button) and deploying the flow (with
-        "Deploy" button)
+    <div id="node-input-tip" class="form-tips" style="display:none">The new dashboard is created entering the title andclicking on create
     </div>
     <div class="form-tips"  id="tipAuthentication" style="max-width: none">
 		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
@@ -384,7 +321,6 @@
         Insert the authentication data and deploy the node to retrieve the updated list of dashboards.
 	</div>
 </script>
-
 <script type="text/x-red" data-help-name="speedometer">
     <p>With this node you can add a speedometer to an existing dashboard or a new one created by the node to show numbers.
     </p>
@@ -404,6 +340,43 @@
 
     <h3>Inputs</h3>
     <dl class="message-properties">
-        <dd> Number to show in the speedometer</dd>
-    </dl>
+        <dd> A number directly in the payload that will be shown in the gauge chart or a JSON Object like the following:</dd>
+        
+<pre>  
+{
+    "metricId": [Service Uri Of A Sensor],
+    "metricHighLevelType": "Sensor",
+    "metricName": [The name of the Sensor],
+    "metricType": [A measure recorded by the sensor]
+}
+</pre>
+<pre>
+{
+    "metricId": [The ID of a KPI],
+    "metricHighLevelType": "MyKPI",
+    "metricName": [The name of the MyKPI],
+    "metricType": [The type of the measure saved in the KPI]
+}
+</pre>
+             
+        An example of the JSON Object filled with correct data:</p>
+
+<pre>
+{
+    "metricId": "http://www.disit.org/km4city/resource/tusc_weather_sensor_ow_3166540",
+    "metricHighLevelType": "Sensor",
+    "metricName": "tusc_weather_sensor_ow_3166540",
+    "metricType": "airTemperature"
+}
+</pre>
+
+<pre>
+{
+    "metricId": "17056579",
+    "metricHighLevelType": "MyKPI",
+    "metricName": "OBD2 - Intake Air Temperature",
+    "metricType": "Temperature"
+}
+</pre>
+</dl>
 </script>

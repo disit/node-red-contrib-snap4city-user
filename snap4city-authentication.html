@@ -29,18 +29,18 @@
                 type: "password"
             }
         },
-        oneditprepare: function(){
+        oneditprepare: function () {
             $("#node-config-input-oldName").val($("#node-config-input-user").val());
             $(".editor-tray-toolbar button.leftButton").attr("disabled", true)
         },
-        oneditsave: function(){
-            if ($("#node-config-input-user").val() != $("#node-config-input-oldName").val()){
+        oneditsave: function () {
+            if ($("#node-config-input-user").val() != $("#node-config-input-oldName").val()) {
                 $.ajax({
                     url: "setChangedUser/",
                     async: false,
                     type: "POST",
                     dataType: "json",
-                    data: {"changedUser": "true"}
+                    data: { "changedUser": "true" }
                 });
             }
         },

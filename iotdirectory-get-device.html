@@ -1,0 +1,290 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<script type="text/javascript">
+    RED.nodes.registerType('iotdirectory-get-device', {
+        category: 'S4CIoT',
+        color: '#a6bbcf',
+        defaults: {
+            name: {
+                value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
+            selectedCB: {
+                value: ""
+            },
+            cbs: {
+                value: ""
+            },
+            devicename: {
+                value: ""
+            },
+            service: {
+                value: ""
+            },
+            servicePath: {
+                value: ""
+            },
+        },
+        outputs: 1,
+        inputs: 1,
+        icon: "white-globe.png",
+        label: function () {
+            return this.name || "iotdirectory-get-device";
+        },
+        oneditprepare: function () {
+            var accessToken = "";
+            var cbList = "";
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                        $.ajax({
+                            url: "myCBList",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                cbList = _data.cbList;
+                            }
+                        });
+                    }
+                    else {
+                        $.ajax({
+                            url: "setChangedUser/",
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            data: {
+                                "changedUser": "false"
+                            }
+                        });
+                        $.ajax({
+                            url: "retrieveAccessTokenAuthentication",
+                            type: "GET",
+                            async: false,
+                            success: function (_data) {
+                                if (_data.accessToken == "") {
+                                    $("#selectCBContainer").hide();
+                                    $('#tipAuthenticationWrong').show();
+                                    $('#tipAuthentication').hide();
+                                } else {
+                                    accessToken = _data.accessToken;
+                                };
+                            }
+                        });
+                    }
+
+                }
+            });
+            refreshCBSelection(accessToken, cbList);
+
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (resp.result) {
+                        $("#rowAuthentication").hide();
+                        $("#tipAuthentication").hide();
+                    }
+                }
+            });
+
+        },
+        oneditsave: function () {
+            $("#node-input-selectedCB").val($("#node-input-cbs").val());
+        },
+        oneditresize: function () {
+            $.ajax({
+                url: "isThereLocalRefreshToken/",
+                type: "GET",
+                async: false,
+                success: function (resp) {
+                    if (!resp.result) {
+                        if ($("#node-input-authentication").children().length > 1) {
+                            $("#node-input-authentication option[value='_ADD_']").remove();
+                        }
+                        $.ajax({
+                            url: "getChangedUser/",
+                            type: "GET",
+                            async: false,
+                            success: function (resp) {
+                                if (resp.changedUser == "true") {
+                                    $("#tipAuthentication").hide();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").show();
+                                    $("#selectCBContainer").hide();
+                                }
+                            },
+                            error: function (err) {
+                                if (err.status == 404) {
+                                    $("#tipAuthentication").show();
+                                    $("#tipAuthenticationDeployFirstTime").show();
+                                    $("#tipAuthenticationWrong").hide();
+                                    $("#tipAuthenticationRedeploy").hide();
+                                    $("#selectCBContainer").hide();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    var refreshCBSelection = function (accessToken, cbList) {
+        $("#node-input-cbs").empty();
+        if (cbList != "") {
+            createCBSelection(cbList);
+        } else if (accessToken != "") {
+            console.log("scenario edge... retrieving ");
+            $.ajax({
+                url: "iotDirectoryUrl",
+                type: "GET",
+                async: false,
+                success: function (_data) {
+                    $.ajax({
+                        url: _data.iotDirectoryUrl +
+                            "/api/contextbroker.php?action=get_all_contextbroker_simple&nodered=yes&token=" +
+                            accessToken,
+                        type: "GET",
+                        async: true,
+                        dataType: "json",
+                        success: function (_data) {
+                            console.log("successo");
+                            createCBSelection(_data);
+                        },
+                        error: function (err) {
+                            console.log("errore");
+                            console.log(err);
+                        }
+                    });
+                }
+            });
+        }
+
+    }
+
+    var createCBSelection = function (currentcbList) {
+        console.log(currentcbList);
+        currentcbList = currentcbList.data;
+        if (currentcbList.length != 0) {
+            $("#node-input-cbs").empty();
+            var currentValue = $("#node-input-selectedCB").val();
+            for (var i = 0; i < currentcbList.length; i++) {
+                $("<option value='" + currentcbList[i].name + "' data-protocol='" + currentcbList[i].protocol + "'>" + currentcbList[i].name + "</option>").appendTo($("#node-input-cbs"));
+            }
+            $("#node-input-cbs").val(currentValue);
+        }
+
+        $("#node-input-cbs").change(function () {
+            if ($("#node-input-cbs").val() != null) {
+                var selected = $(this).find('option:selected');
+                var protocol = selected.data('protocol');
+                if (protocol == "ngsi w/MultiService") {
+                    $("#node-input-service").prop("disabled", false);
+                    $("#node-input-servicepath").prop("disabled", false);
+                }
+                else {
+                    $("#node-input-service").prop("disabled", true);
+                    $("#node-input-servicepath").prop("disabled", true);
+                }
+            }
+        });
+
+        $("#node-input-cbs").val(currentValue).trigger('change');
+
+    }
+</script>
+
+<script type="text/x-red" data-template-name="iotdirectory-get-device">
+
+    <input type="hidden" id="node-input-selectedCB">
+
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+    <!--div class="form-row">
+        <label for="node-input-cbname">Context Broker name</label>
+        <input type="text" autocomplete="off" id="node-input-cbname" placeholder="Context Broker name">
+    </div-->
+	<div class="form-row" id="selectCBContainer">
+        <label for="node-input-cbs">Context Broker</label>
+        <select id="node-input-cbs" style="width: 55%;">
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-devicenamee">Device Name</label>
+        <input type="text" autocomplete="off" id="node-input-devicename" placeholder="Device Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-service">Service</label>
+        <input type="text" autocomplete="off" id="node-input-service" placeholder="Service" disabled>
+    </div>
+	<div class="form-row">
+        <label for="node-input-servicepath">Service Path</label>
+        <input type="text" autocomplete="off" id="node-input-servicepath" placeholder="Service Path" disabled>
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+        You must have an account with Snap4city to use this node. You can register for one
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="iotdirectory-get-device">
+    <p>It allows to retrieve the device information from the iotdirectory</p>
+
+    <h3>Inputs</h3>
+    A JSON with these parameters:
+
+    <dl class="message-properties">
+        <dt>cbname
+            <span class="property-type">string</span>
+        </dt>
+        <dd>The name of the context broker that hold the device you want to retrieve. It can be passed in <code>msg.payload.cbname</code></dd>
+        <dt>devicename
+            <span class="property-type">string</span>
+        </dt>
+        <dd>The name of the device you want to retrieve. It can be passed in <code>msg.payload.devicename</code></dd>
+        <dt>service
+            <span class="property-type">string</span>
+        </dt>
+        <dd>The name of the service the device is stored, in case of Orion w/MultiService (optional). It can be passed in <code>msg.payload.service</code></dd>		
+		<dt>servicepath
+            <span class="property-type">string</span>
+        </dt>
+        <dd>The name of the Service Path the device is stored, in case of Orion w/MultiService (optional). It can be passed in <code>msg.payload.servicepath</code></dd>		
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dd> Returns an array containing the information of the device</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON.
+        If the values are not present in the input JSON, these are read by those in the configuration. If they are not present
+        in either part, an error is generated for the necessary parameters.</p>
+
+</script>
