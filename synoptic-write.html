@@ -59,7 +59,7 @@
                         $("#rowAuthentication").hide();
                         $("#tipAuthentication").hide();
                         $.ajax({
-                            url: "synopticListWrite",
+                            url: "synopticList",
                             type: "GET",
                             async: false,
                             success: function (_data) {
@@ -206,7 +206,7 @@
                         //console.log(currentInput);
                         $("<option value=\"" + currentSynopticList[synopticIndex].input[currentInput] + "\">" + currentInput + "</option>").appendTo(
                             $("#node-input-synopticVariableId"));
-                    } 6666
+                    }
                     $("#node-input-synopticVariableId").val(currentVariableValue);
                 }
             });

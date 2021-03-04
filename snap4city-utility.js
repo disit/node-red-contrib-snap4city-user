@@ -77,6 +77,7 @@ module.exports = {
 
     retrieveCurrentUser: function (RED, node, authentication) {
         var fs = require('fs');
+        var atob = require('atob');
         var refreshToken = "";
         var response = "";
         if (fs.existsSync('/data/refresh_token')) {
@@ -96,6 +97,12 @@ module.exports = {
             }
             if (response != "") {
                 fs.writeFileSync('/data/refresh_token', response.refresh_token);
+                try {
+                    response = JSON.parse(atob(response.access_token.split('.')[1]));
+                } catch (e) {
+                    console.log(e);
+                    return "";
+                }
                 if (response.preferred_username != "" && response.preferred_username != undefined && response.preferred_username != "undefined") {
                     return response.preferred_username;
                 } else {

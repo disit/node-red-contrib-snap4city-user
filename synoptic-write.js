@@ -280,7 +280,7 @@ module.exports = function (RED) {
         });
     });
 
-    RED.httpAdmin.get('/synopticListWrite', RED.auth.needsPermission('synoptic-write.read'), function (req, res) {
+    RED.httpAdmin.get('/synopticList', RED.auth.needsPermission('synoptic-write.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();

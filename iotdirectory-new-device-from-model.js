@@ -65,16 +65,24 @@ module.exports = function (RED) {
                                         }
 
                                         var currentStaticAttributesList = [];
-
+																				
                                         if (typeof msg.payload.staticAttributes != "undefined" && msg.payload.staticAttributes != "") {
-                                            for (var i = 0; i < msg.payload.staticAttributes.length; i++) {
-                                                for (var j = 0; j < node.staticAttributeList.length; j++) {
+                                            var forcedAttrs = [];
+											for (var i = 0; i < msg.payload.staticAttributes.length; i++) {
+                                                var isInModel = false;
+												for (var j = 0; j < node.staticAttributeList.length; j++) {
                                                     if (node.staticAttributeList[j].uri == msg.payload.staticAttributes[i].uri) {
-                                                        node.staticAttributeList[j].value = msg.payload.staticAttributes[i].value;
-                                                    }
+                                                        isInModel = true;
+														node.staticAttributeList[j].value = msg.payload.staticAttributes[i].value;														
+                                                    }													
                                                 }
+												if(!isInModel) {
+													forcedAttrs.push(msg.payload.staticAttributes[i]);
+												}
                                             }
-                                        }
+											if(forcedAttrs) node.staticAttributeList.push(...forcedAttrs);
+                                        }										
+										
 
                                         for (var i = 0; i < node.staticAttributeList.length; i++) {
                                             if (node.staticAttributeList[i].value != "") {
@@ -167,12 +175,12 @@ module.exports = function (RED) {
         });
     });
 
-    RED.httpAdmin.get('/knowledgeBaseUrl', function (req, res) {
+    /*RED.httpAdmin.get('/knowledgeBaseUrl', function (req, res) {
         var knowledgeBaseUrl = (RED.settings.knowledgeBaseUrl ? RED.settings.knowledgeBaseUrl : "https://servicemap.disit.org/WebAppGrafo/api/v1");
         res.send({
             "knowledgeBaseUrl": knowledgeBaseUrl
         });
-    });
+    });*/
 
     RED.httpAdmin.get('/myModelDataList', RED.auth.needsPermission('iotdirectory-new-device-from-model.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");

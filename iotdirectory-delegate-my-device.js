@@ -72,8 +72,15 @@ module.exports = function (RED) {
                         node.error(xmlHttp.responseText);
                     };
 
+                    logger.debug(JSON.stringify({
+                        "usernameDelegated": (usernamedelegated != "ANONYMOUS") ?  usernamedelegated.toLowerCase() : usernamedelegated,
+                        "usernameDelegator": (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase(),
+                        "elementId": deviceId,
+                        "elementType": "IOTID"
+                    }));
+
                     xmlHttp.send(JSON.stringify({
-                        "usernameDelegated": (usernamedelegated).toLowerCase(),
+                        "usernameDelegated": (usernamedelegated != "ANONYMOUS") ?  usernamedelegated.toLowerCase() : usernamedelegated,
                         "usernameDelegator": (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase(),
                         "elementId": deviceId,
                         "elementType": "IOTID"

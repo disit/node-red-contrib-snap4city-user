@@ -174,7 +174,7 @@
             var currentValue = $("#node-input-selectedDeviceDataId").val();
 
             for (var i = 0; i < currentDeviceDataList.length; i++) {
-                $("<option value='" + currentDeviceDataList[i].elementName + "'>" + currentDeviceDataList[i].elementName + "</option>").appendTo($("#node-input-deviceId"));
+                $("<option value='" + currentDeviceDataList[i].elementId + "'>" + currentDeviceDataList[i].elementName + "</option>").appendTo($("#node-input-deviceId"));
             }
             $("#node-input-deviceId").val(currentValue);
         }
@@ -219,7 +219,7 @@
     A JSON with these parameters:
 
     <dl class="message-properties">
-        <dt>deviceId
+        <dt>id
             <span class="property-type">string</span>
         </dt>
         <dd> the nome of the kpi device (you MUST have the ownership of the device)</dd>
@@ -232,7 +232,7 @@
     <p>An example of the JSON array filled with correct data:</p>
     <pre>
 {
-    "deviceId": "nameDevice",
+    "id": "nameDevice",
     "usernamedelegated": "username",
 }
     </pre>

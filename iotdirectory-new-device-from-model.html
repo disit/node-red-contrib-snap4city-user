@@ -381,8 +381,9 @@
             }
             $("#node-input-model").val(currentValue);
 
-            $("#node-input-model").change(function () {
-                $("#node-input-staticAttribute-container").editableList('empty');
+            $("#node-input-model").change(function () {                
+				if(!$("#node-input-model").val()) return;
+				$("#node-input-staticAttribute-container").editableList('empty');
                 var currentValue = $("#node-input-model").val();
                 var currentSubNature = null;
                 var modelStaticAttributeList = null;
@@ -393,7 +394,15 @@
                         break;
                     }
                 }
-                $.ajax({
+				console.log("Selected: "+currentValue);
+				console.log("currentSubNature: "+currentSubNature);
+				console.log("modelStaticAttributeList: see below");
+				console.log(modelStaticAttributeList);
+				console.log("JSON.parse(modelStaticAttributeList): see below");
+				console.log(JSON.parse(modelStaticAttributeList));
+				
+                
+				/* $.ajax({
                     url: "knowledgeBaseUrl",
                     type: "GET",
                     async: false,
@@ -413,13 +422,15 @@
                             }
                         });
                     }
-                });
+                }); */
+				createStaticAttributeListEditor(null, JSON.parse(modelStaticAttributeList));
+				
             });
         }
     }
 
     var createStaticAttributeListEditor = function (subnatureStaticAttributeList, modelStaticAttributeList) {
-        console.log(subnatureStaticAttributeList);
+        // console.log(subnatureStaticAttributeList);
         console.log(modelStaticAttributeList);
         var currentStaticAttributeList = [];
         var staticAttributeList = $("#node-input-staticAttribute-container").editableList('items');
@@ -432,7 +443,7 @@
             currentStaticAttributeList.push(p);
         });
 
-        for (var i = 0; i < subnatureStaticAttributeList.length; i++) {
+        /* for (var i = 0; i < subnatureStaticAttributeList.length; i++) {
             var found = false;
             for (var j = 0; j < currentStaticAttributeList.length; j++) {
                 if (subnatureStaticAttributeList[i].uri == currentStaticAttributeList[j].uri) {
@@ -446,16 +457,26 @@
                     "label": subnatureStaticAttributeList[i].label
                 });
             }
-        }
+        }*/
 
         for (var i = 0; i < modelStaticAttributeList.length; i++) {
-            for (var j = 0; j < currentStaticAttributeList.length; j++) {
+            var isInList = false;
+			for (var j = 0; j < currentStaticAttributeList.length; j++) {
                 if (modelStaticAttributeList[i][0] == currentStaticAttributeList[j].uri) {
-                    if (typeof currentStaticAttributeList[j].value == "undefined" || (typeof currentStaticAttributeList[j].value == "undefined" && currentStaticAttributeList[j].value == "")) {
+                    isInList = true;
+					if (typeof currentStaticAttributeList[j].value == "undefined" || (typeof currentStaticAttributeList[j].value == "undefined" && currentStaticAttributeList[j].value == "")) {
                         currentStaticAttributeList[j].value = modelStaticAttributeList[i][1];
                     }
                 }
             }
+			if(!isInList) {
+				currentStaticAttributeList.push({
+                    "uri": modelStaticAttributeList[i][0],
+                    "label": modelStaticAttributeList[i][2]?modelStaticAttributeList[i][2]:modelStaticAttributeList[i][0].split("#")[1],
+					"value": modelStaticAttributeList[i][1]
+                });
+			}
+			
         }
 
         for (var i = 0; i < currentStaticAttributeList.length; i++) {
