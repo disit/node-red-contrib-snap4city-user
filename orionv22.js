@@ -104,7 +104,7 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v2/entities" + (config.enid ? "/" + config.enid : "") + "/?" + (config.limit ? "limit=" + config.limit : "") + (config.entype ? "&type=" + config.entype : "") + (payload.attributes.length > 0 ? "&attrs=" + payload.attributes.toString() : "") + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					path: prefixPath + "/v2/entities" + (config.enid ? "/" + config.enid : "") + "/?" + (config.limit ? "limit=" + config.limit : "") + (config.entype ? "&type=" + config.entype : "") + (payload.attributes.length > 0 ? "&attrs=" + payload.attributes.toString() : "") + (config.userk1 ? "&k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 					method: 'GET',
 					rejectUnauthorized: false,
 					headers: {}
@@ -194,12 +194,12 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v2/entities/" + config.enid + "/attrs/?" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					path: prefixPath + "/v2/entities/" + config.enid + "/attrs/?" + (config.userk1 ? "&k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 					method: 'PATCH',
 					rejectUnauthorized: false,
 					headers: {
 						'Content-Type': 'application/json',
-						'Content-Length': JSON.stringify(payload).length
+						'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 					}
 				};
 
@@ -288,13 +288,13 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v2/subscriptions" + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v2/subscriptions" + (config.userk1 ? "&k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
-					'Content-Length': JSON.stringify(payload).length
+					'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 				}
 			};
 
@@ -433,7 +433,7 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v2/subscriptions/" + subscriptionId + "/?" + (config.userk1 ? "k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v2/subscriptions/" + subscriptionId + "/?" + (config.userk1 ? "k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 				method: 'DELETE',
 				rejectUnauthorized: false,
 				headers: {}
@@ -510,7 +510,7 @@ module.exports = function (RED) {
 
 		payload = JSON.stringify(payload);
 
-		opts.headers['content-length'] = payload.length;
+		opts.headers['content-length'] = Buffer.byteLength(payload);
 		token = "";
 
 		return when.promise(function (resolve, reject) {
@@ -720,7 +720,7 @@ module.exports = function (RED) {
 		opts.headers["Accept"] = "application/json";
 		payload = JSON.stringify(payload);
 
-		opts.headers['content-length'] = payload.length;
+		opts.headers['content-length'] = Buffer.byteLength(payload);
 		if (token) {
 			opts.headers["X-Auth-Token"] = token;
 		}

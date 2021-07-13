@@ -327,7 +327,7 @@ module.exports = function (RED) {
 
         payload = JSON.stringify(payload);
 
-        opts.headers['content-length'] = payload.length;
+        opts.headers['content-length'] = Buffer.byteLength(payload);
         token = "";
 
         return when.promise(function (resolve, reject) {

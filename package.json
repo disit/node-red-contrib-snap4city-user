@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.7.4",
+    "version": "0.8.0",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
@@ -51,7 +51,6 @@
         "underscore": "^1.10.2",
         "util": "^0.12.3",
         "uuid": "^8.3.0",
-        "websocket": "^1.0.31",
         "wellknown": "^0.5.0",
         "when": "^3.7.8",
         "winston": "^3.3.3",
@@ -137,6 +136,7 @@
             "dashboard-dimmer": "dashboard-dimmer.js",
             "dashboard-geolocator": "dashboard-geolocator.js",
             "dashboard-dropdown": "dashboard-dropdown.js",
+            "dashboard-form": "dashboard-form.js",
             "dashboard-gauge-chart": "dashboard-gauge-chart.js",
             "dashboard-single-content": "dashboard-single-content.js",
             "dashboard-speedometer": "dashboard-speedometer.js",
@@ -168,8 +168,7 @@
             "twitter-last-channel": "twitter-last-channel.js",
             "twitter-last-tweet": "twitter-last-tweet.js",
             "snap4city-authentication": "snap4city-authentication.js",
-            "snap4all-button": "snap4all-button.js",
-            "edge-tunnel-to-cloud": "edge-tunnel-to-cloud.js"
+            "snap4all-button": "snap4all-button.js"
         }
     }
 }

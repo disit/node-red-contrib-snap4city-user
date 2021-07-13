@@ -26,7 +26,7 @@
 </style>
 
 <script type="text/javascript">
-    RED.nodes.registerType('dashboard-calendar', {
+    RED.nodes.registerType('dashboardForm', {
         category: 'S4CDashboard',
         color: '#00a2d3',
         defaults: {
@@ -51,29 +51,27 @@
                 value: "",
                 required: true
             },
-            metricType: {
-                value: "Series"
+            valueType: {
+                value: "Testuale",
+                required: true
             },
-            startValue: {
-                value: 0
-            },
-            metricShortDesc: {
-                value: ""
-            },
-            metricFullDesc: {
-                value: ""
+            dashboardFormOrderedList: { value: [] },
+            domainType: {
+                value: "singleNumericValue",
+                required: true
             }
         },
         inputs: 1,
-        outputs: 0,
-        icon: "abc.png",
+        outputs: 1,
+        outputLabels: ["selection"],
+        icon: "dashboardForm.png",
         label: function () {
-            return this.name || "calendar";
+            return this.name || "form";
         },
         paletteLabel: function () {
-            return this.name || "calendar";
+            return this.name || "form";
         },
-        align: 'right',
+        align: 'left',
         oneditprepare: function () {
             var accessToken = getDashboardUserInfoAndCreateSelection();
             $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
@@ -171,13 +169,13 @@
                                             console.log(e);
                                         }
                                         if (_data.result) {
-                                    if (_data.result.toLowerCase() == "ok") {
-                                        $("#node-input-selectedDashboardId").val(_data.dashboardId);
-                                        getDashboardUserInfoAndCreateSelection();
-                                    } else {
-                                        alert(_data.errormsg);
-                                    }
-                                }
+                                            if (_data.result.toLowerCase() == "ok") {
+                                                $("#node-input-selectedDashboardId").val(_data.dashboardId);
+                                                getDashboardUserInfoAndCreateSelection();
+                                            } else {
+                                                alert(_data.errormsg);
+                                            }
+                                        }
                                     },
                                     error: function (_error) {
                                         console.log(_error);
@@ -193,7 +191,8 @@
                             url: "createDashboard/",
                             type: "POST",
                             async: true,
-                            dataType: "json",data: {
+                            dataType: "json",
+                            data: {
                                 "dashboardTitle": $("#node-input-dashboardTitle").val()
                             },
                             success: function (_data) {
@@ -220,10 +219,100 @@
                     alert("To create a new dashboard you must insert the name of the dashboard");
                 }
             });
+
+            $("#node-input-dashboardFormOrderedList-container").css('min-height', '300px').css('min-width', '300px').css('width', '80%').editableList({
+                addItem: function (container, i, opt) {
+                    if (!opt.hasOwnProperty('p')) {
+                        opt.p = {};
+                    }
+                    var dashboardFormItem = opt.p;
+
+                    container.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+
+
+                    var row = $('<div/>').appendTo(container);
+                    
+					// Label
+					
+					var labelField = $('<input/>', { class: "node-input-dashboardFormOrderedList-label", type: "text", style: "margin-left: 5px;width: 24%;", placeholder: "Label" }).appendTo(row);
+                    if (typeof dashboardFormItem.label != "undefined" && dashboardFormItem.label != "") {
+                        labelField.val(dashboardFormItem.label);
+                    }
+					
+					// Type
+					
+					var typeField = $('<select/>', { class: "node-input-dashboardFormOrderedList-type", type: "text", style: "margin-left:5px; width:24%" }).appendTo(row);
+					var arr = [
+                        { val: "text", text: "text" },
+                        { val: "number", text: "number" },
+                        { val: "email", text: "email" },
+                        { val: "password", text: "password" },
+                        { val: "checkbox", text: "checkbox" },
+                        { val: "switch", text: "switch" },
+                        { val: "date", text: "date" },
+                        { val: "time", text: "time" }
+                    ];
+                    $(arr).each(function () {
+                        var isSelected = false;
+                        if (dashboardFormItem.type == this.val) {
+                            isSelected = true;
+                        }
+                        typeField.append($("<option>").attr('value', this.val).text(this.text).prop('selected', isSelected));
+                    });
+					
+					// Value
+					
+					var valueField = null;					
+                    if("checkbox" == typeField.val()) {
+						valueField = $('<select/>', { class: "node-input-dashboardFormOrderedList-value", type: "text", style: "margin-left:5px; width:24%" }).appendTo(row);
+						valueField.append($("<option>").attr('value', '').text(''));
+						valueField.append($("<option>").attr('value', 'checked').text('checked').prop('selected', Boolean(dashboardFormItem.value)));						
+					}
+					else if("switch" == typeField.val()) {
+						valueField = $('<select/>', { class: "node-input-dashboardFormOrderedList-value", type: "text", style: "margin-left:5px; width:24%" }).appendTo(row);
+						valueField.append($("<option>").attr('value', '').text(''));
+						valueField.append($("<option>").attr('value', 'on').text('on').prop('selected', Boolean(dashboardFormItem.value)));						
+					}
+					else {
+						valueField = $('<input/>', { class: "node-input-dashboardFormOrderedList-value", type: "text", style: "margin-left: 5px;width: 24%;", placeholder: "Value" }).appendTo(row);
+						if (typeof dashboardFormItem.value != "undefined" && dashboardFormItem.value != "") {
+							valueField.val(dashboardFormItem.value);
+						}
+					}
+
+					// Required 
+					
+                    var requiredLabel = $('<span/>', {style: "margin-left:10px; width:16%"}).appendTo(row);
+                    requiredLabel.html("Required");
+					var required = $('<input/>', { class: "node-input-dashboardFormOrderedList-required", type: "checkbox", style: "margin-bottom:6px; width:6%;", checked: dashboardFormItem.required}).appendTo(row);					
+					
+                },
+                removable: true,
+                addButton: true
+            });
+
+            for (var i = 0; i < this.dashboardFormOrderedList.length; i++) {
+                var dashboardFormItem = this.dashboardFormOrderedList[i];
+                $("#node-input-dashboardFormOrderedList-container").editableList('addItem', { p: dashboardFormItem, i: i });
+            }
         },
         oneditsave: function () {
             $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
-
+            var dashboardFormOrderedList = $("#node-input-dashboardFormOrderedList-container").editableList('items');
+            var node = this;
+            node.dashboardFormOrderedList = [];
+            dashboardFormOrderedList.each(function (i) {
+                var dashboardFormItem = $(this);
+                var p = {};
+                p.label = dashboardFormItem.find(".node-input-dashboardFormOrderedList-label").val();
+                p.value = dashboardFormItem.find(".node-input-dashboardFormOrderedList-value").val();
+                p.type = dashboardFormItem.find(".node-input-dashboardFormOrderedList-type").val();
+                p.required = dashboardFormItem.find(".node-input-dashboardFormOrderedList-required").is(":checked");
+                node.dashboardFormOrderedList.push(p);
+            });
         },
         oneditresize: function () {
             $.ajax({
@@ -270,15 +359,10 @@
     });
 </script>
 
-
-
-<script type="text/x-red" data-template-name="dashboard-calendar">
-
+<script type="text/x-red" data-template-name="dashboardForm">
     <input type="hidden" id="node-input-username">
     <input type="hidden" id="node-input-flowName">
-    
     <input type="hidden" id="node-input-selectedDashboardId">
-    
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">
@@ -297,6 +381,9 @@
         <label for="node-input-name">
             <i class="icon-tag"></i> Widget Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Widget Name">
+    </div>
+    <div class="form-row node-input-dashboardFormOrderedList-container-row">
+        <ol id="node-input-dashboardFormOrderedList-container"></ol>
     </div>
     <div class="form-row">
         <button class="dashboardBtn" click="openDashboardEditor" role="button" aria-disabled="false" id="node-dashboard-edit">
@@ -322,106 +409,89 @@
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="dashboard-calendar">
-    <p>With this node you can add a calendar to an existing dashboard or a new one created by the node to show a calendar.
+<script type="text/x-red" data-help-name="dashboardForm">
+    <p>With this node you can add a dashboardForm to an existing dashboard or a new one created by the node to select numbers in an
+        interval.
     </p>
 
-    <h3>Configurations</h3>
+    <h3>Configuration</h3>
 
     <dl class="message-properties">
         <dt>dashboard
             <span class="property-type">string</span>
         </dt>
-        <dd>Dashboard title to which the calendar will be added</dd>
+        <dd>Dashboard title to which the dashboardForm will be added</dd>
         <dt>widget
             <span class="property-type">string</span>
         </dt>
-        <dd> Title that will have the widget containing the calendar.</dd>
+        <dd> Title that will have the widget containing the dashboardForm.</dd>
+        
     </dl>
 
     <h3>Inputs</h3>
-    <dl class="message-properties">
-        A JSON array like the following:
-        <pre>
-[
-    {
-        "metricId": [Service Uri Of A Sensor],
-        "metricHighLevelType": "Sensor",
-        "metricName": [The name of the Sensor],
-        "smField": [A measure recorded by the sensor],
-        "serviceUri": [Service Uri Of A Sensor]
-    },
-    {
-        "metricId": [The ID of a KPI],
-        "metricHighLevelType": "MyKPI",
-        "metricName": [The name of the MyKPI],
-        "smField": [The type of the measure saved in the KPI],
-        "serviceUri": [The ID of a KPI]
-    },
-    {
-        "metricId": "",
-        "metricHighLevelType": "Dynamic",
-        "metricName": [The name of the dynamic data],
-        "smField": [The type of the dynamic data],
-        "metricValueUnit": [The unit of the dynamic data],
-        "value": [An array of array of timestamp and value]
-    }
-]
-        </pre>
 
-    <p>You can insert an arbitrary number of MyKPI and Sensor element inside the array.
-    An example of the JSON array filled with correct data:</p>
+The node accepts in input JSON objects shaped as follows:
 
-        <pre>
-[
+<pre>
     {
-        "metricId": "serviceUri=http://www.disit.org/km4city/resource/IBIMET_SMART17",
-        "metricHighLevelType": "Sensor",
-        "metricName": "IBIMET_SMART12",
-        "smField": "PM10",
-        "serviceUri": "http://www.disit.org/km4city/resource/IBIMET_SMART17"
-    },
-    {
-        "metricId": "https://servicemap.disit.org/WebAppGrafo/api/v1/?serviceUri=http://www.disit.org/km4city/resource/IBIMET_SMART12&format=json",
-        "metricHighLevelType": "Sensor",
-        "metricName": "IBIMET_SMART12",
-        "smField": "PM10",
-        "serviceUri": "http://www.disit.org/km4city/resource/IBIMET_SMART12"
-    },
-    {
-        "metricId": "17056191",
-        "metricHighLevelType": "MyKPI",
-        "metricName": "S4CTuscanyTrackerLocation",
-        "smField": "GPS Information Saved From The App",
-        "serviceUri": "17056191"
-    },
-    {
-        "metricId": "",
-        "metricHighLevelType": "Dynamic",
-        "metricName": "BatteryTemperatureGalaxyNote",
-        "smField": "Gradi Centigradi",
-        "metricValueUnit": "°C",
-        "values": [
-                    [1580305500000, 19.5],
-                    [1580301900000, 20.0],
-                    [1580298300000, 20.5],
-                    [1580294700000, 18.5],
-                    [1580291100000, 19],
-                    [1580287500000, 18.5],
-                    [1580283900000, 21.5],
-                    [1580280300000, 22.0],
-                    [1580276700000, 19],
-                    [1580273100000, 17.5],
-                    [1580269500000, 16.5],
-                    [1580265900000, 17.0],
-                    [1580262300000, 18.5],
-                    [1580258700000, 20.0],
-                    [1580255100000, 19.5],
-                    [1580251500000, 21.5],
-                    [1580247900000, 21]
-        ]
+        "form": {
+            "options": [
+                {
+                    "label": "enter text",
+                    "value": "",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "label": "enter number",
+                    "value": "",
+                    "type": "number",
+                    "required": false
+                },
+                {
+                    "label": "enter email",
+                    "value": "",
+                    "type": "email",
+                    "required": false
+                },
+                {
+                    "label": "enter password",
+                    "value": "",
+                    "type": "password",
+                    "required": false
+                },
+                {
+                    "label": "enter check",
+                    "value": "checked",
+                    "type": "checkbox",
+                    "required": true
+                },
+                {
+                    "label": "enter switch",
+                    "value": "on",
+                    "type": "switch",
+                    "required": false
+                },
+                {
+                    "label": "enter date",
+                    "value": "",
+                    "type": "date",
+                    "required": false
+                },
+                {
+                    "label": "enter time",
+                    "value": "",
+                    "type": "time",
+                    "required": true
+                }
+            ],
+            "selected": []
+        }
     }
-]
-        </pre>
-    </dl>
+
+</pre>
+
+    <h3>Outputs</h3>
+    The node produces in output the payload of the received message (the hidden value associated with the writing that the user has clicked on the widget).
+
 </script>

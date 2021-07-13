@@ -185,7 +185,7 @@ module.exports = function (RED) {
 					headers: {
 						'Content-Type': 'application/json',
 						'Accept': 'application/json',
-						'Content-Length': JSON.stringify(payload).length
+						'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 					}
 				};
 

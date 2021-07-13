@@ -118,13 +118,13 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/queryContext/?limit=" + config.limit + "&elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+					path: prefixPath + "/v1/queryContext/?limit=" + config.limit + "&elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 					method: 'POST',
 					rejectUnauthorized: false,
 					headers: {
 						'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
 						'Content-Type': 'application/json',
-						'Content-Length': JSON.stringify(payload).length
+						'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 					}
 				};
 
@@ -189,8 +189,8 @@ module.exports = function (RED) {
 
 		this.updateContext = function (node, config, payload, auth) {
 
-			var k1 = (auth && auth.k1) ? auth.k1 : ((config.userk1) ? config.userk1 : undefined);
-			var k2 = (auth && auth.k2) ? auth.k2 : ((config.passk2) ? config.passk2 : undefined);
+			var k1 = (auth && auth.k1) ? auth.k1.trim() : ((config.userk1) ? config.userk1.trim() : undefined);
+			var k2 = (auth && auth.k2) ? auth.k2.trim() : ((config.passk2) ? config.passk2.trim() : undefined);
 			var apikey = (auth && auth.apikey) ? auth.apikey : ((config.apikey) ? config.apikey : undefined);
 			var basicAuth = (auth && auth.basicAuth) ? auth.basicAuth : ((config.basicAuth) ? config.basicAuth : undefined);
 
@@ -234,13 +234,13 @@ module.exports = function (RED) {
 				var options = {
 					hostname: hostname,
 					port: orionBrokerService.port,
-					path: prefixPath + "/v1/updateContext/?elementid=" + payload.contextElements[0].id + (k1 ? "&k1=" + k1 : "") + (k2 ? "&k2=" + k2 : ""),
+					path: prefixPath + "/v1/updateContext/?elementid=" + payload.contextElements[0].id + (k1 ? "&k1=" + k1.trim() : "") + (k2 ? "&k2=" + k2.trim() : ""),
 					method: 'POST',
 					rejectUnauthorized: false,
 					headers: {
 						'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth
 						'Content-Type': 'application/json',
-						'Content-Length': JSON.stringify(payload).length
+						'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 					}
 				};
 
@@ -344,14 +344,14 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v1/subscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v1/subscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
 					'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
-					'Content-Length': JSON.stringify(payload).length
+					'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 				}
 			};
 
@@ -538,14 +538,14 @@ module.exports = function (RED) {
 			var options = {
 				hostname: hostname,
 				port: orionBrokerService.port,
-				path: prefixPath + "/v1/unsubscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1 : "") + (config.passk2 ? "&k2=" + config.passk2 : ""),
+				path: prefixPath + "/v1/unsubscribeContext/?elementid=" + config.enid + (config.userk1 ? "&k1=" + config.userk1.trim() : "") + (config.passk2 ? "&k2=" + config.passk2.trim() : ""),
 				method: 'POST',
 				rejectUnauthorized: false,
 				headers: {
 					'Authorization': 'Bearer ' + accessToken, //by default, we insert the Snap4City SSo AccessToken, that can be overrided by the config.basicAuth			
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
-					'Content-Length': JSON.stringify(payload).length
+					'Content-Length': Buffer.byteLength(JSON.stringify(payload))
 				}
 			};
 
@@ -620,7 +620,7 @@ module.exports = function (RED) {
 
 		payload = JSON.stringify(payload);
 
-		opts.headers['content-length'] = payload.length;
+		opts.headers['content-length'] = Buffer.byteLength(payload);
 		token = "";
 
 		return when.promise(function (resolve, reject) {
@@ -814,7 +814,7 @@ module.exports = function (RED) {
 		opts.headers["Accept"] = "application/json";
 		payload = JSON.stringify(payload);
 
-		opts.headers['content-length'] = payload.length;
+		opts.headers['content-length'] = Buffer.byteLength(payload);
 		if (token) {
 			opts.headers["X-Auth-Token"] = token;
 		}
