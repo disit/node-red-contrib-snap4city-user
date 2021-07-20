@@ -143,7 +143,7 @@ module.exports = function (RED) {
             return when.promise(function (resolve, reject) {
                 s4cOrionUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, retrieveDeviceName(node, config.enid, config.tenant, config.servicepath), uid, accessToken);
                 var [hostname, prefixPath] = s4cOrionUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
-                var options = orionHttpRequestOptions.generateForOrionAPIV2Update(hostname, orionBrokerService.port, prefixPath, config, auth, JSON.stringify(payload).length, accessToken)
+                var options = orionHttpRequestOptions.generateForOrionAPIV2Update(hostname, orionBrokerService.port, prefixPath, config, auth, Buffer.byteLength(JSON.stringify(payload)), accessToken)
                 options = orionHttpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED, auth)
 
                 var msg = {};
