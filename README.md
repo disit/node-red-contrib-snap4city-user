@@ -1,7 +1,7 @@
 # node-red-contrib-snap4city-user
 
 Node-red nodes for developing IoT applications for smart cities and Industry 4.0.
-These nodes are targeted to a not developer user.
+These nodes are targeted to developer and non developer users.
 
 A description of the available nodes can be found [here](https://www.km4city.org/iot-micro-doc/user.html).
 
