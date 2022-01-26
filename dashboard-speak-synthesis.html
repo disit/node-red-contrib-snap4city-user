@@ -1,0 +1,384 @@
+<!--/* NODE-RED-CONTRIB-SNAP4CITY-USER
+   Copyright (C) 2018 DISIT Lab http://www.disit.org - University of Florence
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as
+   published by the Free Software Foundation, either version 3 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
+<style type="text/css">
+    .dashboardBtn {
+        background: #AD1625;
+        border: none;
+        color: #eee !important;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+</style>
+
+<script type="text/javascript">
+    RED.nodes.registerType('speak-synthesis', {
+        category: 'S4CDashboard',
+        color: '#00a2d3',
+        defaults: {
+            selectedDashboardId: {
+                value: "",
+            },
+            flowName: {
+                value: ""
+            },
+            authentication: {
+                type: "snap4city-authentication",
+                required: false
+            },
+            username: {
+                value: ""
+            },
+            name: {
+                value: "",
+                required: true
+            },
+			text: {
+                value: "",
+                required: false
+            },
+            rate: {
+                value: "",
+                required: false
+            },
+            pitch: {
+                value: "",
+                required: false
+            },
+
+            dashboardId: {
+                value: "",
+                required: true
+            },
+            metricType: {
+                value: "Testuale"
+            },
+            startValue: {
+                value: ""
+            },
+			lang: {
+                value: "",
+                required: false
+            },
+            metricShortDesc: {
+                value: ""
+            },
+            metricFullDesc: {
+                value: ""
+            }
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "speak.png",
+        label: function () {
+            return this.name || "speak-synthesis";
+        },
+        paletteLabel: function () {
+            return this.name || "speak-synthesis";
+        },
+        align: 'right',
+        oneditprepare: function () {
+            var accessToken = getDashboardUserInfoAndCreateSelection();
+            $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
+            $('#node-dashboard-edit').click(function () {
+                if ($('#node-input-dashboardId').val() != null && $('#node-input-dashboardId')
+                    .val() != "") {
+                    $.ajax({
+                        url: "dashboardManagerBaseUrl",
+                        type: "GET",
+                        async: true,
+                        success: function (_data) {
+							var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                            if (domain != "") {
+                                _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
+                            }
+							window.open(_data.dashboardManagerBaseUrl +
+                                "/controllers/openNRDashboardEditor.php?dashboardId=" +
+                                $('#node-input-dashboardId').val(),
+                                '_blank');
+                        }
+                    });
+                } else {
+                    alert("Select a dashboard or enter the name of a new one");
+                }
+            });
+
+            $('#node-dashboard-view').click(function () {
+                if ($('#node-input-dashboardId').val() != null && $(
+                    '#node-input-dashboardId')
+                    .val() != "") {
+                    $.ajax({
+                        url: "dashboardManagerBaseUrl",
+                        type: "GET",
+                        async: true,
+                        success: function (_data) {
+							var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                            if (domain != "") {
+                                _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
+                            }
+							window.open(_data.dashboardManagerBaseUrl +
+                                "/controllers/openNRDashboardViewer.php?dashboardId=" +
+                                $('#node-input-dashboardId').val(),
+                                '_blank'
+                            );
+                        }
+                    });
+                } else {
+                    alert("Select a dashboard or enter the name of a new one");
+                }
+            });
+
+            $("#createNewDashboardTitle").click(function () {
+                $("#node-input-dashboardId").hide();
+                $("#node-input-dashboardId").val("");
+                $("#createNewDashboardTitle").hide();
+                $("#node-input-dashboardTitle").show();
+                $("#createNewDashboardButton").show();
+                $("#backDashboardTitle").show();
+                $("#node-dashboard-view").hide();
+                $("#node-dashboard-edit").hide();
+                $("#node-input-tip").show();
+
+                $("#node-input-dashboardTitle").val($("#node-input-dashboardTitleInserted").val());
+                $('#node-input-dashboardTitle').keypress(function (e) {
+                    var txt = String.fromCharCode(e.which);
+                    if (!txt.match(/[A-Za-z0-9&. ]/)) {
+                        return false;
+                    }
+                });
+            });
+
+            $("#backDashboardTitle").click(function () {
+                $("#node-input-dashboardTitle").val("");
+                $("#node-input-dashboardTitle").hide();
+                $("#node-input-dashboardId").show();
+                $("#createNewDashboardTitle").show();
+                $("#createNewDashboardButton").hide();
+                $("#backDashboardTitle").hide();
+                $("#node-dashboard-view").show();
+                $("#node-dashboard-edit").show();
+                $("#node-input-tip").hide();
+
+
+            });
+
+            $("#createNewDashboardButton").click(function () {
+                if ($("#node-input-dashboardTitle").val() != "") {
+                    if (accessToken != "") {
+                        $.ajax({
+                            url: "dashboardManagerBaseUrl",
+                            type: "GET",
+                            async: true,
+                            success: function (_data) {
+								var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                                if (domain != ""){
+                                    _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
+                                }
+								$.ajax({
+                                    url: _data.dashboardManagerBaseUrl + "/controllers/createDashboardFromNR.php?dashboardTitle="
+                                        + encodeURIComponent($("#node-input-dashboardTitle").val()) + "&accessToken=" + accessToken,
+                                    type: "GET",
+                                    async: true,
+                                    success: function (_data) {
+                                        try {
+                                            _data = JSON.parse(_data)
+                                        } catch (e) {
+                                            console.log(e);
+                                        }
+                                        if (_data.result) {
+                                            if (_data.result.toLowerCase() == "ok") {
+                                                $("#node-input-selectedDashboardId").val(_data.dashboardId);
+                                                getDashboardUserInfoAndCreateSelection();
+                                            } else {
+                                                alert(_data.errormsg);
+                                            }
+                                        }
+                                    },
+                                    error: function (_error) {
+                                        console.log(_error);
+                                    }
+                                });
+                            },
+                            error: function (_error) {
+                                console.log(_error);
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: "createDashboard/",
+                            type: "POST",
+                            async: true,
+                            dataType: "json",
+							data: {
+                                "dashboardTitle": $("#node-input-dashboardTitle").val()
+                            },
+                            success: function (_data) {
+                                try {
+                                    _data = JSON.parse(_data)
+                                } catch (e) {
+                                    console.log(e);
+                                }
+                                if (_data.result) {
+                                    if (_data.result.toLowerCase() == "ok") {
+                                        $("#node-input-selectedDashboardId").val(_data.dashboardId);
+                                        getDashboardUserInfoAndCreateSelection();
+                                    } else {
+                                        alert(_data.errormsg);
+                                    }
+                                }
+                            },
+                            error: function (_error) {
+                                console.log(_error);
+                            }
+                        });
+                    }
+                } else {
+                    alert("To create a new dashboard you must insert the name of the dashboard");
+                }
+            });
+        },
+        oneditsave: function () {
+            $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="speak-synthesis">
+    <input type="hidden" id="node-input-username">
+    <input type="hidden" id="node-input-flowName">
+    
+    <input type="hidden" id="node-input-selectedDashboardId">
+    
+    <div class="form-row" id="rowAuthentication">
+        <label for="node-input-authentication">Authentication</label>
+        <input type="text" id="node-input-authentication">
+    </div>
+	    <div class="form-row">
+        <label for="node-input-text">text</label>
+        <input type="text" autocomplete="off" id="node-input-text" placeholder="insert text">
+    </div>
+	</div>
+	    <div class="form-row">
+        <label for="node-input-rate">rate</label>
+        <input type="text" autocomplete="off" id="node-input-rate" placeholder="insert rate. 1 is the default">
+    </div>
+	</div>
+	    <div class="form-row">
+        <label for="node-input-pitch">pitch</label>
+        <input type="text" autocomplete="off" id="node-input-pitch" placeholder="insert pitch. 1 is the default">
+    </div>
+	<div class="form-row">
+        <label for="node-input-lang">lang</label>
+		<select name="lang" id="node-input-lang">
+            <option value="default"></option>
+            <option value="engF">English woman</option>
+			<option value="engM">English man</option>
+			<option value="itF">Italian woman</option>
+			<option value="itM">Italian man</option>
+			<option value="frF">French woman</option>
+			<option value="frM">French man</option>
+			<option value="esF">Spanish woman</option>
+			<option value="esM">Spanish man</option>
+        </select>
+	</div>
+    <div class="form-row" id="selectDashboardContainer">
+        <label for="node-input-dashboardTitle">
+            <i class="fa fa-dashboard"></i>Dashboard Name</label>
+        <input type="text" autocomplete="off" id="node-input-dashboardTitle" placeholder="Dashboard Name" style="display:none; width: 55%;">
+        <select id="node-input-dashboardId" style="width: 55%;">
+        </select>
+        <button id="createNewDashboardTitle" >New Dashboard</button>
+        <button id="createNewDashboardButton" style="display:none">Create</button>
+        <button id="backDashboardTitle" style="display:none">Show list</button>
+    </div>
+    <div class="form-row" id="selectWidgetName">
+        <label for="node-input-name">
+            <i class="icon-tag"></i> Widget Name</label>
+        <input type="text" autocomplete="off" id="node-input-name" placeholder="Widget Name">
+    </div>
+    <div class="form-row">
+        <button class="dashboardBtn" click="openDashboardEditor" role="button" aria-disabled="false" id="node-dashboard-edit">
+            Edit Dashboard
+        </button>
+        <button class="dashboardBtn" click="openDashboardViewer" role="button" aria-disabled="false" id="node-dashboard-view">
+            View Dashboard
+        </button>
+    </div>
+    <div id="node-input-tip" class="form-tips" style="display:none">The new dashboard is created entering the title andclicking on create
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="max-width: none">
+		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
+    </div>
+    <div class="form-tips" id="tipAuthenticationWrong" style="display:none; max-width: none">
+        Maybe the authentication data are wrong. Check them and redeploy the node.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationRedeploy" style="display:none; max-width: none">
+        Deploy the node to retrieve the updated list of dashboards.
+    </div>
+    <div class="form-tips"  id="tipAuthenticationDeployFirstTime" style="display:none; max-width: none">
+        Insert the authentication data and deploy the node to retrieve the updated list of dashboards.
+	</div>
+</script>
+
+<script type="text/x-red" data-help-name="speak-synthesis">
+    <p>With this node you can send a voice message to an existing dashboard or a new one created by the node.
+    </p>
+
+    <h3>Configuration</h3>
+
+    <dl class="message-properties">
+		<dt>text
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Text of the message to be sent</dd>
+		<dt>rate
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Speed of execution. 1 is the default value</dd>
+		<dt>pitch
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Running tone. 1 is the default value</dd>
+		<dt>lang
+            <span class="property-type">string</span>
+        </dt>
+	
+        <dd>String to select language and voice. The possible choices are: </br>'engF' for English woman</br>'engM' for English man</br>'itF' for Italian woman</br>'itM' for Italian man</br>'frF' for French woman</br>'frM' for French man</br>'esF' for Spanish woman</br>'esM' for Spanish man</dd>
+        <dt>dashboard
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Dashboard title to which the single content will be added</dd>
+        <dt>widget
+            <span class="property-type">string</span>
+        </dt>
+        <dd> Title that will have the widget containing the single content.</dd>
+    </dl>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dd> The node can receive a JSON with the parameters described in the Inputs section and with them generate the output JSON. If the values are not present in the input JSON, these are read by those in the configuration. If they are not present in either part, an error is generated for the necessary parameters.</dd>
+        <dd> Example JSON.</dd>
+<pre> 
+{
+    "text": "Text of the message to be sent",
+    "pitch": 1,
+    "rate": 1,
+	"lang":"engM"
+}
+</pre>
+</dl>
+</script>

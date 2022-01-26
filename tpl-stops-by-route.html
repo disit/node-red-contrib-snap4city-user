@@ -30,11 +30,6 @@
                 required: false
             }
         },
-        oneditresize: function () {
-            if ($("#node-input-authentication").children().length > 1) {
-                $("#node-input-authentication option[value='_ADD_']").remove();
-            }
-        },
         outputs: 2,
         inputs: 1,
         outputLabels: ["service uri array", "geojson result"],
@@ -43,21 +38,13 @@
             return this.name || "tpl-stops-by-route";
         },
         oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
+
             var node = this;
             $("#node-input-agency").empty();
+            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+
             $.ajax({
-                url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/agencies/",
+                url: (domain ? domain : (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.snap4city.org/")) + "/superservicemap/api/v1/tpl/agencies/",
                 type: "GET",
                 async: false,
                 dataType: "json",
@@ -77,8 +64,10 @@
             $("#node-input-agency").change(function () {
                 if ($("#node-input-agency").val() != null) {
                     $("#node-input-line").empty();
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+
                     $.ajax({
-                        url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/bus-lines/?agency=" +
+                        url: (domain ? domain : (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.snap4city.org/")) + "/superservicemap/api/v1/tpl/bus-lines/?agency=" +
                             $("#node-input-agency").val(),
                         type: "GET",
                         async: false,
@@ -102,8 +91,10 @@
             $("#node-input-line").change(function () {
                 if ($("#node-input-line").val() != null) {
                     $("#node-input-route").empty();
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+
                     $.ajax({
-                        url: (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1") + "/tpl/bus-routes/?line=" +
+                        url: (domain ? domain : (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.snap4city.org/")) + "/superservicemap/api/v1/tpl/bus-routes/?line=" +
                             $("#node-input-line").val(),
                         type: "GET",
                         async: false,

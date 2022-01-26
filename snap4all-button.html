@@ -165,114 +165,36 @@
 			$("#node-input-buttonName").val("");
 			var buttonList = "";
 			var accessToken = "";
+
 			$.ajax({
-				url: "isThereLocalRefreshToken/",
-				type: "GET",
+				url: "retrieveAccessTokenAuthentication",
+				type: "POST",
 				async: false,
-				success: function (resp) {
-					if (resp.result) {
-						$("#rowAuthentication").hide();
-						$("#tipAuthentication").hide();
-						$.ajax({
-							url: "snap4allButtonList",
-							type: "GET",
-							async: false,
-							success: function (_data) {
-								buttonList = _data;
-							}
-						});
+				dataType: "json",
+				data: {
+					"authenticationNodeId": $("#node-input-authentication").val()
+				},
+				success: function (_data) {
+					if (_data.accessToken == "") {
+						$("#selectSnap4allButtonContainer").hide();
+						$('#tipAuthenticationWrong').show();
+						$('#tipAuthentication').hide();
+						$("#node-input-entype").val("");
+						$("#node-input-enid").val("");
+						$("#node-input-userk1").val("");
+						$("#node-input-passk2").val("");
+						$("#node-input-entypeContainer").hide();
+						$("#node-input-enidContainer").hide();
+						$("#node-input-userk1Container").hide();
+						$("#node-input-passk2Container").hide();
+
 					} else {
-						$.ajax({
-							url: "setChangedUser/",
-							async: false,
-							type: "POST",
-							dataType: "json",
-							data: {
-								"changedUser": "false"
-							}
-						});
-						$.ajax({
-							url: "retrieveAccessTokenAuthentication",
-							type: "GET",
-							async: false,
-							success: function (_data) {
-								if (_data.accessToken == "") {
-									$("#selectSnap4allButtonContainer").hide();
-									$('#tipAuthenticationWrong').show();
-									$('#tipAuthentication').hide();
-									$("#node-input-entype").val("");
-									$("#node-input-enid").val("");
-									$("#node-input-userk1").val("");
-									$("#node-input-passk2").val("");
-									$("#node-input-entypeContainer").hide();
-									$("#node-input-enidContainer").hide();
-									$("#node-input-userk1Container").hide();
-									$("#node-input-passk2Container").hide();
-
-								} else {
-									accessToken = _data.accessToken;
-								};
-							}
-						});
-					}
+						accessToken = _data.accessToken;
+					};
 				}
 			});
+
 			refreshButtonsSelection(accessToken, buttonList);
-		},
-		oneditresize: function () {
-			$.ajax({
-				url: "isThereLocalRefreshToken/",
-				type: "GET",
-				async: false,
-				success: function (resp) {
-					if (!resp.result) {
-						if ($("#node-input-authentication").children().length > 1) {
-							$("#node-input-authentication option[value='_ADD_']").remove();
-						}
-						$.ajax({
-							url: "getChangedUser/",
-							type: "GET",
-							async: false,
-							success: function (resp) {
-								if (resp.changedUser == "true") {
-									$("#tipAuthentication").hide();
-									$("#tipAuthenticationWrong").hide();
-									$("#tipAuthenticationRedeploy").show();
-									$("#selectSnap4allButtonContainer").hide();
-									$("#node-input-entype").val("");
-									$("#node-input-enid").val("");
-									$("#node-input-userk1").val("");
-									$("#node-input-passk2").val("");
-									$("#node-input-entypeContainer").hide();
-									$("#node-input-enidContainer").hide();
-									$("#node-input-userk1Container").hide();
-									$("#node-input-passk2Container").hide();
-
-
-								}
-							},
-							error: function (err) {
-								if (err.status == 404) {
-									$("#tipAuthentication").show();
-									$("#tipAuthenticationDeployFirstTime").show();
-									$("#tipAuthenticationWrong").hide();
-									$("#tipAuthenticationRedeploy").hide();
-									$("#selectSnap4allButtonContainer").hide();
-									$("#node-input-entype").val("");
-									$("#node-input-enid").val("");
-									$("#node-input-userk1").val("");
-									$("#node-input-passk2").val("");
-									$("#node-input-entypeContainer").hide();
-									$("#node-input-enidContainer").hide();
-									$("#node-input-userk1Container").hide();
-									$("#node-input-passk2Container").hide();
-
-								}
-							}
-						});
-					}
-				}
-			});
 		}
 	});
 

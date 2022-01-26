@@ -56,6 +56,7 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         var serviceNode = this;
 
+        this.authentication = config.authentication;
         this.url = config.url;
         this.port = config.port;
         var orionUrl = getOrionUrl(config);
@@ -85,23 +86,21 @@ module.exports = function (RED) {
         this.queryContext = function (node, config, queryParams) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
-            var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var orionBrokerService = RED.nodes.getNode(config.service);
+            var accessToken = s4cUtility.retrieveAccessToken(RED, node, orionBrokerService.authentication, uid);
 
             nodeStatus.querying(node)
 
             logger.debug(`Querying entity: ${config.enid}`);
 
             return when.promise(function (resolve, reject) {
-
                 s4cOrionUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, retrieveDeviceName(node, config.enid, config.tenant, config.servicepath), uid, accessToken);
-
 				
                 var [hostname, prefixPath] = s4cOrionUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
 				
                 var options = orionHttpRequestOptions.generateForOrionAPIV2Query(hostname, orionBrokerService.port, prefixPath, config, queryParams, accessToken)
                 options = orionHttpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
-
+                
                 var msg = {};
                 var req = https2.request(options, function (res) {
                     (node.ret === "bin") ? res.setEncoding('binary') : res.setEncoding('utf8');
@@ -134,8 +133,8 @@ module.exports = function (RED) {
         this.updateContext = function (node, config, payload, auth) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
-            var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var orionBrokerService = RED.nodes.getNode(config.service);
+            var accessToken = s4cUtility.retrieveAccessToken(RED, node, orionBrokerService.authentication, uid);
 
             nodeStatus.sending(node)
 
@@ -175,8 +174,8 @@ module.exports = function (RED) {
         this.subscribe = function (node, config, payload) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
-            var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid, false);
             var orionBrokerService = RED.nodes.getNode(config.service);
+            var accessToken = s4cUtility.retrieveAccessToken(RED, node, orionBrokerService.authentication, uid, false);
 
             var reference = payload.notification.http.url;
 
@@ -268,8 +267,8 @@ module.exports = function (RED) {
     function unsubscribeFromOrion(node, subscriptionId, url, config) {
         const logger = s4cUtility.getLogger(RED, node);
         const uid = s4cUtility.retrieveAppID(RED);
-        var accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
         var orionBrokerService = RED.nodes.getNode(config.service);
+        var accessToken = s4cUtility.retrieveAccessToken(RED, node, orionBrokerService.authentication, uid);
 
         logger.debug("Unsubscring ID: " + JSON.stringify(subscriptionId));
 
@@ -836,8 +835,8 @@ module.exports = function (RED) {
 	RED.httpAdmin.get('/myContextbrokerDataList', RED.auth.needsPermission('orion-api-v2.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");
 		var s4cOrionUtility = require("./snap4city-orion-utility.js");
-        var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
-		var lista=s4cOrionUtility.getContextBrokerList(RED, accessToken );
+        var accessToken = s4cUtility.retrieveAccessToken(RED, null, req.body.authenticationNodeId, null);
+		var lista=s4cOrionUtility.getContextBrokerList(RED, accessToken, req.body.authenticationNodeId );
 		if (lista==null)
 			lista=[];
 		res.send({

@@ -29,7 +29,8 @@ module.exports = function (RED) {
             var deviceId = (msg.payload.id ? msg.payload.id : node.deviceId);
 
             if (deviceId) {
-                var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1") + "/username/" + (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase() + "/delegation";
+                node.s4cAuth = RED.nodes.getNode(config.authentication);
+                var uri = s4cUtility.settingUrl(RED,node, "myPersonalDataUrl", "https://www.snap4city.org", "/datamanager/api/v1/") + "username/" + (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase() + "/delegation";
                 var usernamedelegated = (msg.payload.usernamedelegated ? msg.payload.usernamedelegated : node.usernamedelegated);
                 var inPayload = msg.payload;
                 var accessToken = "";

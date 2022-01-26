@@ -21,7 +21,8 @@ module.exports = function (RED) {
         var s4cUtility = require("./snap4city-utility.js");
         const logger = s4cUtility.getLogger(RED, node);
         node.on('input', function (msg) {
-            var uri = (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.disit.org/superservicemap/api/v1");
+            
+            var uri = (RED.settings.ascapiUrl ? RED.settings.ascapiUrl : "https://www.snap4city.org") + "/superservicemap/api/v1";
             var latitude = (msg.payload.latitude ? msg.payload.latitude : config.latitude);
             var longitude = (msg.payload.longitude ? msg.payload.longitude : config.longitude);
             const uid = s4cUtility.retrieveAppID(RED);

@@ -23,8 +23,8 @@
         <input type="text" autocomplete="off" id="node-input-heatmapname" placeholder="Heatmap Name">
     </div>
     <div class="form-row">
-        <label for="node-input-datetime">Date Time</label>
-        <input type="datetime-local" autocomplete="off" id="node-input-datetime">
+        <label for="node-input-datetime">Date Time (</label>
+        <input type="datetime-local" autocomplete="off" id="node-input-datetime" placeholder="yyyy-mm-ddThhh:mm:ss">
     </div>
     <div class="form-row">
         <label for="node-input-latitude">Latitude</label>
@@ -194,7 +194,7 @@
         <dt>heatmapname
             <span class="property-type">string</span>
         </dt>
-        <dd> the name of the heatmap</dd>
+        <dd> the name of the heatmap (the list of heatmaps is also available from DataInspector and Dashboard Wizard but without the date which has to be retrieved from the panel in the dashboard and in the near future in Heatmap Manager)</dd>
         <dt>latitude
             <span class="property-type">number</span>
         </dt>
@@ -203,6 +203,10 @@
             <span class="property-type">number</span>
         </dt>
         <dd> longitude of the GPS point</dd>
+        <dt>datetime
+            <span class="property-type">string</span>
+        </dt>
+        <dd> datetime, date/time to when retrieve the heatmap. The string format can be: yyyy-mm-ddThh:mm:ss </dd>
     </dl>
     <h3>Outputs</h3>
         A JSON containing the information of the heatmap

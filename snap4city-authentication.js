@@ -19,16 +19,20 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.name = config.name;
+        node.domain = config.domain;
+        node.domainLight = config.domain.replace("https://", "").replace("http://", "").replace("/", "");
+        node.isMainAccount = config.ismainaccount;
         var s4cUtility = require("./snap4city-utility.js");
         const logger = s4cUtility.getLogger(RED, node);
-        
+
         this.setNewOwnership = function (accessToken, uid) {
             var os = require('os');
             var homedir = os.homedir() + "/";
             var fs = require('fs');
-            if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership") && !fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership") && !fs.existsSync(__dirname + "/../../../.snap4cityConfig/ownership") && !fs.existsSync(homedir + ".snap4cityConfig/ownership")) {
+            logger.info("Try to set new ownership on " + node.domain);
+            if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership_" + node.domainLight) && !fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership_" + node.domainLight) && !fs.existsSync(__dirname + "/../../../.snap4cityConfig/ownership_" + node.domainLight) && !fs.existsSync(homedir + ".snap4cityConfig/ownership_" + node.domainLight)) {
                 var ifaces = os.networkInterfaces();
-                var url = (RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/ownership-api/") + "/v1/register/?";
+                var url = node.domain + "/ownership-api/v1/register/?";
                 var params = "accessToken=" + accessToken;
                 var iplocal = null;
                 Object.keys(ifaces).forEach(function (ifname) {
@@ -61,34 +65,35 @@ module.exports = function (RED) {
                 if (xmlHttp.responseText != "") {
                     try {
                         response = JSON.parse(xmlHttp.responseText)
+                    
                         if (typeof response.error == "undefined") {
                             if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user")) {
                                 if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config")) {
                                     fs.mkdirSync(__dirname + "/../node-red-contrib-snap4city-user/config");
                                 }
-                                fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership", "");
+                                fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership_" + node.domainLight, "");
                             }
                             if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer")) {
                                 if (!fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config")) {
                                     fs.mkdirSync(__dirname + "/../node-red-contrib-snap4city-developer/config");
                                 }
-                                fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership", "");
+                                fs.writeFileSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership_" + node.domainLight, "");
                             }
                             if (fs.existsSync(homedir + ".snap4cityConfig")) {
                                 if (!fs.existsSync(homedir + ".snap4cityConfig")) {
                                     fs.mkdirSync(homedir + ".snap4cityConfig");
                                 }
-                                fs.writeFileSync(homedir + ".snap4cityConfig/ownership", "");
+                                fs.writeFileSync(homedir + ".snap4cityConfig/ownership_" + node.domainLight, "");
                             }
                         }
                     } catch (e) {}
                 }
             } else {
-                if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership") || fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership")) {
+                if (fs.existsSync(__dirname + "/../node-red-contrib-snap4city-user/config/ownership_" + node.domainLight) || fs.existsSync(__dirname + "/../node-red-contrib-snap4city-developer/config/ownership_" + node.domainLight)) {
                     if (!fs.existsSync(homedir + ".snap4cityConfig")) {
                         fs.mkdirSync(homedir + ".snap4cityConfig");
                     }
-                    fs.writeFileSync(homedir + ".snap4cityConfig/ownership", "");
+                    fs.writeFileSync(homedir + ".snap4cityConfig/ownership_" + node.domainLight, "");
                 }
             }
         }
@@ -100,29 +105,33 @@ module.exports = function (RED) {
         this.refreshTokenGetAccessToken = function (uid) {
             var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
-            var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
+            var url = node.domain + "/auth/realms/master/protocol/openid-connect/token/";
+            logger.info(url);
             var params = "";
             var expiresTimestamp = node.credentials.expiresTimestamp;
             var refreshToken = node.credentials.refreshToken;
+            console.log("Refresh Token: " + refreshToken);
             if (typeof refreshToken == "undefined" || typeof expiresTimestamp == "undefined" || new Date().getTime() > expiresTimestamp) {
-                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=password&username=" + node.credentials.user + "&password=" + encodeURIComponent(node.credentials.password);
+                params = "client_id=nodered-iotedge&grant_type=password&username=" + node.credentials.user + "&password=" + encodeURIComponent(node.credentials.password);
             } else {
-                params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
+                params = "client_id=nodered-iotedge&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             }
             var response = "";
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            logger.info("Refresh token");
-            logger.silly("Refresh token from:" + encodeURI(url) + " with parameters: " + params);
+            logger.info("Refresh token from:" + encodeURI(url));
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             xmlHttp.send(params);
+            logger.info(xmlHttp.responseText);
             if (xmlHttp.responseText != "") {
                 try {
                     response = JSON.parse(xmlHttp.responseText);
                     if (response.access_token != null && uid != null) {
                         if (typeof expiresTimestamp == "undefined") {
-                            this.setNewOwnership(response.access_token, uid);
+                            if (node.isMainAccount) {
+                                this.setNewOwnership(response.access_token, uid);
+                            }
                         }
                         node.credentials.accessToken = response.access_token;
                     }
@@ -147,47 +156,18 @@ module.exports = function (RED) {
             return response;
         }
 
-        RED.httpAdmin.get("/retrieveAccessTokenAuthentication/", RED.auth.needsPermission('snap4city-authentication.read'), function (req, res) {
+        RED.httpAdmin.post("/retrieveAccessTokenAuthentication/", RED.auth.needsPermission('snap4city-authentication.read'), function (req, res) {
             var s4cUtility = require("./snap4city-utility.js");
             res.json({
-                "accessToken": s4cUtility.retrieveAccessToken(RED, node, node.id, null),
-                "username": s4cUtility.retrieveCurrentUser(RED, node, node.id),
+                "accessToken": s4cUtility.retrieveAccessToken(RED, node, req.body.authenticationNodeId, null),
+                "username": s4cUtility.retrieveCurrentUser(RED, node, req.body.authenticationNodeId),
                 "appId": s4cUtility.retrieveAppID(RED),
             });
         });
 
-        RED.httpAdmin.get('/getChangedUser/', function (req, res) {
-            var fs = require('fs');
-            try {
-                res.send({
-                    "changedUser": fs.readFileSync(__dirname + "../snap4cityConfig/changedUser", 'utf-8')
-                });
-            } catch (e) {
-                res.send({
-                    "changedUser": ""
-                });
-            }
-        })
+
     }
 
-    RED.httpAdmin.get("/isThereLocalRefreshToken/", function (req, res) {
-        var fs = require('fs');
-        res.json({
-            "result": fs.existsSync('/data/refresh_token')
-        });
-    });
-
-    RED.httpAdmin.post('/setChangedUser/', function (req, res) {
-        var fs = require('fs');
-        var os = require('os');
-        var homedir = os.homedir() + "/";
-        if (!fs.existsSync(homedir + ".snap4cityConfig")) {
-            fs.mkdirSync(homedir + ".snap4cityConfig");
-        }
-        fs.writeFileSync(homedir + ".snap4cityConfig/changedUser", req.body.changedUser);
-
-        res.sendStatus(200);
-    });
 
     RED.nodes.registerType("snap4city-authentication", Snap4cityAuthentication, {
         credentials: {

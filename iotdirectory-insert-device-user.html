@@ -175,39 +175,24 @@
         oneditprepare: function () {
 
             var accessToken = "";
+
             $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
+                url: "retrieveAccessTokenAuthentication",
+                type: "POST",
                 async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#deviceRegistrationUserContainer").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                }
-                            }
-                        });
+                dataType: "json",
+                data: {
+                    "authenticationNodeId": $("#node-input-authentication").val()
+                },
+                success: function (_data) {
+                    if (_data.accessToken == "") {
+                        $("#deviceRegistrationUserContainer").hide();
+                        $('#tipAuthenticationWrong').show();
+                        $('#tipAuthentication').hide();
                     }
                 }
             });
+
 
             isSuccess = 0;
             var node = this;
@@ -476,41 +461,6 @@
                 window.node_input_map.invalidateSize(true);
             }
 
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#deviceRegistrationUserContainer").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#deviceRegistrationUserContainer").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-
             var pos = $("#node-dialog-ok").position();
             var w = $("#node-dialog-ok").width();
             var h = $("#node-dialog-ok").height();
@@ -715,40 +665,24 @@
     function sendToServer(id) {
 
         var accessToken = "";
+
         $.ajax({
-            url: "isThereLocalRefreshToken/",
-            type: "GET",
+            url: "retrieveAccessTokenAuthentication",
+            type: "POST",
             async: false,
-            success: function (resp) {
-                if (resp.result) {
-                    $.ajax({
-                        url: "retrieveAccessTokenLocal",
-                        type: "GET",
-                        async: false,
-                        success: function (_data) {
-                            if (_data.accessToken == "") {
-                                //VEDERE COSA FARE IN QUESTO CASO
-                            } else {
-                                accessToken = _data.accessToken;
-                            };
-                        }
-                    });
+            dataType: "json",
+            data: {
+                "authenticationNodeId": $("#node-input-authentication").val()
+            },
+            success: function (_data) {
+                if (_data.accessToken == "") {
+                    //VEDERE COSA FARE IN QUESTO CASO
                 } else {
-                    $.ajax({
-                        url: "retrieveAccessTokenAuthentication",
-                        type: "GET",
-                        async: false,
-                        success: function (_data) {
-                            if (_data.accessToken == "") {
-                                //VEDERE COSA FARE IN QUESTO CASO
-                            } else {
-                                accessToken = _data.accessToken;
-                            };
-                        }
-                    });
-                }
+                    accessToken = _data.accessToken;
+                };
             }
         });
+
 
 
         var accesstoken = accessToken;

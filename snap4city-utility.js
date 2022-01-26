@@ -78,10 +78,15 @@ module.exports = {
     retrieveCurrentUser: function (RED, node, authentication) {
         var fs = require('fs');
         var atob = require('atob');
-        var refreshToken = "";
         var response = "";
-        if (fs.existsSync('/data/refresh_token')) {
-            refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
+        if (node != null && authentication != null) {
+            node.s4cAuth = RED.nodes.getNode(authentication);
+            if (node.s4cAuth != null) {
+                response = node.s4cAuth.retrieveCurrentUser();
+            }
+        }
+        if (fs.existsSync('/data/refresh_token') && response == "") {
+            var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
             var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
             var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
@@ -104,21 +109,13 @@ module.exports = {
                     return "";
                 }
                 if (response.preferred_username != "" && response.preferred_username != undefined && response.preferred_username != "undefined") {
-                    return response.preferred_username;
+                    response = response.preferred_username;
                 } else {
-                    return response.username;
+                    response = response.username;
                 }
-            }
-        } else {
-            if (node != null && authentication != null) {
-                node.s4cAuth = RED.nodes.getNode(authentication);
-                if (node.s4cAuth != null) {
-                    return node.s4cAuth.retrieveCurrentUser();
-                }
-            } else {
-                return "";
             }
         }
+        return response
     },
 
     retrieveAccessToken: function (RED, node, authentication, uid) {
@@ -127,10 +124,29 @@ module.exports = {
 
     retrieveAccessToken: function (RED, node, authentication, uid, fillStatus) {
         var fs = require('fs');
-        var refreshToken = "";
         var response = "";
-        if (fs.existsSync('/data/refresh_token')) {
-            refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
+        if (node != null && authentication != null) {
+            node.s4cAuth = RED.nodes.getNode(authentication);
+            if (node.s4cAuth != null) {
+                var accessToken = node.s4cAuth.refreshTokenGetAccessToken(uid);
+                if (accessToken != "") {
+                    if (fillStatus) node.status({
+                        fill: "green",
+                        shape: "dot",
+                        text: "Authenticaton Ok"
+                    });
+                    response = accessToken;
+                } else {
+                    if (fillStatus) node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: "Authentication Problem"
+                    });
+                }
+            }
+        }
+        if (fs.existsSync('/data/refresh_token') && response == "") {
+            var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
             var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
             var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
@@ -146,28 +162,7 @@ module.exports = {
             }
             if (response != "") {
                 fs.writeFileSync('/data/refresh_token', response.refresh_token);
-                return response.access_token;
-            }
-        } else {
-            if (node != null && authentication != null) {
-                node.s4cAuth = RED.nodes.getNode(authentication);
-                if (node.s4cAuth != null) {
-                    var accessToken = node.s4cAuth.refreshTokenGetAccessToken(uid);
-                    if (accessToken != "") {
-                        if (fillStatus) node.status({
-                            fill: "green",
-                            shape: "dot",
-                            text: "Authenticaton Ok"
-                        });
-                        return accessToken;
-                    } else {
-                        if (fillStatus) node.status({
-                            fill: "red",
-                            shape: "dot",
-                            text: "Authentication Problem"
-                        });
-                    }
-                }
+                response =  response.access_token;
             }
         }
         return response;
@@ -259,5 +254,17 @@ module.exports = {
         if (fs.existsSync(correctPath + ".snap4cityConfig") && fs.existsSync(correctPath + ".snap4cityConfig/context") && fs.existsSync(correctPath + ".snap4cityConfig/context/" + node.id)) {
             fs.unlinkSync(correctPath + ".snap4cityConfig/context/" + node.id);
         }
+    },
+
+    settingUrl: function(RED, node, parameterUrl, defaultUrl, basePath){
+        var url = "";
+        if (node.s4cAuth != null && node.s4cAuth.domain){
+            url = node.s4cAuth.domain + "/" + basePath + "/";
+        } else if (RED.settings[parameterUrl]){
+            url = RED.settings[parameterUrl] + "/";
+        } else {
+            url = defaultUrl + "/" + basePath  + "/";
+        }
+        return url.replace(/\/\//g, "/").replace(/:\//g, "://");
     }
 }

@@ -19,6 +19,12 @@
         defaults: {
             name: {
                 value: ""
+            },
+            domain: {
+                value: ""
+            },
+            ismainaccount:{
+                value: false
             }
         },
         credentials: {
@@ -32,17 +38,6 @@
         oneditprepare: function () {
             $("#node-config-input-oldName").val($("#node-config-input-user").val());
             $(".editor-tray-toolbar button.leftButton").attr("disabled", true)
-        },
-        oneditsave: function () {
-            if ($("#node-config-input-user").val() != $("#node-config-input-oldName").val()) {
-                $.ajax({
-                    url: "setChangedUser/",
-                    async: false,
-                    type: "POST",
-                    dataType: "json",
-                    data: { "changedUser": "true" }
-                });
-            }
         },
         label: function () {
             return this.name || 'snap4city-authentication';
@@ -60,6 +55,13 @@
         <input type="text" id="node-config-input-name">
     </div>
     <div class="form-row">
+        <label for="node-config-input-domain">
+            <i class="fa fa-globe"></i>
+            Domain
+        </label>
+        <input type="text" id="node-config-input-domain" placeholder="https://...">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-user">
             <i class="fa fa-user"></i>
             Username
@@ -72,6 +74,12 @@
             Password
         </label>
         <input type="password" id="node-config-input-password">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-ismainaccount">
+            Is Main Account?
+        </label>
+        <input type="checkbox" id="node-config-input-ismainaccount">
     </div>
     <div class="form-tips"  id="tip-authentication" >
         You must have an account with Snap4city to use this node. You can register for one

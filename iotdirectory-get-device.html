@@ -50,104 +50,33 @@
         oneditprepare: function () {
             var accessToken = "";
             var cbList = "";
+                       
             $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
+                url: "retrieveAccessTokenAuthentication",
+                type: "POST",
                 async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "myCBList",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                cbList = _data.cbList;
-                            }
-                        });
-                    }
-                    else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#selectCBContainer").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
-
+                dataType: "json",
+                data: {
+                    "authenticationNodeId": $("#node-input-authentication").val()
+                },
+                success: function (_data) {
+                    if (_data.accessToken == "") {
+                        $("#selectCBContainer").hide();
+                        $('#tipAuthenticationWrong').show();
+                        $('#tipAuthentication').hide();
+                    } else {
+                        accessToken = _data.accessToken;
+                    };
                 }
             });
+                   
             refreshCBSelection(accessToken, cbList);
 
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
+            
 
         },
         oneditsave: function () {
             $("#node-input-selectedCB").val($("#node-input-cbs").val());
-        },
-        oneditresize: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#selectCBContainer").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#selectCBContainer").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         }
     });
 
@@ -162,6 +91,10 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                    if (domain != ""){
+                        _data.iotDirectoryUrl = domain + "/iot-directory/";
+                    }
                     $.ajax({
                         url: _data.iotDirectoryUrl +
                             "/api/contextbroker.php?action=get_all_contextbroker_simple&nodered=yes&token=" +

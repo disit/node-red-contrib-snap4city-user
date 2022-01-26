@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.8.1",
+    "version": "0.9.6",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
@@ -150,13 +150,14 @@
             "dashboard-curved-line-series": "dashboard-curved-line-series.js",
             "dashboard-table-content": "dashboard-table-content.js",
 			"dashboard-calendar": "dashboard-calendar.js",
+			"dashboard-speak-synthesis": "dashboard-speak-synthesis.js",
+			"dashboard-selector-to-map": "dashboard-selector-to-map.js",
             "event-driven-my-kpi": "event-driven-my-kpi.js",
             "synoptic-read": "synoptic-read.js",
             "synoptic-write": "synoptic-write.js",
             "synoptic-subscribe": "synoptic-subscribe.js",
             "sigfox-device-filter": "sigfox-device-filter.js",
             "sigfox-in": "sigfox-in.js",
-            "iot-directory": "iot-directory.js",
             "iotdirectory-get-device": "iotdirectory-get-device.js",
             "event-log": "event-log.js",
             "fiware-orion": "orion.js",

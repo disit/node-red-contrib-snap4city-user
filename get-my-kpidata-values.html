@@ -48,93 +48,14 @@
             return this.name || "get-my-kpidata-values";
         },
         oneditprepare: function () {
-            $("#node-input-kpiId").val("");
-            var accessToken = "";
-            var kpiDataList = "";
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "myKpiDataList",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                kpiDataList = _data.kpiDataList;
-                            }
-                        });
-                    } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#selectKpiDataContainer").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
-                }
-            });
-            refreshKPIDataSelection(accessToken, kpiDataList);
+            initChangeAuthenticationKPIData();
+				$("#node-input-authentication").change(function () {
+					initChangeAuthenticationKPIData();
+			});
         },
         oneditsave: function () {
             $("#node-input-selectedKPIDataId").val($("#node-input-kpiId").val());
             $("#node-input-name").val("Value of my " + $("#node-input-kpiId").val().split("-")[1]);
-        },
-        oneditresize: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#selectKpiDataContainer").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#selectKpiDataContainer").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         }
     });
 
@@ -148,9 +69,13 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                    if (domain != ""){
+                        _data.myPersonalDataUrl = domain + "/datamanager/api/v1/";
+                    }
                     $.ajax({
                         url: _data.myPersonalDataUrl +
-                            "/kpidata/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
+                            "kpidata/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
                             accessToken,
                         type: "GET",
                         async: true,
@@ -180,11 +105,39 @@
             $("#node-input-kpiId").val(currentValue);
         }
     }
+
+    var initChangeAuthenticationKPIData = function () {
+        $("#node-input-kpiId").val("");
+            var accessToken = "";
+            var kpiDataList = "";
+                        
+            $.ajax({
+                url: "retrieveAccessTokenAuthentication",
+                type: "POST",
+                async: false,
+                dataType: "json",
+                data: {
+                    "authenticationNodeId": $("#node-input-authentication").val()
+                },
+                success: function (_data) {
+                    if (_data.accessToken == "") {
+                        $("#selectKpiDataContainer").hide();
+                        $('#tipAuthenticationWrong').show();
+                        $('#tipAuthentication').hide();
+                    } else {
+                        accessToken = _data.accessToken;
+                    };
+                }
+            });
+           
+            refreshKPIDataSelection(accessToken, kpiDataList);
+	}
 </script>
 
 <script type="text/x-red" data-template-name="get-my-kpidata-values">
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-selectedKPIDataId">
+    <input type="hidden" id="node-input-domain">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">

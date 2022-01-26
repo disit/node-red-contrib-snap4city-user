@@ -18,6 +18,15 @@
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-service-api-v2">
 	<input type="hidden" id="node-config-input-selectedContextbroker">
+	<div class="form-row" id="rowAuthentication">
+        <label for="node-config-input-authentication">Authentication</label>
+        <input type="text" id="node-config-input-authentication">
+    </div>
+    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
+        If you have private data and you want to access them, you can insert you account data. You can register for one account 
+        <a href="https://www.snap4city.org"
+            target="_blank">here</a>.
+    </div>
 	<div class="form-row">
         <label for="node-config-input-contextbroker">Contextbroker</label>
         <select id="node-config-input-contextbroker" style="width: 55%;">
@@ -53,22 +62,13 @@
 			<i class="fa fa-tag"></i>
 			<span data-i18n="node-red:common.label.name"></span>
 		</label>
-		<input type="text" id="node-config-input-name" data-i18n="[placeholder]node-red:common.label.name" disabled>
+		<input type="text" id="node-config-input-name" data-i18n="[placeholder]node-red:common.label.name">
 	</div>
 </script>
 
 //////////////////////////////////////////////////// ORION CONTEXT BROKER SUBSCRIBE NODE
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-subscribe-api-v2">
-    <div class="form-row" id="rowAuthentication">
-        <label for="node-input-authentication">Authentication</label>
-        <input type="text" id="node-input-authentication">
-    </div>
-    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
-        If you have private data and you want to access them, you can insert you account data. You can register for one account 
-        <a href="https://www.snap4city.org"
-            target="_blank">here</a>.
-    </div>
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -223,15 +223,6 @@
 ////////////////////////////////////////////////////// ORION CONTEXT BROKER QUERY NODE
 //////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-query-api-v2">
-    <div class="form-row" id="rowAuthentication">
-        <label for="node-input-authentication">Authentication</label>
-        <input type="text" id="node-input-authentication">
-    </div>
-    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
-        If you have private data and you want to access them, you can insert you account data. You can register for one account 
-        <a href="https://www.snap4city.org"
-            target="_blank">here</a>.
-    </div>
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -359,15 +350,6 @@
 ////////////////////////////////////////////////////// ORION CONTEXT BROKER UPDATE NODE
 //////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-update-api-v2">
-    <div class="form-row" id="rowAuthentication">
-        <label for="node-input-authentication">Authentication</label>
-        <input type="text" id="node-input-authentication">
-    </div>
-    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
-        If you have private data and you want to access them, you can insert you account data. You can register for one account 
-        <a href="https://www.snap4city.org"
-            target="_blank">here</a>.
-    </div>
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -463,15 +445,6 @@
 ////////////////////////////////////////////////////// ORION CONTEXT BROKER OUT UPDATE NODE
 //////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-out-api-v2">
-    <div class="form-row" id="rowAuthentication">
-        <label for="node-input-authentication">Authentication</label>
-        <input type="text" id="node-input-authentication">
-    </div>
-    <div class="form-tips"  id="tipAuthentication" style="margin-bottom: 10px;">
-        If you have private data and you want to access them, you can insert you account data. You can register for one account 
-        <a href="https://www.snap4city.org"
-            target="_blank">here</a>.
-    </div>
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -550,15 +523,12 @@
 	</div>
 </script>
 
-	
+
 <script type="text/x-red" data-help-name="orion-out-api-v2">
 	<p>Provides a node for sending generic json payload to Fiware Orion context broker Version 2.</p>
 	
 	<h3>Configuration</h3>
 	<dl class="message-properties">
-		<dt>Authentication (only available on edge scenario)</dt>	
-		<dd>Configuration options for Snap4city Authentication (optional)
-		</dd>
 	
 		<dt>Service</dt>	
 		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
@@ -653,8 +623,6 @@
 	
 	<h3>Configuration</h3>
 	<dl class="message-properties">
-		<dt>Authentication (only available on edge scenario)</dt>	
-		<dd>Configuration options for Snap4city Authentication (optional)</dd>
 	
 		<dt>Service</dt>	
 		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
@@ -739,8 +707,6 @@
 
 	<h3>Configuration</h3>
 	<dl class="message-properties">
-		<dt>Authentication (only available on edge scenario)</dt>	
-		<dd>Configuration options for Snap4city Authentication (optional)</dd>
 	
 		<dt>Service</dt>	
 		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
@@ -855,8 +821,6 @@
 	
 	<h3>Configuration</h3>
 	<dl class="message-properties">
-		<dt>Authentication (only available on edge scenario)</dt>	
-		<dd>Configuration options for Snap4city Authentication (optional)</dd>
 	
 		<dt>Service</dt>	
 		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
@@ -987,80 +951,14 @@
 				return this.name || this.namespace || "Orion Service";
 			},
 			oneditprepare: function () {
-				$("#node-config-input-contextbroker").val("");
-				var accessToken = "";
-				var contextbrokerDataList = "";		
-			
-			    $.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-							$.ajax({
-								url: "myContextbrokerDataList",
-								type: "GET",
-								async: false,
-								success: function (_data) {
-									contextbrokerDataList = _data.contextbrokerDataList;
-								}
-							});
-						} else {
-							$.ajax({
-								url: "setChangedUser/",
-								async: false,
-								type: "POST",
-								dataType: "json",
-								data: {
-									"changedUser": "false"
-								}
-							});
-							$.ajax({
-								url: "retrieveAccessTokenAuthentication",
-								type: "GET",
-								async: false,
-								success: function (_data) {
-									if (_data.accessToken == "") {
-										$("#noAuthenticationContainer").hide();
-										$('#tipAuthenticationWrong').show();
-										$('#tipAuthentication').hide();
-									} else {
-										accessToken = _data.accessToken;
-									};
-								}
-							});
-						}
-					}
+				initChangeAuthenticationServiceOrion();
+				$("#node-config-input-authentication").change(function () {
+					initChangeAuthenticationServiceOrion();
 				});
-				refreshContextbrokerSelection(accessToken, contextbrokerDataList);
-				
-				/*if (this.credentials.user || this.credentials.password) {
-					$('#node-config-input-useAuth').prop('checked', true);
-					$(".node-config-input-useAuth-row").show();
-				} else {
-					$('#node-config-input-useAuth').prop('checked', false);
-					$(".node-config-input-useAuth-row").hide();
-					$('#node-config-input-user').val('');
-					$('#node-config-input-password').val('');
-				}
-
-				$("#node-config-input-useAuth").change(function () {
-					if ($(this).is(":checked")) {
-						$('#node-config-input-user').val('');
-						$('#node-config-input-password').val('');
-						$(".node-config-input-useAuth-row").show();
-					} else {
-						$('#node-config-input-user').val('');
-						$('#node-config-input-password').val('');
-						$(".node-config-input-useAuth-row").hide();
-					}
-				});*/
 			},
 			oneditsave: function () {
 				$("#node-config-input-selectedContextbroker").val($("#node-config-input-contextbroker").val());
-			
+
 				if ($("#node-config-input-useAuth").is(":checked")) {
 					$(".node-config-input-useAuth-row").show();
 				} else {
@@ -1076,10 +974,6 @@
 			defaults: {
 				name: {
 					value: ""
-				},
-				authentication: {
-					type: "snap4city-authentication",
-					required: false
 				},
 				service: {
 					type: "orion-service-api-v2",
@@ -1104,12 +998,12 @@
 				passk2: {
 					value: ""
 				},
-                tenant: {
-                    value: ""
-                },
-                servicepath: {
-                    value: ""
-                },				
+				tenant: {
+					value: ""
+				},
+				servicepath: {
+					value: ""
+				},
 				apikey: {
 					value: ""
 				},
@@ -1159,21 +1053,6 @@
 				return this.name ? "node_label_italic" : "";
 			},
 			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
-				/*if (this.credentials.includeattr) {
-					$('#node-input-includeattr').prop('checked', true);
-				}*/
-
 				$("#node-input-noderedhostauto").change(function () {
 					if ($(this).is(":checked")) {
 						$(".node-input-noderedhost-row").hide();
@@ -1182,12 +1061,7 @@
 						$(".node-input-noderedhost-row").show();
 					}
 				});
-			},
-			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
-			},
+			}
 		});
 
 		RED.nodes.registerType('orion-query-api-v2', {
@@ -1196,10 +1070,6 @@
 			defaults: {
 				name: {
 					value: ""
-				},
-				authentication: {
-					type: "snap4city-authentication",
-					required: false
 				},
 				service: {
 					type: "orion-service-api-v2",
@@ -1221,12 +1091,12 @@
 				passk2: {
 					value: ""
 				},
-                tenant: {
-                    value: ""
-                },
-                servicepath: {
-                    value: ""
-                },				
+				tenant: {
+					value: ""
+				},
+				servicepath: {
+					value: ""
+				},
 				apikey: {
 					value: ""
 				},
@@ -1267,17 +1137,7 @@
 				return this.name ? "node_label_italic" : "";
 			},
 			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
+
 				if (this.rtype || this.rvalue) {
 					$('#node-input-useFiltering').prop('checked', true);
 					$(".node-input-rtype-row").show();
@@ -1323,12 +1183,7 @@
 						$(".node-input-rvalue-row").hide();
 					}
 				});
-			},
-			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
-			},
+			}
 		});
 		RED.nodes.registerType('orion-update-api-v2', {
 			category: 'S4CIoT',
@@ -1336,10 +1191,6 @@
 			defaults: {
 				name: {
 					value: ""
-				},
-				authentication: {
-					type: "snap4city-authentication",
-					required: false
 				},
 				service: {
 					type: "orion-service-api-v2",
@@ -1361,12 +1212,12 @@
 				passk2: {
 					value: ""
 				},
-                tenant: {
-                    value: ""
-                },
-                servicepath: {
-                    value: ""
-                },				
+				tenant: {
+					value: ""
+				},
+				servicepath: {
+					value: ""
+				},
 				apikey: {
 					value: ""
 				},
@@ -1383,24 +1234,6 @@
 			inputs: 1,
 			outputs: 1,
 			icon: "orioncb.png",
-			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
-			},
-			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
-			},
 			label: function () {
 				return this.name || "fiware orion update api v2";
 			},
@@ -1447,12 +1280,12 @@
 				passk2: {
 					value: ""
 				},
-                tenant: {
-                    value: ""
-                },
-                servicepath: {
-                    value: ""
-                },				
+				tenant: {
+					value: ""
+				},
+				servicepath: {
+					value: ""
+				},
 				apikey: {
 					value: ""
 				},
@@ -1463,24 +1296,6 @@
 			inputs: 1,
 			outputs: 0,
 			icon: "orioncb.png",
-			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
-			},
-			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
-			},
 			label: function () {
 				return this.name || "fiware orion out api v2";
 			},
@@ -1496,65 +1311,96 @@
 			}
 		});
 	})();
-	
-	
+
+
 	var refreshContextbrokerSelection = function (accessToken, contextbrokerDataList) {
-        $("#node-config-input-contextbroker").empty();
-        if (contextbrokerDataList != "") {
-            createContextbrokerSelection(contextbrokerDataList);
-        } else if (accessToken != "" && contextbrokerDataList == "") {
-            $.ajax({
-                url: "iotDirectoryUrl",
-                type: "GET",
-                async: false,
-                success: function (_data) {
-                    $.ajax({
-                        url: _data.iotDirectoryUrl +
-                            "/api/contextbroker.php?action=get_all_contextbroker&nodered=yes&token=" +
-                            accessToken,
-                        type: "GET",
-                        async: true,
-                        dataType: "json",
-                        success: function (_data) {
-                            createContextbrokerSelection(_data.data);
-                        },
-                        error: function (err) {
-                            console.log(err);
-                        }
-                    });
-                }
-            });
-        }
-    }
+		$("#node-config-input-contextbroker").empty();
+		if (contextbrokerDataList != "") {
+			createContextbrokerSelection(contextbrokerDataList);
+		} else if (accessToken != "" && contextbrokerDataList == "") {
+			$.ajax({
+				url: "iotDirectoryUrl",
+				type: "GET",
+				async: false,
+				success: function (_data) {
+					var domain = RED.nodes.node($("#node-config-input-authentication").val()).domain;
+					console.log(domain);
+					if (domain != "") {
+						_data.iotDirectoryUrl = domain + "/iot-directory/";
+					}
+					$.ajax({
+						url: _data.iotDirectoryUrl +
+							"/api/contextbroker.php?action=get_all_contextbroker&nodered=yes&token=" +
+							accessToken,
+						type: "GET",
+						async: true,
+						dataType: "json",
+						success: function (_data) {
+							createContextbrokerSelection(_data.data);
+						},
+						error: function (err) {
+							console.log(err);
+						}
+					});
+				}
+			});
+		}
+	}
 
-    var createContextbrokerSelection = function (currentContextbrokerList) {
-        currentContextbrokerList.sort(function (a, b) {
-            if (a.name < b.name) { return -1; }
-            if (a.name > b.name) { return 1; }
-            return 0;
-        });
-        if (currentContextbrokerList.length != 0) {
-            var node = this;
-            node.currentContextbrokerList = currentContextbrokerList;
-            $("#node-config-input-contextbroker").empty();
-            var currentValue = $("#node-config-input-selectedContextbroker").val();
-            for (var i = 0; i < currentContextbrokerList.length; i++) {
-                $("<option value='" + currentContextbrokerList[i].name + "'>" + currentContextbrokerList[i].name + "</option>").appendTo($("#node-config-input-contextbroker"));
-            }
-            $("#node-config-input-contextbroker").val(currentValue);
+	var createContextbrokerSelection = function (currentContextbrokerList) {
+		currentContextbrokerList.sort(function (a, b) {
+			if (a.name < b.name) { return -1; }
+			if (a.name > b.name) { return 1; }
+			return 0;
+		});
+		if (currentContextbrokerList.length != 0) {
+			var node = this;
+			node.currentContextbrokerList = currentContextbrokerList;
+			$("#node-config-input-contextbroker").empty();
+			var currentValue = $("#node-config-input-selectedContextbroker").val();
+			for (var i = 0; i < currentContextbrokerList.length; i++) {
+				$("<option value='" + currentContextbrokerList[i].name + "'>" + currentContextbrokerList[i].name + "</option>").appendTo($("#node-config-input-contextbroker"));
+			}
+			$("#node-config-input-contextbroker").val(currentValue);
 
-            $("#node-config-input-contextbroker").change(function () {
+			$("#node-config-input-contextbroker").change(function () {
 				var currentValue = $("#node-config-input-contextbroker").val();
 				for (var i = 0; i < node.currentContextbrokerList.length; i++) {
-                    if (currentValue == node.currentContextbrokerList[i].name) {
+					if (currentValue == node.currentContextbrokerList[i].name) {
 						$("#node-config-input-url").val(node.currentContextbrokerList[i].accesslink);
 						$("#node-config-input-port").val(node.currentContextbrokerList[i].accessport);
-						$("#node-config-input-name").val(node.currentContextbrokerList[i].name);					
-                        break;
-                    }
-                }
-            });
-        }
-    }
-	
+						$("#node-config-input-name").val(node.currentContextbrokerList[i].name);
+						break;
+					}
+				}
+			});
+		}
+	}
+
+	var initChangeAuthenticationServiceOrion = function () {
+		$("#node-config-input-contextbroker").val("");
+		var accessToken = "";
+		var contextbrokerDataList = "";
+
+		$.ajax({
+			url: "retrieveAccessTokenAuthentication",
+			type: "POST",
+			async: false,
+			dataType: "json",
+			data: {
+				"authenticationNodeId": $("#node-config-input-authentication").val()
+			},
+			success: function (_data) {
+				if (_data.accessToken == "") {
+					$('#tipAuthenticationWrong').show();
+					$('#tipAuthentication').hide();
+				} else {
+					accessToken = _data.accessToken;
+				};
+			}
+		});
+
+		refreshContextbrokerSelection(accessToken, contextbrokerDataList);
+	}
+
 </script>

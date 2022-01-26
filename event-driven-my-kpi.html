@@ -42,143 +42,22 @@
             return this.name || "event-driven-my-kpi";
         },
         oneditprepare: function () {
-            $("#node-input-kpiId").val("");
-            var accessToken = "";
-            var kpiDataList = "";
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "myKpiDataList",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                kpiDataList = _data.kpiDataList;
-                            }
-                        });
-                    } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#selectKpiDataContainer").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
-                }
+            initChangeAuthenticationKPIData();
+            $("#node-input-authentication").change(function () {
+                initChangeAuthenticationKPIData();
             });
-            refreshKPIDataSelection(accessToken, kpiDataList);
         },
         oneditsave: function () {
             $("#node-input-selectedKPIDataId").val($("#node-input-kpiId").val());
             $("#node-input-name").val("Value of my " + $("#node-input-kpiId").val().split("-")[1]);
-        },
-        oneditresize: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#selectKpiDataContainer").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#selectKpiDataContainer").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         }
     });
-
-    var refreshKPIDataSelection = function (accessToken, kpiDataList) {
-        $("#node-input-kpiId").empty();
-        if (kpiDataList != "") {
-            createKPIDataSelection(kpiDataList);
-        } else if (accessToken != "" && kpiDataList == "") {
-            $.ajax({
-                url: "myPersonalDataUrl",
-                type: "GET",
-                async: false,
-                success: function (_data) {
-                    $.ajax({
-                        url: _data.myPersonalDataUrl +
-                            "/kpidata/?sourceRequest=iotapp&highLevelType=MyKPI&accessToken=" +
-                            accessToken,
-                        type: "GET",
-                        async: true,
-                        dataType: "json",
-                        success: function (_data) {
-                            createKPIDataSelection(_data);
-                        },
-                        error: function (err) {
-                            console.log(err);
-                        }
-                    });
-                }
-            });
-        }
-
-    }
-
-    var createKPIDataSelection = function (currentKPIDataList) {
-        console.log(currentKPIDataList);
-        if (currentKPIDataList.length != 0) {
-            $("#node-input-kpiId").empty();
-            var currentValue = $("#node-input-selectedKPIDataId").val();
-            for (var i = 0; i < currentKPIDataList.length; i++) {
-                $("<option value='" + currentKPIDataList[i].id + "-" + currentKPIDataList[i].valueName + "-" + currentKPIDataList[i].dataType + "'s>" + currentKPIDataList[i].id + "-" +
-                    currentKPIDataList[i].valueName + "</option>").appendTo($("#node-input-kpiId"));
-            }
-            $("#node-input-kpiId").val(currentValue);
-        }
-    }
 </script>
 
 <script type="text/x-red" data-template-name="event-driven-my-kpi">
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-selectedKPIDataId">
+    
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">

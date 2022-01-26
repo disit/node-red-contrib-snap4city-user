@@ -34,7 +34,8 @@ module.exports = function (RED) {
             var deviceName = (msg.payload.deviceName ? msg.payload.deviceName : node.deviceName);
 
             if (deviceId) {
-                var uri = (RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/ownership-api/") + "v1/register/";
+                node.s4cAuth = RED.nodes.getNode(config.authentication);
+                var uri = (node.s4cAuth.domain ? node.s4cAuth.domain  : ( RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/")) + "/ownership-api/v1/register/";
                 var usernamedelegated = (msg.payload.newusername ? msg.payload.newusername : node.usernamedelegated);
                 var inPayload = msg.payload;
                 var accessToken = "";

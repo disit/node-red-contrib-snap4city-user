@@ -205,7 +205,7 @@ module.exports = {
             delete node.contextBrokerList;
         }
         if (typeof node.contextBrokerList == "undefined") {
-			var lista = module.exports.getContextBrokerList(RED, accessToken);
+			var lista = module.exports.getContextBrokerList(RED, accessToken, node);
 			if (lista != null) {
 				node.contextBrokerList = lista;
                 module.exports.createDeviceLongIdAndRegisterActivity(RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
@@ -214,12 +214,14 @@ module.exports = {
             module.exports.createDeviceLongIdAndRegisterActivity(RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken);
         }
     },
-	getContextBrokerList: function (RED, accessToken){	
+	getContextBrokerList: function (RED, accessToken, node){	
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-        var xmlHttp = new XMLHttpRequest();		
-		var uri = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
-		if (accessToken != "" && typeof accessToken != "undefined") {
-			xmlHttp.open("GET", encodeURI(uri + "/api/contextbroker.php?action=get_all_contextbroker&nodered=yes"), false);
+        var xmlHttp = new XMLHttpRequest();	
+        var s4cUtility = require("./snap4city-utility.js");
+        node.s4cAuth = RED.nodes.getNode(node.service.authentication);
+        var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/api/");
+        if (accessToken != "" && typeof accessToken != "undefined") {
+			xmlHttp.open("GET", encodeURI(uri + "contextbroker.php?action=get_all_contextbroker&nodered=yes"), false);
 			xmlHttp.setRequestHeader("Content-Type", "application/json");
 			xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
 			xmlHttp.send(null);
@@ -251,6 +253,7 @@ module.exports = {
     createDeviceLongIdAndRegisterActivity: function (RED, node, contextBrokerUrl, contextBrokerPort, deviceName, iotappid, accessToken) {
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();
+        var s4cUtility = require("./snap4city-utility.js");
         if (typeof node.deviceLongId == "undefined" || node.deviceLongId.indexOf(deviceName) == -1) {
             if (typeof node.contextBrokerList != "undefined") {
                 for (var i = 0; i < node.contextBrokerList.length; i++) {
@@ -262,9 +265,10 @@ module.exports = {
             }
         }
         if (typeof node.deviceLongId != "undefined") {
-            var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1");
+            node.s4cAuth = RED.nodes.getNode(node.service.authentication);
+            var uri = s4cUtility.settingUrl(RED,node, "myPersonalDataUrl", "https://www.snap4city.org", "/datamanager/api/v1/");
             if (accessToken != "" && typeof accessToken != "undefined") {
-                xmlHttp.open("POST", encodeURI(uri + "/lightactivities/?elementType=IOTID&sourceRequest=iotapp&sourceId=" + iotappid + "&elementId=" + node.deviceLongId), true);
+                xmlHttp.open("POST", encodeURI(uri + "lightactivities/?elementType=IOTID&sourceRequest=iotapp&sourceId=" + iotappid + "&elementId=" + node.deviceLongId), true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                 xmlHttp.onload = function (e) {

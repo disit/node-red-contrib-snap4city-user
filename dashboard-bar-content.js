@@ -22,8 +22,9 @@ module.exports = function (RED) {
         var s4cUtility = require("./snap4city-utility.js");
         const logger = s4cUtility.getLogger(RED, node);
         const uid = s4cUtility.retrieveAppID(RED);
-        var wsServer = (RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "wss://dashboard.km4city.org:443/server");
-        var wsServerHttpOrigin = (RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org");
+        node.s4cAuth = RED.nodes.getNode(config.authentication);
+        var wsServer = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
+        var wsServerHttpOrigin = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
         node.ws = null;
         node.notRestart = false;
         node.name = config.name;
@@ -345,11 +346,9 @@ module.exports = function (RED) {
     RED.nodes.registerType("bar-content", BarContentNode);
 
     RED.httpAdmin.get('/dashboardManagerBaseUrl', function (req, res) {
-        var dashboardManagerBaseUrl = (RED.settings.dashboardSmartCityUrl ? RED.settings.dashboardSmartCityUrl : "https://www.snap4city.org/dashboardSmartCity/");
-        var dashboardSecret = (RED.settings.dashboardSecret ? RED.settings.dashboardSecret : "45awwprty_zzq34");
+        var dashboardManagerBaseUrl = (RED.settings.dashboardSmartCityUrl ? RED.settings.dashboardSmartCityUrl : "https://www.snap4city.org//dashboardSmartCity");
         res.send({
-            "dashboardManagerBaseUrl": dashboardManagerBaseUrl,
-            "dashboardSecret": dashboardSecret
+            "dashboardManagerBaseUrl": dashboardManagerBaseUrl
         });
     });
 
@@ -358,8 +357,7 @@ module.exports = function (RED) {
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();
         var xmlHttp2 = new XMLHttpRequest();
-        var dashboardManagerBaseUrl = (RED.settings.dashboardSmartCityUrl ? RED.settings.dashboardSmartCityUrl : "https://www.snap4city.org/dashboardSmartCity/");
-        var dashboardSecret = (RED.settings.dashboardSecret ? RED.settings.dashboardSecret : "45awwprty_zzq34");
+        var dashboardManagerBaseUrl = (RED.settings.dashboardSmartCityUrl ? RED.settings.dashboardSmartCityUrl : "https://www.snap4city.org/");
         var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
         const uid = s4cUtility.retrieveAppID(RED);
         var username = "";
@@ -378,7 +376,7 @@ module.exports = function (RED) {
                             }
                         }
                         if (username != "" && uid != "" && accessToken != "" && dashboardSecret != "" && dashboardManagerBaseUrl != "") {
-                            xmlHttp2.open("GET", encodeURI(dashboardManagerBaseUrl + "/api/nodeRedDashboardsApi.php?v3&secret=" + dashboardSecret + "&username=" + username + "&accessToken=" + accessToken), true); // false for synchronous request
+                            xmlHttp2.open("GET", encodeURI(dashboardManagerBaseUrl + "dashboardSmartCity/api/nodeRedDashboardsApi.php?v3&username=" + username + "&accessToken=" + accessToken), true); // false for synchronous request
                             xmlHttp2.onload = function (e) {
                                 if (xmlHttp2.readyState === 4) {
                                     if (xmlHttp2.status === 200) {
@@ -457,8 +455,8 @@ module.exports = function (RED) {
         var s4cUtility = require("./snap4city-utility.js");
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
         var xmlHttp = new XMLHttpRequest();
-        var dashboardManagerBaseUrl = (RED.settings.dashboardSmartCityUrl ? RED.settings.dashboardSmartCityUrl : "https://www.snap4city.org/dashboardSmartCity/");
-        var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
+        var dashboardManagerBaseUrl = (RED.settings.dashboardSmartCityUrl ? RED.settings.dashboardSmartCityUrl : (req.body.authenticationNodeDomain? req.body.authenticationNodeDomain:"https://www.snap4city.org/") + "dashboardSmartCity/");
+        var accessToken = s4cUtility.retrieveAccessToken(RED, null, req.body.authenticationNodeId, null);
         console.log(encodeURI(dashboardManagerBaseUrl + "/controllers/createDashboardFromNR.php?dashboardTitle=" + req.body.dashboardTitle));
         xmlHttp.open("GET", encodeURI(dashboardManagerBaseUrl + "/controllers/createDashboardFromNR.php?dashboardTitle=" + req.body.dashboardTitle + "&accessToken=" + accessToken), true); // false for synchronous request
         xmlHttp.onload = function (e) {

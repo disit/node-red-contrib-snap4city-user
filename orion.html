@@ -1124,17 +1124,7 @@
 				return this.name ? "node_label_italic" : "";
 			},
 			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
+				
 				if (this.credentials.includeattr) {
 					$('#node-input-includeattr').prop('checked', true);
 				}
@@ -1149,9 +1139,7 @@
 				});
 			},
 			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
+				$("#node-input-authentication option[value='_ADD_']").remove();
 			},
 		});
 
@@ -1232,17 +1220,7 @@
 				return this.name ? "node_label_italic" : "";
 			},
 			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
+				
 				if (this.rtype || this.rvalue) {
 					$('#node-input-useFiltering').prop('checked', true);
 					$(".node-input-rtype-row").show();
@@ -1290,9 +1268,7 @@
 				});
 			},
 			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
+				$("#node-input-authentication option[value='_ADD_']").remove();
 			},
 		});
 		RED.nodes.registerType('orion-test', {
@@ -1348,23 +1324,9 @@
 			inputs: 1,
 			outputs: 1,
 			icon: "orioncb.png",
-			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
-			},
+			
 			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
+				$("#node-input-authentication option[value='_ADD_']").remove();
 			},
 			label: function () {
 				return this.name || "fiware orion update v1";
@@ -1428,23 +1390,9 @@
 			inputs: 1,
 			outputs: 0,
 			icon: "orioncb.png",
-			oneditprepare: function () {
-				$.ajax({
-					url: "isThereLocalRefreshToken/",
-					type: "GET",
-					async: false,
-					success: function (resp) {
-						if (resp.result) {
-							$("#rowAuthentication").hide();
-							$("#tipAuthentication").hide();
-						}
-					}
-				});
-			},
+			
 			oneditresize: function () {
-				if ($("#node-input-authentication").children().length > 1) {
-					$("#node-input-authentication option[value='_ADD_']").remove();
-				}
+				$("#node-input-authentication option[value='_ADD_']").remove();
 			},
 			label: function () {
 				return this.name || "fiware orion out v1";

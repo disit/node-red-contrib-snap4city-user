@@ -37,8 +37,8 @@ module.exports = function (RED) {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
                 var xmlHttp2 = new XMLHttpRequest();
-
-                var uri = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
+                node.s4cAuth = RED.nodes.getNode(config.authentication);
+                var uri = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/";
                 logger.info(encodeURI(uri + "/api/model.php?action=get_model&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&name=" + model + "&nodered=yes"));
                 xmlHttp.open("POST", encodeURI(uri + "/api/model.php?action=get_model&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&name=" + model + "&nodered=yes"), true);
 
@@ -90,7 +90,8 @@ module.exports = function (RED) {
                                             }
                                         }
 
-                                        var uri2 = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/") + "api/device.php?action=insert&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&id=" + encodeURIComponent(devicename) + "&type=" + encodeURIComponent(responseJs.content.devicetype) + "&kind=" + encodeURIComponent(responseJs.content.kind) + "&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) + "&organization=" + encodeURIComponent(responseJs.content.organization) + "&protocol=" + encodeURIComponent(responseJs.content.protocol) + "&format=" + encodeURIComponent(responseJs.content.format) + "&mac=&model=" + encodeURIComponent(model) + "&producer=" + encodeURIComponent(responseJs.content.producer) + "&latitude=" + latitude + "&longitude=" + longitude + "&visibility=" + encodeURIComponent(responseJs.content.visibility) + "&frequency=" + encodeURIComponent(responseJs.content.frequency) + "&k1=" + k1 + "&k2=" + k2 + "&edgegateway_type=&edgegateway_uri=&subnature=" + encodeURIComponent(responseJs.content.subnature) + "&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) + "&service=" + encodeURIComponent(responseJs.content.service) + "&servicePath=" + encodeURIComponent(responseJs.content.servicePath) + "&nodered=yes&attributes=" + encodeURIComponent(responseJs.content.attributes);
+                                        node.s4cAuth = RED.nodes.getNode(config.authentication);
+                                        var uri2 = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/api/device.php?action=insert&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&id=" + encodeURIComponent(devicename) + "&type=" + encodeURIComponent(responseJs.content.devicetype) + "&kind=" + encodeURIComponent(responseJs.content.kind) + "&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) + "&organization=" + encodeURIComponent(responseJs.content.organization) + "&protocol=" + encodeURIComponent(responseJs.content.protocol) + "&format=" + encodeURIComponent(responseJs.content.format) + "&mac=&model=" + encodeURIComponent(model) + "&producer=" + encodeURIComponent(responseJs.content.producer) + "&latitude=" + latitude + "&longitude=" + longitude + "&visibility=" + encodeURIComponent(responseJs.content.visibility) + "&frequency=" + encodeURIComponent(responseJs.content.frequency) + "&k1=" + k1 + "&k2=" + k2 + "&edgegateway_type=&edgegateway_uri=&subnature=" + encodeURIComponent(responseJs.content.subnature) + "&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) + "&service=" + encodeURIComponent(responseJs.content.service) + "&servicePath=" + encodeURIComponent(responseJs.content.servicePath) + "&nodered=yes&attributes=" + encodeURIComponent(responseJs.content.attributes);
                                         logger.info(uri2);
                                         xmlHttp2.open("POST", uri2, true);
                                         xmlHttp2.setRequestHeader("Content-Type", "application/json");
@@ -169,18 +170,11 @@ module.exports = function (RED) {
 
 
     RED.httpAdmin.get('/iotDirectoryUrl', function (req, res) {
-        var iotDirectoryUrl = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
+        var iotDirectoryUrl = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/ ");
         res.send({
             "iotDirectoryUrl": iotDirectoryUrl
         });
     });
-
-    /*RED.httpAdmin.get('/knowledgeBaseUrl', function (req, res) {
-        var knowledgeBaseUrl = (RED.settings.knowledgeBaseUrl ? RED.settings.knowledgeBaseUrl : "https://servicemap.disit.org/WebAppGrafo/api/v1");
-        res.send({
-            "knowledgeBaseUrl": knowledgeBaseUrl
-        });
-    });*/
 
     RED.httpAdmin.get('/myModelDataList', RED.auth.needsPermission('iotdirectory-new-device-from-model.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");

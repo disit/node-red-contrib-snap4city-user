@@ -34,20 +34,6 @@
         icon: "white-globe.png",
         label: function () {
             return this.name || "get-my-devices";
-        },
-        oneditresize: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                    }
-                }
-            });
         }
     });
 </script>

@@ -86,6 +86,10 @@
                         type: "GET",
                         async: true,
                         success: function (_data) {
+                            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                            if (domain != "") {
+                                _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
+                            }
                             window.open(_data.dashboardManagerBaseUrl +
                                 "/controllers/openNRDashboardEditor.php?dashboardId=" +
                                 $('#node-input-dashboardId').val(),
@@ -106,6 +110,10 @@
                         type: "GET",
                         async: true,
                         success: function (_data) {
+                            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                            if (domain != "") {
+                                _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
+                            }
                             window.open(_data.dashboardManagerBaseUrl +
                                 "/controllers/openNRDashboardViewer.php?dashboardId=" +
                                 $('#node-input-dashboardId').val(),
@@ -148,8 +156,6 @@
                 $("#node-dashboard-view").show();
                 $("#node-dashboard-edit").show();
                 $("#node-input-tip").hide();
-
-
             });
 
             $("#createNewDashboardButton").click(function () {
@@ -160,6 +166,10 @@
                             type: "GET",
                             async: true,
                             success: function (_data) {
+                                var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                                if (domain != ""){
+                                    _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
+                                }
                                 $.ajax({
                                     url: _data.dashboardManagerBaseUrl + "/controllers/createDashboardFromNR.php?dashboardTitle="
                                         + encodeURIComponent($("#node-input-dashboardTitle").val()) + "&accessToken=" + accessToken,
@@ -196,7 +206,9 @@
                             async: true,
                             dataType: "json",
                             data: {
-                                "dashboardTitle": $("#node-input-dashboardTitle").val()
+                                "dashboardTitle": $("#node-input-dashboardTitle").val(),
+                                "authenticationNodeId": $("#node-input-authentication").val(),
+                                "authenticationNodeDomain": RED.nodes.node($("#node-input-authentication").val()).domain
                             },
                             success: function (_data) {
                                 try {
@@ -225,49 +237,6 @@
         },
         oneditsave: function () {
             $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
-
-        },
-        oneditresize: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#selectDashboardContainer").hide();
-                                    $("#selectWidgetName").hide();
-                                    $('#node-dashboard-view').hide();
-                                    $('#node-dashboard-edit').hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#selectDashboardContainer").hide();
-                                    $("#selectWidgetName").hide();
-                                    $('#node-dashboard-view').hide();
-                                    $('#node-dashboard-edit').hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         }
     });
 </script>

@@ -25,7 +25,9 @@ module.exports = function (RED) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var filterName = (msg.payload.filterName ? msg.payload.filterName : node.filterName);
-            var uri = (RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/ownership-api/") + "v1/list/";
+            node.s4cAuth = RED.nodes.getNode(config.authentication);
+            var uri = (node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org" )) + "/ownership-api/v1/list/";
+
             var inPayload = msg.payload;
             var accessToken = "";
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);

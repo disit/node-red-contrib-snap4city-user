@@ -386,56 +386,29 @@ RED.nodes.registerType('label',{
             gpsCentreLatLng = "";
             accessToken = "";
 
+            
             $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
+                url: "retrieveAccessTokenAuthentication",
+                type: "POST",
                 async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "retrieveAccessTokenLocal",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    //VEDERE COSA FARE IN QUESTO CASO
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
+                dataType: "json",
+                data: {
+                    "authenticationNodeId": $("#node-input-authentication").val()
+                },
+                success: function (_data) {
+                    if (_data.accessToken == "") {
 
-                                    $("#deviceTabButton").parent().hide();
-                                    $("#Device-based-search").hide();
-                                    $("#Value-based-search").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
+                        $("#deviceTabButton").parent().hide();
+                        $("#Device-based-search").hide();
+                        $("#Value-based-search").hide();
+                        $('#tipAuthenticationWrong').show();
+                        $('#tipAuthentication').hide();
+                    } else {
+                        accessToken = _data.accessToken;
+                    };
                 }
             });
+                    
 
 
 
@@ -2316,45 +2289,6 @@ RED.nodes.registerType('label',{
             if (window.node_input_map) {
                 window.node_input_map.invalidateSize(true);
             }
-
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#deviceTabButton").parent().hide();
-                                    $("#Device-based-search").hide();
-                                    $("#Value-based-search").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#deviceTabButton").parent().hide();
-                                    $("#Device-based-search").hide();
-                                    $("#Value-based-search").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         },
 
 
@@ -2380,17 +2314,7 @@ RED.nodes.registerType('label',{
                     }
                 });
 
-                var changedUser = false;
-                $.ajax({
-                    url: "getChangedUser/",
-                    type: "GET",
-                    async: false,
-                    success: function (resp) {
-                        if (resp.changedUser == "true") {
-                            changedUser = true;
-                        }
-                    }
-                });
+                
 
                 console.log("sensors are:")
                 console.log(sensors);
@@ -3873,55 +3797,29 @@ RED.nodes.registerType('label',{
 
             var accessToken = "";
 
+            
+                        
             $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
+                url: "retrieveAccessTokenAuthentication",
+                type: "POST",
                 async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "retrieveAccessTokenLocal",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    //VEDERE COSA FARE IN QUESTO CASO
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
+                dataType: "json",
+                data: {
+                    "authenticationNodeId": $("#node-input-authentication").val()
+                },
+                success: function (_data) {
+                    if (_data.accessToken == "") {
+                        $("#deviceTabButton").parent().hide();
+                        $("#Device-based-search").hide();
+                        $("#Value-based-search").hide();
+                        $('#tipAuthenticationWrong').show();
+                        $('#tipAuthentication').hide();
                     } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#deviceTabButton").parent().hide();
-                                    $("#Device-based-search").hide();
-                                    $("#Value-based-search").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
+                        accessToken = _data.accessToken;
+                    };
                 }
             });
+                    
 
             if (accessToken != "") {
                 $.ajax({
@@ -5733,44 +5631,7 @@ RED.nodes.registerType('label',{
                 window.node_input_map.invalidateSize(true);
             }
 
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#deviceTabButton").parent().hide();
-                                    $("#Device-based-search").hide();
-                                    $("#Value-based-search").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#deviceTabButton").parent().hide();
-                                    $("#Device-based-search").hide();
-                                    $("#Value-based-search").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
+            
         },
 
         oneditsave: function () {
@@ -5913,17 +5774,7 @@ RED.nodes.registerType('label',{
 
             //console.log("configData is ");
             //console.log(configData);
-            var changedUser = false;
-            $.ajax({
-                url: "getChangedUser/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.changedUser == "true") {
-                        changedUser = true;
-                    }
-                }
-            });
+            
 
             /*** array di sensori  selezionati da pannello di configurazione  ***/
 

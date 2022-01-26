@@ -33,7 +33,8 @@ module.exports = function (RED) {
             var kpiId = (msg.payload.id ? msg.payload.id : node.kpiId);
             if (kpiId) {
                 var usernamedelegated = (msg.payload.usernamedelegated ? msg.payload.usernamedelegated : node.usernamedelegated);
-                var uri = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/mypersonaldata/api/v1") + "/kpidata/" + kpiId + "/delegations";
+                node.s4cAuth = RED.nodes.getNode(config.authentication);
+                var uri = s4cUtility.settingUrl(RED,node, "myPersonalDataUrl", "https://www.snap4city.org", "/datamanager/api/v1/") + "kpidata/" + kpiId + "/delegations";
                 var inPayload = msg.payload;
                 var accessToken = "";
                 accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);

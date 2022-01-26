@@ -22,7 +22,8 @@ module.exports = function (RED) {
             var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
-            var uri = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
+            node.s4cAuth = RED.nodes.getNode(config.authentication);
+            var uri = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/";
             var inPayload = msg.payload;
 
             var deviceName = (msg.payload.devicename ? msg.payload.devicename : config.devicename);
@@ -34,8 +35,8 @@ module.exports = function (RED) {
             if (accessToken != "" && typeof accessToken != "undefined") {
                 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 var xmlHttp = new XMLHttpRequest();
-
                 var uri = encodeURI(uri + "/api/device.php?action=get_device_simple&nodered=yes&token=" + accessToken + "&id=" + deviceName + "&contextbroker=" + cbName + (service ? "&service=" + service : "") + (servicePath ? "&servicePath=" + servicePath : ""));
+                logger.info(uri);
                 xmlHttp.open("GET", uri, true);
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
@@ -73,7 +74,7 @@ module.exports = function (RED) {
     RED.nodes.registerType("iotdirectory-get-device", IotDirectoryGetDevice);
 
     RED.httpAdmin.get('/iotDirectoryUrl', function (req, res) {
-        var iotDirectoryUrl = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://iotdirectory.snap4city.org/");
+        var iotDirectoryUrl = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/");
         res.send({
             "iotDirectoryUrl": iotDirectoryUrl
         });

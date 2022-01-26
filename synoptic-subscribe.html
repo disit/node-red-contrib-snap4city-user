@@ -49,49 +49,25 @@
             var accessToken = "";
             var synopticList = "";
             $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
+                url: "retrieveAccessTokenAuthentication",
+                type: "POST",
                 async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                        $.ajax({
-                            url: "synopticList",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                synopticList = _data.synopticList;
-                            }
-                        });
+                dataType: "json",
+                data: {
+                    "authenticationNodeId": $("#node-input-authentication").val()
+                },
+                success: function (_data) {
+                    if (_data.accessToken == "") {
+                        $("#selectSynopticContainer").hide();
+                        $("#selectSynopticVariableContainer").hide();
+                        $('#tipAuthenticationWrong').show();
+                        $('#tipAuthentication').hide();
                     } else {
-                        $.ajax({
-                            url: "setChangedUser/",
-                            async: false,
-                            type: "POST",
-                            dataType: "json",
-                            data: {
-                                "changedUser": "false"
-                            }
-                        });
-                        $.ajax({
-                            url: "retrieveAccessTokenAuthentication",
-                            type: "GET",
-                            async: false,
-                            success: function (_data) {
-                                if (_data.accessToken == "") {
-                                    $("#selectSynopticContainer").hide();
-                                    $("#selectSynopticVariableContainer").hide();
-                                    $('#tipAuthenticationWrong').show();
-                                    $('#tipAuthentication').hide();
-                                } else {
-                                    accessToken = _data.accessToken;
-                                };
-                            }
-                        });
-                    }
+                        accessToken = _data.accessToken;
+                    };
                 }
             });
+                   
             refreshSynopticSelection(accessToken, synopticList);
         },
         oneditsave: function () {
@@ -100,44 +76,6 @@
             if ($("#node-input-name").val() == "") {
                 $("#node-input-name").val("Subscribe To " + $("#node-input-synopticVariableId option:selected").text());
             }
-        },
-        oneditresize: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (!resp.result) {
-                        if ($("#node-input-authentication").children().length > 1) {
-                            $("#node-input-authentication option[value='_ADD_']").remove();
-                        }
-                        $.ajax({
-                            url: "getChangedUser/",
-                            type: "GET",
-                            async: false,
-                            success: function (resp) {
-                                if (resp.changedUser == "true") {
-                                    $("#tipAuthentication").hide();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").show();
-                                    $("#selectSynopticContainer").hide();
-                                    $("#selectSynopticVariableContainer").hide();
-                                }
-                            },
-                            error: function (err) {
-                                if (err.status == 404) {
-                                    $("#tipAuthentication").show();
-                                    $("#tipAuthenticationDeployFirstTime").show();
-                                    $("#tipAuthenticationWrong").hide();
-                                    $("#tipAuthenticationRedeploy").hide();
-                                    $("#selectSynopticContainer").hide();
-                                    $("#selectSynopticVariableContainer").hide();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
         }
     });
 
@@ -151,6 +89,10 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                    if (domain != ""){
+                        _data.dashboardSmartCityUrl = domain + "/dashboardSmartCity/";
+                    }
                     $.ajax({
                         url: _data.dashboardSmartCityUrl +
                             "api/synoptics.php?accessToken=" +

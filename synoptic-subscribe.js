@@ -23,7 +23,8 @@ module.exports = function (RED) {
         const logger = s4cUtility.getLogger(RED, node);
 
         node.uid = s4cUtility.retrieveAppID(RED);
-        node.socketIOUrl = (RED.settings.socketIOUrl ? RED.settings.socketIOUrl : "https://www.snap4city.org");
+        node.s4cAuth = RED.nodes.getNode(config.authentication);
+        node.socketIOUrl = (node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.socketIOUrl ? RED.settings.socketIOUrl : "https://www.snap4city.org" ));
         node.socketIOPath = (RED.settings.socketIOPath ? RED.settings.socketIOPath : "/synoptics/socket.io");
         node.selectedSynopticId = config.selectedSynopticId;
         node.synopticId = config.synopticId;

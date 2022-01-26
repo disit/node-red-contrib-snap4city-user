@@ -193,11 +193,6 @@
                 required: false
             }
         },
-        oneditresize: function () {
-            if ($("#node-input-authentication").children().length > 1) {
-                $("#node-input-authentication option[value='_ADD_']").remove();
-            }
-        },
         outputs: 2,
         inputs: 1,
         outputLabels: ["service uri array", "geojson result"],
@@ -206,17 +201,6 @@
             return this.name || "service-search-along-path";
         },
         oneditprepare: function () {
-            $.ajax({
-                url: "isThereLocalRefreshToken/",
-                type: "GET",
-                async: false,
-                success: function (resp) {
-                    if (resp.result) {
-                        $("#rowAuthentication").hide();
-                        $("#tipAuthentication").hide();
-                    }
-                }
-            });
             $.ajax({
                 url: "s4c/js/leaflet.js",
                 async: false,

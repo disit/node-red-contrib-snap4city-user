@@ -16,34 +16,134 @@
 module.exports = function (RED) {
 
     function EventDrivenMyKPI(config) {
-        var io = require('socket.io-client');
         RED.nodes.createNode(this, config);
         var node = this;
+        var io = require('socket.io-client');
         var s4cUtility = require("./snap4city-utility.js");
         const logger = s4cUtility.getLogger(RED, node);
+
         node.uid = s4cUtility.retrieveAppID(RED);
-        node.socketIOUrl = (RED.settings.socketIOUrl ? RED.settings.socketIOUrl : "https://www.snap4city.org");
+        node.s4cAuth = RED.nodes.getNode(config.authentication);
+        node.socketIOUrl = (node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : (RED.settings.socketIOUrl ? RED.settings.socketIOUrl : "https://www.snap4city.org"));
+        node.socketIOPath = (RED.settings.socketIOPath ? RED.settings.socketIOPath : "/synoptics/socket.io");
         node.selectedKPIDataId = config.selectedKPIDataId;
         node.kpiId = config.kpiId.split("-")[0];
-        node.whenValueChange = config.whenValueChange;
         node.notRestart = false;
         node.socket = null;
 
         node.socket = io(node.socketIOUrl, {
-            path: "/synoptic/socket.io",
-            query: {
-                "accessToken": s4cUtility.retrieveAccessToken(RED, node, config.authentication, node.uid),
-                "lazyMode": 1,
-                "sourceRequest": "iotapp",
-                "sourceId": node.uid
+            path: node.socketIOPath
+        })
+
+        node.startTimestamp = new Date().getTime();
+        node.socket.connect();
+
+        node.socket.on('authenticate', function (_data) {
+            logger.debug("Receive authenticate message: " + _data);
+            try {
+                _data = JSON.parse(_data);
+            } catch (e) {
+                logger.error("Problem Parsing data " + _data);
+            }
+
+            if (typeof _data.status != "undefined") {
+                if (_data.status.toLowerCase() == "ok") {
+                    node.status({
+                        fill: "green",
+                        shape: "dot",
+                        text: "Authenticated to the server!"
+                    });
+                    if (typeof node.kpiId != "undefined" && node.kpiId != "") {
+                        node.socket.emit("subscribe", node.kpiId);
+                        logger.debug("Emit subscribe with kpiId: " + node.kpiId);
+                    } else {
+                        node.error("You have to configure or input the id of the KPI to be read");
+                        logger.error("Problem with kpiId: " + node.kpiId);
+                    }
+                } else {
+                    node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: "Authentication Problem!"
+                    });
+                    node.error(_data.error);
+                    logger.error("Error on authenticate: " + _data.error);
+                }
+            }
+        });
+
+        node.socket.on('subscribe', function (_data) {
+            logger.debug("Receive write message: " + _data);
+            try {
+                _data = JSON.parse(_data);
+            } catch (e) {
+                logger.error("Problem Parsing data " + _data);
+            }
+
+            if (typeof _data.status != "undefined") {
+                if (_data.status.toLowerCase() != "error") {
+                    node.status({
+                        fill: "green",
+                        shape: "dot",
+                        text: "Subscribed!"
+                    });
+                    logger.info("Success Subscribed on " + node.kpiId);
+
+                } else {
+                    node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: "Error, see debug tab"
+                    });
+                    if (_data.error == "unauthorized") {
+                        logger.warn("Unauthorized to emit write message");
+                    }
+                    var accessToken = "";
+                    accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, node.uid);
+                    if (accessToken != "" && accessToken != "undefined") {
+                        node.socket.emit("authenticate", accessToken);
+                        logger.debug("Emit authenticate with accessToken: " + accessToken);
+                    } else {
+                        node.error("Check the authentication in the configuration tab");
+                        logger.error("Problem with accessToken: " + accessToken);
+                    }
+                    node.error(_data.error);
+                    logger.error("Error on subscribe: " + _data.error);
+                }
             }
         })
 
-        if (!node.whenValueChange) {
-            node.socket.io.opts.query.nosyMode = 1;
-        }
-        node.startTimestamp = new Date().getTime();
-        node.socket.connect();
+        node.socket.on('update ' + node.kpiId, function (_data) {
+            logger.debug("Receive update message: " + _data);
+            try {
+                _data = JSON.parse(_data);
+            } catch (e) {
+                logger.error("Problem Parsing data " + _data);
+            }
+
+            if (typeof _data.lastValue != "undefined") {
+
+                node.status({
+                    fill: "green",
+                    shape: "dot",
+                    text: "Update value!"
+                });
+
+                node.send({
+                    "payload": _data
+                });
+
+            } else {
+                node.status({
+                    fill: "red",
+                    shape: "dot",
+                    text: "Error, see debug tab"
+                });
+                node.error(_data.error);
+                logger.error("Error on subscribe: " + _data.error);
+            }
+
+        });
 
         node.socket.on('connect', function () {
             logger.debug("Receive connect message");
@@ -53,20 +153,23 @@ module.exports = function (RED) {
                 text: "Connected to the server!"
             });
 
-            node.socket.emit("i_need_these", node.kpiId);
-            logger.debug("Emit i_need_these message: " + node.kpiId);
-
-            if (node.intervalID != null) {
-                clearInterval(node.intervalID);
-                node.intervalID = null;
+            var accessToken = "";
+            accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, node.uid);
+            if (accessToken != "" && accessToken != "undefined") {
+                node.socket.emit("authenticate", accessToken);
+                logger.debug("Emit authenticate with accessToken: " + accessToken);
+            } else {
+                node.error("Check the authentication in the configuration tab");
+                logger.error("Problem with accessToken: " + accessToken);
             }
         });
+
         node.socket.on('connect_error', (error) => {
             logger.error("Receive connect_error message: " + error);
             node.status({
-                fill: "orange",
+                fill: "red",
                 shape: "dot",
-                text: "error to the server!" + error
+                text: "Sorry, there seems to be an issue"
             });
         });
 
@@ -78,16 +181,6 @@ module.exports = function (RED) {
             logger.warn("Receive reconnect_attempt");
         });
 
-        node.socket.on(node.kpiId, function (data) {
-            logger.warn("Receive node.kpiId");
-            var dataParsed = JSON.parse(data);
-            if (dataParsed.lastDate > node.startTimestamp) {
-                node.send({
-                    payload: dataParsed
-                });
-            }
-        });
-
         node.socket.on('disconnect', function (reason) {
             logger.error("Receive disconnect message: " + reason);
             node.status({
@@ -96,19 +189,10 @@ module.exports = function (RED) {
                 text: "Disconnetted"
             });
             node.startTimestamp = new Date().getTime();
-            var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
-            var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
-            logger.debug("wsServerRetryActive: " + wsServerRetryActive + " node.notRestart: " + node.notRestart + " reason: " + reason);
             if (reason === 'io server disconnect') {
                 // the disconnection was initiated by the server, you need to reconnect manually
-                logger.info("will try to make a new connection to WebSocket in " + parseInt(wsServerRetryTime) + "s");
-                node.socket.io.opts.query.accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, node.uid);
                 node.socket.connect();
-            } else if (wsServerRetryActive === 'yes' && !node.notRestart) {
-                logger.info("will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
-                if (!node.intervalID) {
-                    node.intervalID = setInterval(node.socket.connect, parseInt(wsServerRetryTime) * 1000);
-                }
+                logger.debug("Start socket reconnection");
             }
         });
 
@@ -129,8 +213,9 @@ module.exports = function (RED) {
         node.closedDoneCallback = function () {
             logger.info("has been closed");
         };
-
     }
+
+
 
     RED.nodes.registerType("event-driven-my-kpi", EventDrivenMyKPI);
 
