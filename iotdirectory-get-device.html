@@ -48,16 +48,18 @@
             return this.name || "iotdirectory-get-device";
         },
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             var accessToken = "";
             var cbList = "";
-                       
+
             $.ajax({
                 url: "retrieveAccessTokenAuthentication",
                 type: "POST",
                 async: false,
                 dataType: "json",
                 data: {
-                    "authenticationNodeId": $("#node-input-authentication").val()
+                    "authenticationNodeId": $("#node-input-authentication").val(),
+                    "nodeId": $("#node-input-currentNodeId").val()
                 },
                 success: function (_data) {
                     if (_data.accessToken == "") {
@@ -69,10 +71,10 @@
                     };
                 }
             });
-                   
+
             refreshCBSelection(accessToken, cbList);
 
-            
+
 
         },
         oneditsave: function () {
@@ -91,8 +93,8 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
-                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
-                    if (domain != ""){
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
+                    if (domain != "") {
                         _data.iotDirectoryUrl = domain + "/iot-directory/";
                     }
                     $.ajax({
@@ -152,6 +154,7 @@
 <script type="text/x-red" data-template-name="iotdirectory-get-device">
 
     <input type="hidden" id="node-input-selectedCB">
+    <input type="hidden" id="node-input-currentNodeId">
 
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>

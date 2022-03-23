@@ -23,8 +23,8 @@ module.exports = function (RED) {
         const logger = s4cUtility.getLogger(RED, node);
         const uid = s4cUtility.retrieveAppID(RED);
         node.s4cAuth = RED.nodes.getNode(config.authentication);
-        var wsServer = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
-        var wsServerHttpOrigin = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
+        var wsServer = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
+        var wsServerHttpOrigin = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
         node.ws = null;
         node.notRestart = false;
         node.name = config.name;
@@ -34,7 +34,7 @@ module.exports = function (RED) {
         node.dashboardId = config.dashboardId;
         node.selectedWidgetId = config.selectedWidgetId;
         node.widgetId = config.widgetId;
-        node.metricName = "NR_" + node.id.replace(".", "_");
+        node.metricName = "Map";
         node.metricType = config.metricType;
         node.startValue = config.startValue;
         node.metricShortDesc = config.metricName;
@@ -70,6 +70,8 @@ module.exports = function (RED) {
                 timeout = 1000;
             }
             node.wsStart = new Date().getTime();
+            
+            msg.payload.target = node.widgetId;
 
             var newMetricData = {
                 msgType: "AddMetricData",
@@ -77,7 +79,7 @@ module.exports = function (RED) {
                 metricName: encodeURIComponent(node.metricName),
                 metricType: node.metricType,
                 widgetUniqueName: node.widgetId,
-                newValue: JSON.stringify(msg.payload),
+                newValue: msg.payload,
                 appId: uid,
                 user: node.username,
                 flowId: node.z,

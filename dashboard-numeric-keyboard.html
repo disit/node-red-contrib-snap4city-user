@@ -70,7 +70,11 @@
         },
         align: 'left',
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             var accessToken = getDashboardUserInfoAndCreateSelection();
+				$("#node-input-authentication").change(function () {
+					getDashboardUserInfoAndCreateSelection();
+			});
             $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
             $('#node-dashboard-edit').click(function () {
                 if ($('#node-input-dashboardId').val() != null && $('#node-input-dashboardId')
@@ -238,7 +242,7 @@
 <script type="text/x-red" data-template-name="numeric-keyboard">
     <input type="hidden" id="node-input-username">
     <input type="hidden" id="node-input-flowName">
-    
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedDashboardId">
     
     <div class="form-row" id="rowAuthentication">

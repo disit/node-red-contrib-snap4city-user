@@ -23,8 +23,8 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.s4cAuth = RED.nodes.getNode(config.authentication);
-        var wsServer = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
-        var wsServerHttpOrigin = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
+        var wsServer = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
+        var wsServerHttpOrigin = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
         node.ws = null;
         node.notRestart = false;
         node.name = config.name;

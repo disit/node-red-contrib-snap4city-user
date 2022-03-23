@@ -18,6 +18,7 @@
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-service-api-v2">
 	<input type="hidden" id="node-config-input-selectedContextbroker">
+	<input type="hidden" id="node-config-input-currentNodeId">
 	<div class="form-row" id="rowAuthentication">
         <label for="node-config-input-authentication">Authentication</label>
         <input type="text" id="node-config-input-authentication">
@@ -951,6 +952,7 @@
 				return this.name || this.namespace || "Orion Service";
 			},
 			oneditprepare: function () {
+				$("#node-config-input-currentNodeId").val(this.id);
 				initChangeAuthenticationServiceOrion();
 				$("#node-config-input-authentication").change(function () {
 					initChangeAuthenticationServiceOrion();
@@ -1323,7 +1325,7 @@
 				type: "GET",
 				async: false,
 				success: function (_data) {
-					var domain = RED.nodes.node($("#node-config-input-authentication").val()).domain;
+					var domain = (RED.nodes.node($("#node-config-input-authentication").val()) != null ? RED.nodes.node($("#node-config-input-authentication").val()).domain : "");
 					console.log(domain);
 					if (domain != "") {
 						_data.iotDirectoryUrl = domain + "/iot-directory/";
@@ -1388,7 +1390,8 @@
 			async: false,
 			dataType: "json",
 			data: {
-				"authenticationNodeId": $("#node-config-input-authentication").val()
+				"authenticationNodeId": $("#node-config-input-authentication").val(),
+				"nodeId": $("#node-config-input-currentNodeId").val()
 			},
 			success: function (_data) {
 				if (_data.accessToken == "") {

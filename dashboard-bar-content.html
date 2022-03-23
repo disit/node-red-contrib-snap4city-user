@@ -75,7 +75,12 @@
         },
         align: 'right',
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             var accessToken = getDashboardUserInfoAndCreateSelection();
+				$("#node-input-authentication").change(function () {
+					getDashboardUserInfoAndCreateSelection();
+			});
+    
             $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
             $('#node-dashboard-edit').click(function () {
                 if ($('#node-input-dashboardId').val() != null && $('#node-input-dashboardId')
@@ -251,7 +256,8 @@
             async: false,
             dataType: "json",
             data: {
-                "authenticationNodeId": $("#node-input-authentication").val()
+                "authenticationNodeId": $("#node-input-authentication").val(),
+                "nodeId": $("#node-input-currentNodeId").val()
             },
             success: function (_data) {
                 if (_data.accessToken == "") {
@@ -262,6 +268,12 @@
                     $('#tipAuthenticationWrong').show();
                     $('#tipAuthentication').hide();
                 } else {
+                    $("#selectDashboardContainer").show();
+                    $("#selectWidgetName").show();
+                    $('#node-dashboard-view').show();
+                    $('#node-dashboard-edit').show();
+                    $('#tipAuthenticationWrong').hide();
+                    $('#tipAuthentication').show();
                     username = _data.username;
                     accessToken = _data.accessToken;
                 };
@@ -332,6 +344,7 @@
 <script type="text/x-red" data-template-name="bar-content">
     <input type="hidden" id="node-input-username">
     <input type="hidden" id="node-input-flowName">
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedDashboardId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>

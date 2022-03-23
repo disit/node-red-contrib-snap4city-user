@@ -23,7 +23,7 @@ module.exports = function (RED) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             node.s4cAuth = RED.nodes.getNode(config.authentication);
-            var uri = ( node.s4cAuth != null && node.s4cAuth.domain ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/";
+            var uri = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/";
             var inPayload = msg.payload;
 
             var deviceName = (msg.payload.devicename ? msg.payload.devicename : config.devicename);

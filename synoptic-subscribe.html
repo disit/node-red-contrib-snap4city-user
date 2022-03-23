@@ -45,6 +45,7 @@
             return this.name || "synoptic-subscribe";
         },
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             $("#node-input-synopticId").val("");
             var accessToken = "";
             var synopticList = "";
@@ -54,7 +55,8 @@
                 async: false,
                 dataType: "json",
                 data: {
-                    "authenticationNodeId": $("#node-input-authentication").val()
+                    "authenticationNodeId": $("#node-input-authentication").val(),
+                    "nodeId": $("#node-input-currentNodeId").val()
                 },
                 success: function (_data) {
                     if (_data.accessToken == "") {
@@ -67,7 +69,7 @@
                     };
                 }
             });
-                   
+
             refreshSynopticSelection(accessToken, synopticList);
         },
         oneditsave: function () {
@@ -89,8 +91,8 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
-                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
-                    if (domain != ""){
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
+                    if (domain != "") {
                         _data.dashboardSmartCityUrl = domain + "/dashboardSmartCity/";
                     }
                     $.ajax({
@@ -155,6 +157,7 @@
 </script>
 
 <script type="text/x-red" data-template-name="synoptic-subscribe">
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedSynopticId">
     <input type="hidden" id="node-input-selectedSynopticVariableId">
     <div class="form-row" id="rowAuthentication">

@@ -173,7 +173,7 @@
 
 
         oneditprepare: function () {
-
+            $("#node-input-currentNodeId").val(this.id);
             var accessToken = "";
 
             $.ajax({
@@ -182,7 +182,8 @@
                 async: false,
                 dataType: "json",
                 data: {
-                    "authenticationNodeId": $("#node-input-authentication").val()
+                    "authenticationNodeId": $("#node-input-authentication").val(),
+                    "nodeId": $("#node-input-currentNodeId").val()
                 },
                 success: function (_data) {
                     if (_data.accessToken == "") {
@@ -672,7 +673,8 @@
             async: false,
             dataType: "json",
             data: {
-                "authenticationNodeId": $("#node-input-authentication").val()
+                "authenticationNodeId": $("#node-input-authentication").val(),
+                "nodeId": $("#node-input-currentNodeId").val()
             },
             success: function (_data) {
                 if (_data.accessToken == "") {
@@ -847,7 +849,7 @@
 
 
 <script type="text/x-red" data-template-name="device-registration-user">
-
+    <input type="hidden" id="node-input-currentNodeId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">

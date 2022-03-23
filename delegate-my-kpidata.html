@@ -42,6 +42,7 @@
             return this.name || "delegate-my-kpidata";
         },
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             initChangeAuthenticationKPIData();
             $("#node-input-authentication").change(function () {
                 initChangeAuthenticationKPIData();
@@ -57,6 +58,7 @@
 
 <script type="text/x-red" data-template-name="delegate-my-kpidata">
     <input type="hidden" id="node-input-name">
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedKPIDataId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>

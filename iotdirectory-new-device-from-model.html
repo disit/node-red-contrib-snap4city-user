@@ -61,17 +61,19 @@
             return this.name || "iotdirectory-new-device-from-model";
         },
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             $("#node-input-model").val("");
             var accessToken = "";
             var modelDataList = "";
-            
+
             $.ajax({
                 url: "retrieveAccessTokenAuthentication",
                 type: "POST",
                 async: false,
                 dataType: "json",
                 data: {
-                    "authenticationNodeId": $("#node-input-authentication").val()
+                    "authenticationNodeId": $("#node-input-authentication").val(),
+                    "nodeId": $("#node-input-currentNodeId").val()
                 },
                 success: function (_data) {
                     if (_data.accessToken == "") {
@@ -97,7 +99,7 @@
                 }
 
             });
-            
+
             $.ajax({
                 url: "s4c/js/leaflet.js",
                 async: false,
@@ -270,8 +272,8 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
-                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
-                    if (domain != ""){
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
+                    if (domain != "") {
                         _data.iotDirectoryUrl = domain + "/iot-directory/";
                     }
                     $.ajax({
@@ -312,9 +314,9 @@
             }
             $("#node-input-model").val(currentValue);
 
-            $("#node-input-model").change(function () {                
-				if(!$("#node-input-model").val()) return;
-				$("#node-input-staticAttribute-container").editableList('empty');
+            $("#node-input-model").change(function () {
+                if (!$("#node-input-model").val()) return;
+                $("#node-input-staticAttribute-container").editableList('empty');
                 var currentValue = $("#node-input-model").val();
                 var currentSubNature = null;
                 var modelStaticAttributeList = null;
@@ -325,15 +327,15 @@
                         break;
                     }
                 }
-				console.log("Selected: "+currentValue);
-				console.log("currentSubNature: "+currentSubNature);
-				console.log("modelStaticAttributeList: see below");
-				console.log(modelStaticAttributeList);
-				console.log("JSON.parse(modelStaticAttributeList): see below");
-				console.log(JSON.parse(modelStaticAttributeList));
-				
-                
-				/* $.ajax({
+                console.log("Selected: " + currentValue);
+                console.log("currentSubNature: " + currentSubNature);
+                console.log("modelStaticAttributeList: see below");
+                console.log(modelStaticAttributeList);
+                console.log("JSON.parse(modelStaticAttributeList): see below");
+                console.log(JSON.parse(modelStaticAttributeList));
+
+
+                /* $.ajax({
                     url: "knowledgeBaseUrl",
                     type: "GET",
                     async: false,
@@ -354,8 +356,8 @@
                         });
                     }
                 }); */
-				createStaticAttributeListEditor(null, JSON.parse(modelStaticAttributeList));
-				
+                createStaticAttributeListEditor(null, JSON.parse(modelStaticAttributeList));
+
             });
         }
     }
@@ -392,22 +394,22 @@
 
         for (var i = 0; i < modelStaticAttributeList.length; i++) {
             var isInList = false;
-			for (var j = 0; j < currentStaticAttributeList.length; j++) {
+            for (var j = 0; j < currentStaticAttributeList.length; j++) {
                 if (modelStaticAttributeList[i][0] == currentStaticAttributeList[j].uri) {
                     isInList = true;
-					if (typeof currentStaticAttributeList[j].value == "undefined" || (typeof currentStaticAttributeList[j].value == "undefined" && currentStaticAttributeList[j].value == "")) {
+                    if (typeof currentStaticAttributeList[j].value == "undefined" || (typeof currentStaticAttributeList[j].value == "undefined" && currentStaticAttributeList[j].value == "")) {
                         currentStaticAttributeList[j].value = modelStaticAttributeList[i][1];
                     }
                 }
             }
-			if(!isInList) {
-				currentStaticAttributeList.push({
+            if (!isInList) {
+                currentStaticAttributeList.push({
                     "uri": modelStaticAttributeList[i][0],
-                    "label": modelStaticAttributeList[i][2]?modelStaticAttributeList[i][2]:modelStaticAttributeList[i][0].split("#")[1],
-					"value": modelStaticAttributeList[i][1]
+                    "label": modelStaticAttributeList[i][2] ? modelStaticAttributeList[i][2] : modelStaticAttributeList[i][0].split("#")[1],
+                    "value": modelStaticAttributeList[i][1]
                 });
-			}
-			
+            }
+
         }
 
         for (var i = 0; i < currentStaticAttributeList.length; i++) {
@@ -424,6 +426,7 @@
 
 
 <script type="text/x-red" data-template-name="iotdirectory-new-device-from-model">
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedModel">
     <div class="form-row" id="rowAuthentication">
     <label for="node-input-authentication">Authentication</label>

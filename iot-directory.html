@@ -380,20 +380,22 @@ RED.nodes.registerType('label',{
         /******* ON EDIT PREPARE  START ********/
 
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             username = "";
             role = "manager";
             organization = "";
             gpsCentreLatLng = "";
             accessToken = "";
 
-            
+
             $.ajax({
                 url: "retrieveAccessTokenAuthentication",
                 type: "POST",
                 async: false,
                 dataType: "json",
                 data: {
-                    "authenticationNodeId": $("#node-input-authentication").val()
+                    "authenticationNodeId": $("#node-input-authentication").val(),
+                    "nodeId": $("#node-input-currentNodeId").val()
                 },
                 success: function (_data) {
                     if (_data.accessToken == "") {
@@ -408,7 +410,7 @@ RED.nodes.registerType('label',{
                     };
                 }
             });
-                    
+
 
 
 
@@ -440,7 +442,7 @@ RED.nodes.registerType('label',{
                 console.log("couldn't get the canvas height: " + err);
             }
 
-			//TODO: externalize this source code to the js side, so we can make this parameters configurable via settings
+            //TODO: externalize this source code to the js side, so we can make this parameters configurable via settings
             //serverURL = "https://www.snap4city.org/iotdirectorytest/"; //testing
             serverURL = "https://iotdirectory.snap4city.org/"; //produzione
 
@@ -546,10 +548,10 @@ RED.nodes.registerType('label',{
                 //$(".editor-tray").css("width","1000px");
                 node = this;
                 /* map = L.map('node-input-map').setView([45.4858914, 9.202094], 10);
-		//	map=map.update;
-		//map._onResize(); 
-		//map.invalidateSize(true);
-		
+        //	map=map.update;
+        //map._onResize(); 
+        //map.invalidateSize(true);
+    	
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
@@ -931,8 +933,8 @@ RED.nodes.registerType('label',{
                 node2 = this;
 
                 /*map2 = L.map('node-input-map-tab2').setView([45.4858914, 9.202094], 10);
-    		
-    		
+        	
+        	
                 L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map2);
@@ -1102,27 +1104,27 @@ RED.nodes.registerType('label',{
 
             /******* SAMPLE CONFIG DATA START ********/
             /* 
-				"ARDUINO_ST_4201": {
-				  	"contextBroker" : "orionUNIMI" , 
-				  	"ip": "159.149.129.184",
-				  	"port" : "1026",
-				  	"type" : "temperature",
-				  	"kind" : "sensor",
-				  	"latitude" : "45.54",
-				  	"longitude" : "91.21",
+                "ARDUINO_ST_4201": {
+                        "contextBroker" : "orionUNIMI" , 
+                        "ip": "159.149.129.184",
+                        "port" : "1026",
+                        "type" : "temperature",
+                        "kind" : "sensor",
+                        "latitude" : "45.54",
+                        "longitude" : "91.21",
 
-				 },
-				*/
+                 },
+                */
 
             /******* SAMPLE CONFIG DATA END ********/
 
             /******* PANNELLO  RETRIEVE   START ********/
 
             /****
-				desc:
-					recupera i dati per popolare i menu a tendina del pannello retrieve e li popola tramite la funzione addSelectData
+                desc:
+                    recupera i dati per popolare i menu a tendina del pannello retrieve e li popola tramite la funzione addSelectData
 
-	    	 ****/
+             ****/
             function createRetrievePanel() {
                 var types = getDistinctValues(node.configData, "devicetype");
                 addSelectData('node-input-type-select', types);
@@ -1154,13 +1156,13 @@ RED.nodes.registerType('label',{
             }
 
             /****
-				desc:
-					quando viene selezionato o deselezionato qualche valore nel pannello retrieve
-					viene effettuata la verifica sui filtri (type, kind, broker) e vengono 
-					resi visibili i sensori o gli attuatori per i filtri corrispondenti.
+                desc:
+                    quando viene selezionato o deselezionato qualche valore nel pannello retrieve
+                    viene effettuata la verifica sui filtri (type, kind, broker) e vengono 
+                    resi visibili i sensori o gli attuatori per i filtri corrispondenti.
 
 
-	    	 ****/
+             ****/
             function onChangeRetrieveSelect() {
 
 
@@ -1293,13 +1295,13 @@ RED.nodes.registerType('label',{
             }
 
             /****
-	    	 	input:
-	    	 		selectId: id del menu  a tendina
-	    	 	output:
-	    	 		data: dati per popolare il menu a tendina
-	    	 	desc:
-					inserisce i valori nei menu a tendina
-	    	 ****/
+                  input:
+                        selectId: id del menu  a tendina
+                  output:
+                        data: dati per popolare il menu a tendina
+                  desc:
+                    inserisce i valori nei menu a tendina
+             ****/
             function addSelectData(selectId, data) {
                 data = data.sort();
                 $('#' + selectId).html("");
@@ -1350,13 +1352,13 @@ RED.nodes.registerType('label',{
 
             /*********
             input: 
-            	dataObj: array da cui  recuperare i dati
-            	matchKey:  chiave di dui recuperare i dati
+                dataObj: array da cui  recuperare i dati
+                matchKey:  chiave di dui recuperare i dati
             output:
-            	ar: array filtrato
+                ar: array filtrato
             desc:
-            	restituisce i valori esistenti  per una determinata chiave
-            	per esempio  tutti i type restituisce ["sensor","actuator"]
+                restituisce i valori esistenti  per una determinata chiave
+                per esempio  tutti i type restituisce ["sensor","actuator"]
 
             **********/
             function getDistinctValues(dataObj, matchKey) {
@@ -1428,7 +1430,7 @@ RED.nodes.registerType('label',{
 
             /*********
             desc:
-            	crea la lista con tutti i sensori selezionabili
+                crea la lista con tutti i sensori selezionabili
 
             **********/
 
@@ -1662,7 +1664,7 @@ RED.nodes.registerType('label',{
 
             /*********
              desc:
-	             ordinamento dei sensori
+                 ordinamento dei sensori
 
              **********/
             function sortNodeList(sortOn) {
@@ -1748,7 +1750,7 @@ RED.nodes.registerType('label',{
 
 
             /*********	
-				  definizione  evento click per sui pulsanti di ordinamento
+                  definizione  evento click per sui pulsanti di ordinamento
              **********/
             $("#node-input-target-sort-label").click(function (e) {
                 e.preventDefault();
@@ -1785,7 +1787,7 @@ RED.nodes.registerType('label',{
                 sortNodeListTab2('sublabel-tab2');
             });
             /*********	
-				  definizione  evento click su checkbox per selezionare tutti i sensori
+                  definizione  evento click su checkbox per selezionare tutti i sensori
              **********/
             $("#node-input-target-node-checkbox-all").change(function () {
                 $(".node-input-target-node-checkbox:visible").prop('checked', this.checked);
@@ -1867,7 +1869,7 @@ RED.nodes.registerType('label',{
 
             });
             /*********
-				  definizione  evento keyup per la ricerca testuale
+                  definizione  evento keyup per la ricerca testuale
              **********/
             $("#node-input-text-search").keyup(function () {
                 onChangeRetrieveSelect();
@@ -1891,7 +1893,7 @@ RED.nodes.registerType('label',{
             /******* SELECT  SENSORS START  *****/
 
             /*********	
-				  definizione della evento change su select per tipo ricerca (parametric search, map , slected nodes)
+                  definizione della evento change su select per tipo ricerca (parametric search, map , slected nodes)
              **********/
 
             $("#node-input-kind-of-search-select").change(function () {
@@ -1921,66 +1923,66 @@ RED.nodes.registerType('label',{
                 }
 
                 /*else if($(this).val()=="map_marker") // map search - target
-	                {
-	                	
+                    {
+                    	
 
-	                	$("#target-wrapper").fadeIn("fast");
-						$("#retrieve-selected").fadeOut("fast");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#marker-wrapper").fadeIn("fast");
-						$("#path-wrapper").fadeOut("fast");
-						$("#polygon-wrapper").fadeOut("fast");
-						if (window.node_input_map) {
-	                window.node_input_map.invalidateSize(true);
-	            };
-						
-	                }
-	                
-	                else if($(this).val()=="map_path") // map search - target
-	                {
-	                	
+                        $("#target-wrapper").fadeIn("fast");
+                        $("#retrieve-selected").fadeOut("fast");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#marker-wrapper").fadeIn("fast");
+                        $("#path-wrapper").fadeOut("fast");
+                        $("#polygon-wrapper").fadeOut("fast");
+                        if (window.node_input_map) {
+                    window.node_input_map.invalidateSize(true);
+                };
+                    	
+                    }
+                    
+                    else if($(this).val()=="map_path") // map search - target
+                    {
+                    	
 
-	                	$("#target-wrapper").fadeIn("fast");
-						$("#retrieve-selected").fadeOut("fast");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#marker-wrapper").fadeOut("fast");
-						$("#path-wrapper").fadeIn("fast");
-						$("#polygon-wrapper").fadeOut("fast");
-						if (window.node_input_map) {
-	                window.node_input_map.invalidateSize(true);
-	            };
-						
-	                }
-	                
-	                else if($(this).val()=="map_polygon") // map search - target
-	                {
-	                	
+                        $("#target-wrapper").fadeIn("fast");
+                        $("#retrieve-selected").fadeOut("fast");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#marker-wrapper").fadeOut("fast");
+                        $("#path-wrapper").fadeIn("fast");
+                        $("#polygon-wrapper").fadeOut("fast");
+                        if (window.node_input_map) {
+                    window.node_input_map.invalidateSize(true);
+                };
+                    	
+                    }
+                    
+                    else if($(this).val()=="map_polygon") // map search - target
+                    {
+                    	
 
-	                	$("#target-wrapper").fadeIn("fast");
-						$("#retrieve-selected").fadeOut("fast");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#marker-wrapper").fadeOut("fast");
-						$("#path-wrapper").fadeOut("fast");
-						$("#polygon-wrapper").fadeIn("fast");
-						if (window.node_input_map) {
-	                window.node_input_map.invalidateSize(true);
-	            };
-						
-	                }
+                        $("#target-wrapper").fadeIn("fast");
+                        $("#retrieve-selected").fadeOut("fast");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#marker-wrapper").fadeOut("fast");
+                        $("#path-wrapper").fadeOut("fast");
+                        $("#polygon-wrapper").fadeIn("fast");
+                        if (window.node_input_map) {
+                    window.node_input_map.invalidateSize(true);
+                };
+                    	
+                    }
 
-	                else // specific devices - selected
-	                {
-	                	console.log("selected");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#target-wrapper").fadeOut("fast");
-						$("#retrieve-selected").fadeIn("fast");
-						$("#marker-wrapper").fadeOut("fast");
-						$("#path-wrapper").fadeOut("fast");
-						$("#polygon-wrapper").fadeOut("fast");
-	                	$("#node-input-nodes-target-container li").each(function(){
-	                	 	$(this).show();
-	                	})
-	                }*/
+                    else // specific devices - selected
+                    {
+                        console.log("selected");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#target-wrapper").fadeOut("fast");
+                        $("#retrieve-selected").fadeIn("fast");
+                        $("#marker-wrapper").fadeOut("fast");
+                        $("#path-wrapper").fadeOut("fast");
+                        $("#polygon-wrapper").fadeOut("fast");
+                        $("#node-input-nodes-target-container li").each(function(){
+                              $(this).show();
+                        })
+                    }*/
 
 
             });
@@ -2020,7 +2022,7 @@ RED.nodes.registerType('label',{
 
 
             /*********	
-				  recupero dei dati  da  server node
+                  recupero dei dati  da  server node
             **********/
             //var jqxhr = $.getJSON( "http://localhost:3001/api/get-config-data", function(data) {
             //var jqxhr = $.getJSON( "http://iot-app.snap4city.org/iotdirectory/api/get-config-data", function(data) {
@@ -2048,7 +2050,7 @@ RED.nodes.registerType('label',{
 
                     //*****until here//
 
-					var findOrg_url=serverURL + "api/nodeRedConnection.php?action=get_organization";
+                    var findOrg_url = serverURL + "api/nodeRedConnection.php?action=get_organization";
 
                     if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                         findOrg_url += "&nodered=yes&token=" + accesstoken;
@@ -2097,9 +2099,9 @@ RED.nodes.registerType('label',{
                                 //########################################//            
 
                                 var url = serverURL + "api/device.php?action=get_all_device";
-								//using new api (get_all_device) required that "entityType" has been migrated towards "devicetype"
-								//moreover, old api included also extra info about: cb.`name` and cb.`protocol` as type
-								//and old api also renamed cb.`accesslink` AS ip and cb.`accessport` AS port
+                                //using new api (get_all_device) required that "entityType" has been migrated towards "devicetype"
+                                //moreover, old api included also extra info about: cb.`name` and cb.`protocol` as type
+                                //and old api also renamed cb.`accesslink` AS ip and cb.`accessport` AS port
 
                                 if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                     url += "&nodered=yes&token=" + accesstoken;
@@ -2129,10 +2131,10 @@ RED.nodes.registerType('label',{
 
                                             for (var k in data) {
 
-												console.log(data[k]);
-												console.log(data[k]['id']);
-												console.log(data[k]['devicetype']);
-												console.log(data[k]['kind']);
+                                                console.log(data[k]);
+                                                console.log(data[k]['id']);
+                                                console.log(data[k]['devicetype']);
+                                                console.log(data[k]['kind']);
 
                                                 lat = Number(data[k]["latitude"]); //45.4858914;
                                                 est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
@@ -2140,7 +2142,7 @@ RED.nodes.registerType('label',{
                                                 est_lng = lng; //lng+(Math.random() * (0.000700 - 0.000010) + 0.000010);
                                                 popup = "<b>" + data[k]['id'] + "</b><br>" + data[k]['devicetype'] + "<br>" + data[k]['kind'];
 
-												console.log("popup is:"+popup);
+                                                console.log("popup is:" + popup);
 
                                                 if (data[k]["visibility"] == "public") {
 
@@ -2175,8 +2177,8 @@ RED.nodes.registerType('label',{
                                     });
 
                                 var url_values = serverURL + "api/value.php?action=get_all_event_value";
-								//migrated to the new api from value.php. we don't know yet which changes appeared
-								
+                                //migrated to the new api from value.php. we don't know yet which changes appeared
+
                                 if (typeof accesstoken != "undefined" && accesstoken != "" &&
                                     accesstoken != "undefined") {
                                     url_values += "&nodered=yes&token=" + accesstoken;
@@ -2314,7 +2316,7 @@ RED.nodes.registerType('label',{
                     }
                 });
 
-                
+
 
                 console.log("sensors are:")
                 console.log(sensors);
@@ -2437,10 +2439,10 @@ RED.nodes.registerType('label',{
                 /*var Ssensors=[];
                 for (var x in idSensorsMap){
                 	
-                	arrSensors= idSensorsMap[x];
-                	Ssensors.push(arrSensors);
+                    arrSensors= idSensorsMap[x];
+                    Ssensors.push(arrSensors);
                 	
-                	//createFlow(arrSensors, configData);
+                    //createFlow(arrSensors, configData);
                 	
                 }*/
                 console.log("idValueArray length is " + idValueArray.length);
@@ -2727,7 +2729,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL+"stubs"+ "\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL + "stubs" + "\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 600,
@@ -2971,21 +2973,21 @@ RED.nodes.registerType('label',{
 
                         //collect
                         /* newflow.push({
-    							"id": function_id,
-    							"type": "function",
-    							"z": flow_id,
-    							"name": "collect",
-    							"func": "\nreturn msg;",
-    							"outputs": 1,
-    							"noerr": 0,
-    							"x": 1000,
-    							"y": middleY,
-    							"wires": [
-    							[
-    									link_out_id
-    								]
-    							]
-    						})*/
+                                "id": function_id,
+                                "type": "function",
+                                "z": flow_id,
+                                "name": "collect",
+                                "func": "\nreturn msg;",
+                                "outputs": 1,
+                                "noerr": 0,
+                                "x": 1000,
+                                "y": middleY,
+                                "wires": [
+                                [
+                                        link_out_id
+                                    ]
+                                ]
+                            })*/
                         //sensori
 
                         var addInjectNode = false;
@@ -3215,7 +3217,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL+"stubs" + "\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL + "stubs" + "\" );\r\n \/\/return msg;",
                                 "outputs": 1,
                                 "noerr": 0,
                                 "x": 800,
@@ -3276,18 +3278,18 @@ RED.nodes.registerType('label',{
 
                         //function instead of .shift() because for some reasons it's not working!
                         /*var Asensors=[];
-    				
-    				if(Ssensors.length >2){
-	    				for (var i=1; i<Ssensors.length; i++){
-	    					Asensors.push(Ssensors[i]);
-	    				}
-	    				createFlow(Asensors, configData);
-    				}
-    				else if(Ssensors.length>0) 
-    					{
-    						Asensors.push(Ssensors[0]);
-    						createFlow(Asensors, configData);
-    					}*/
+                	
+                    if(Ssensors.length >2){
+                        for (var i=1; i<Ssensors.length; i++){
+                            Asensors.push(Ssensors[i]);
+                        }
+                        createFlow(Asensors, configData);
+                    }
+                    else if(Ssensors.length>0) 
+                        {
+                            Asensors.push(Ssensors[0]);
+                            createFlow(Asensors, configData);
+                        }*/
                     })
                     .fail(function () {
                         console.log("error");
@@ -3661,7 +3663,7 @@ RED.nodes.registerType('label',{
                                 "type": "function",
                                 "z": flow_id,
                                 "name": "transform",
-                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL+"stubs" + "\" );\r\n \/\/return msg;",
+                                "func": "function ajaxRequest()\r\n{var request=false;\r\n\r\n  try { \r\n      \/\/var xmlhRequest = global.get(\'xmlhRequest\');\r\n      \/\/var XMLHttpRequest = xmlhRequest.XMLHttpRequest;\r\n      var XMLHttpRequest = require(\"xmlhttprequest\").XMLHttpRequest; \r\n      request = new XMLHttpRequest();\r\n      }catch(e1){\r\n\ttry{request = new ActiveXObject(\"Msxml2.XMLHTTP\")}catch(e2){\r\n\t\ttry{ request = new ActiveXObject(\"Microsoft.XMLHTTP\")\r\n\t\t}catch(e3){request = false}\r\n\t}\r\n  }\r\n  return request\r\n}\r\n\r\nfunction activateStub(serviceIP,cb,protocol,model,organization,dataToParse,selectedAttributes)\r\n{\r\n\tvar data;\t\t\r\n     data = \"contextbroker=\" + cb + \"&model=\"+model+ \"&organization=\"+organization+ \"&dataToParse=\"+dataToParse+ \"&selectedAttributes=\"+selectedAttributes;\t\t\t\r\n\t\r\n\tvar service = serviceIP + \"\/api\/nodered-\"+protocol;\r\n\t\r\n\tconsole.log(data);\r\n\tconsole.log(service);\r\n\tvar xhr = ajaxRequest();\r\n\tmsg.payload=xhr;\r\n\r\n\txhr.addEventListener(\"readystatechange\", function () {\r\n\t  if (this.readyState === 4 && this.status == 200) {\r\n\t\tvar resp= JSON.parse(this.responseText);\r\n         console.log(\"resp \"+ resp.message);\r\n         node.send({payload:resp});\r\n         return resp.message;\r\n\t\t}\r\n        else\r\n         return \"error\"; \r\n\t});\r\n    xhr.open(\"POST\", service);\r\n\txhr.setRequestHeader(\"Content-Type\", \"application\/x-www-form-urlencoded\");\r\n    \/* xhr.setRequestHeader(\"Content-Type\", \"text\/plain;charset=UTF-8\");*\/\r\n    xhr.setRequestHeader(\"Access-Control-Allow-Origin\", \"*\");\r\n\txhr.send(data);\r\n    }\r\n    \r\nfunction snap4cityParser(sensorID, cb, model, organization, protocol, value, selectedAttributes, serviceIP)\r\n{\r\n  var attributes=[];\r\n  var newType=\"\"; \r\n  var newId=\"\";   \r\n  msg.payload=\"here\";\r\n  if (protocol==\"ngsi\") \r\n   {       \r\n     resp= activateStub(serviceIP, cb,protocol,model,organization, value, selectedAttributes);\r\n   }\r\n} snap4cityParser(\"" + sensors[i] + "\", \"" + configData[sensors[i]]['contextBroker'] + "\",\"" + configData[sensors[i]]['model'] + "\",\"" + organization + "\",\"ngsi\", msg.payload, [" + attributes_string + "], \"" + serverURL + "stubs" + "\" );\r\n \/\/return msg;",
                                 "outputs": corresponding_out_ids.length,
                                 "noerr": 0,
                                 "x": 800,
@@ -3788,7 +3790,7 @@ RED.nodes.registerType('label',{
             var KEYCLOACK = "https://www.snap4city.org/auth/realms/master/protocol/openid-connect/userinfo";
             //test keycloak
             //var KEYCLOACK="https://www.disit.org/auth/realms/master/protocol/openid-connect/userinfo";
-
+            $("#node-input-currentNodeId").val(this.id);
             var username = "";
             var user_roles = [];
             var role = "manager";
@@ -3797,15 +3799,16 @@ RED.nodes.registerType('label',{
 
             var accessToken = "";
 
-            
-                        
+
+
             $.ajax({
                 url: "retrieveAccessTokenAuthentication",
                 type: "POST",
                 async: false,
                 dataType: "json",
                 data: {
-                    "authenticationNodeId": $("#node-input-authentication").val()
+                    "authenticationNodeId": $("#node-input-authentication").val(),
+                    "nodeId": $("#node-input-currentNodeId").val()
                 },
                 success: function (_data) {
                     if (_data.accessToken == "") {
@@ -3819,7 +3822,7 @@ RED.nodes.registerType('label',{
                     };
                 }
             });
-                    
+
 
             if (accessToken != "") {
                 $.ajax({
@@ -3877,8 +3880,8 @@ RED.nodes.registerType('label',{
             } catch (err) {
                 console.log("couldn't get the canvas height: " + err);
             }
-			
-			//TODO: externalize this source code to the js side, so we can make this parameters configurable via settings
+
+            //TODO: externalize this source code to the js side, so we can make this parameters configurable via settings
             //serverURL= "https://www.snap4city.org/iotdirectorytest/"; //for testing
             serverURL = "https://iotdirectory.snap4city.org/"; //official
 
@@ -4464,7 +4467,7 @@ RED.nodes.registerType('label',{
                         $(this).show();
                         });
                 });
-    			*/
+                */
 
                 L.Control.RemoveAll = L.Control.extend({
                     options: {
@@ -5232,7 +5235,7 @@ RED.nodes.registerType('label',{
 
 
             /*********
-				  definizione  evento keyup per la ricerca testuale
+                  definizione  evento keyup per la ricerca testuale
              **********/
             $("#node-input-text-search").keyup(function () {
                 onChangeRetrieveSelect();
@@ -5282,66 +5285,66 @@ RED.nodes.registerType('label',{
                 }
 
                 /* else if($(this).val()=="map_marker") // map search - target
-	                {
-	                	
+                    {
+                    	
 
-	                	$("#target-wrapper").fadeIn("fast");
-						$("#retrieve-selected").fadeOut("fast");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#marker-wrapper").fadeIn("fast");
-						$("#path-wrapper").fadeOut("fast");
-						$("#polygon-wrapper").fadeOut("fast");
-						if (window.node_input_map) {
-	                window.node_input_map.invalidateSize(true);
-	            };
-						
-	                }
-	                
-	                else if($(this).val()=="map_path") // map search - target
-	                {
-	                	
+                        $("#target-wrapper").fadeIn("fast");
+                        $("#retrieve-selected").fadeOut("fast");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#marker-wrapper").fadeIn("fast");
+                        $("#path-wrapper").fadeOut("fast");
+                        $("#polygon-wrapper").fadeOut("fast");
+                        if (window.node_input_map) {
+                    window.node_input_map.invalidateSize(true);
+                };
+                    	
+                    }
+                    
+                    else if($(this).val()=="map_path") // map search - target
+                    {
+                    	
 
-	                	$("#target-wrapper").fadeIn("fast");
-						$("#retrieve-selected").fadeOut("fast");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#marker-wrapper").fadeOut("fast");
-						$("#path-wrapper").fadeIn("fast");
-						$("#polygon-wrapper").fadeOut("fast");
-						if (window.node_input_map) {
-	                window.node_input_map.invalidateSize(true);
-	            };
-						
-	                }
-	                
-	                else if($(this).val()=="map_polygon") // map search - target
-	                {
-	                	
+                        $("#target-wrapper").fadeIn("fast");
+                        $("#retrieve-selected").fadeOut("fast");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#marker-wrapper").fadeOut("fast");
+                        $("#path-wrapper").fadeIn("fast");
+                        $("#polygon-wrapper").fadeOut("fast");
+                        if (window.node_input_map) {
+                    window.node_input_map.invalidateSize(true);
+                };
+                    	
+                    }
+                    
+                    else if($(this).val()=="map_polygon") // map search - target
+                    {
+                    	
 
-	                	$("#target-wrapper").fadeIn("fast");
-						$("#retrieve-selected").fadeOut("fast");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#marker-wrapper").fadeOut("fast");
-						$("#path-wrapper").fadeOut("fast");
-						$("#polygon-wrapper").fadeIn("fast");
-						if (window.node_input_map) {
-	                window.node_input_map.invalidateSize(true);
-	            };
-						
-	                }
+                        $("#target-wrapper").fadeIn("fast");
+                        $("#retrieve-selected").fadeOut("fast");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#marker-wrapper").fadeOut("fast");
+                        $("#path-wrapper").fadeOut("fast");
+                        $("#polygon-wrapper").fadeIn("fast");
+                        if (window.node_input_map) {
+                    window.node_input_map.invalidateSize(true);
+                };
+                    	
+                    }
 
-	                else // specific devices - selected
-	                {
-	                	console.log("selected");
-	                	$("#retrieve-wrapper").fadeOut("fast");
-	                	$("#target-wrapper").fadeOut("fast");
-						$("#retrieve-selected").fadeIn("fast");
-						$("#marker-wrapper").fadeOut("fast");
-						$("#path-wrapper").fadeOut("fast");
-						$("#polygon-wrapper").fadeOut("fast");
-	                	$("#node-input-nodes-target-container li").each(function(){
-	                	 	$(this).show();
-	                	})
-	                }*/
+                    else // specific devices - selected
+                    {
+                        console.log("selected");
+                        $("#retrieve-wrapper").fadeOut("fast");
+                        $("#target-wrapper").fadeOut("fast");
+                        $("#retrieve-selected").fadeIn("fast");
+                        $("#marker-wrapper").fadeOut("fast");
+                        $("#path-wrapper").fadeOut("fast");
+                        $("#polygon-wrapper").fadeOut("fast");
+                        $("#node-input-nodes-target-container li").each(function(){
+                              $(this).show();
+                        })
+                    }*/
 
 
 
@@ -5410,7 +5413,7 @@ RED.nodes.registerType('label',{
 
                             //**until here
 
-							var findOrg_url=serverURL + "api/nodeRedConnection.php?action=get_organization";
+                            var findOrg_url = serverURL + "api/nodeRedConnection.php?action=get_organization";
 
                             if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                 findOrg_url += "&nodered=yes&token=" + accesstoken;
@@ -5453,9 +5456,9 @@ RED.nodes.registerType('label',{
 
 
                                         var url = serverURL + "api/device.php?action=get_all_device";
-										//using new api (get_all_device) required that "entityType" has been migrated towards "devicetype"
-										//moreover, old api included also extra info about: cb.`name` and cb.`protocol` as type
-										//and old api also renamed cb.`accesslink` AS ip and cb.`accessport` AS port
+                                        //using new api (get_all_device) required that "entityType" has been migrated towards "devicetype"
+                                        //moreover, old api included also extra info about: cb.`name` and cb.`protocol` as type
+                                        //and old api also renamed cb.`accesslink` AS ip and cb.`accessport` AS port
 
                                         if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                             url += "&nodered=yes&token=" + accesstoken;
@@ -5482,7 +5485,7 @@ RED.nodes.registerType('label',{
                                                     var marker_array = [];
                                                     for (var k in data) {
 
-														console.log(data[k]);
+                                                        console.log(data[k]);
 
                                                         lat = Number(data[k]["latitude"]); //45.4858914;
                                                         est_lat = lat; //lat+(Math.random() * (0.000700 - 0.000010) + 0.000010);
@@ -5522,8 +5525,8 @@ RED.nodes.registerType('label',{
                                                 console.log("complete");
                                             });
                                         var url_values = serverURL + "api/value.php?action=get_all_event_value";
-										//migrated to the new api from value.php. we don't know yet which changes appeared
-										
+                                        //migrated to the new api from value.php. we don't know yet which changes appeared
+
                                         if (typeof accesstoken != "undefined" && accesstoken != "" && accesstoken != "undefined") {
                                             url_values += "&nodered=yes&token=" + accesstoken;
                                         }
@@ -5631,7 +5634,7 @@ RED.nodes.registerType('label',{
                 window.node_input_map.invalidateSize(true);
             }
 
-            
+
         },
 
         oneditsave: function () {
@@ -5774,7 +5777,7 @@ RED.nodes.registerType('label',{
 
             //console.log("configData is ");
             //console.log(configData);
-            
+
 
             /*** array di sensori  selezionati da pannello di configurazione  ***/
 
@@ -5859,17 +5862,17 @@ RED.nodes.registerType('label',{
                            })*/
                         //debug
                         /*   newflow.push({
-   			    		"id": debug_id,
-   						"type": "debug",
-   						"z": flow_id,
-   						"name": "",
-   						"active": true,
-   						"console": "false",
-   						"complete": "false",
-   						"x": 1000,
-   						"y": middleY,
-   						"wires": []
-   						})*/
+                                "id": debug_id,
+                                "type": "debug",
+                                "z": flow_id,
+                                "name": "",
+                                "active": true,
+                                "console": "false",
+                                "complete": "false",
+                                "x": 1000,
+                                "y": middleY,
+                                "wires": []
+                                })*/
 
 
                         //sensori
@@ -5937,7 +5940,7 @@ RED.nodes.registerType('label',{
                                     /*
 
                                [{"id":"5e144820.fe4668","type":"fiware orion in","z":"78fd82f6.a1df4c","name":"","service":"71e5538a.8861bc","throttle":"PT5S","entype":"Temperature","enid":"ARDUINO_ST_4201","ispattern":false,"duration":"P1W","attributes":"","condvalues":"","includeattr":true,"noderedhost":"","noderedhostauto":true,"x":420,"y":440,"wires":[[]]},{"id":"71e5538a.8861bc","type":"orion-service","z":"","name":"159.149.129.184:1026","url":"159.149.129.184","port":"1026"}]
-   	                        */
+                                  */
 
                                     newflow.push({
                                         "id": conf_id,
@@ -7183,7 +7186,7 @@ RED.nodes.registerType('label',{
 //////////////////////////////////////////////////// // IOT DIRECTORY IN
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="iot-directory-in">
-
+    <input type="hidden" id="node-input-currentNodeId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">
@@ -7630,7 +7633,7 @@ RED.nodes.registerType('label',{
 //////////////////////////////////////////////////// // IOT DIRECTORY IN SCRIPT OUT
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="iot-directory-out">
-
+    <input type="hidden" id="node-input-currentNodeId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">

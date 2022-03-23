@@ -15,6 +15,7 @@
 //////////////////////////////////////////////////// // ORION CONTEXT BROKER SUBSCRIBE NODE
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="snap4all-button">
+	<input type="hidden" id="node-input-currentNodeId">
 	<div class="form-row">
 		<label for="node-input-service">
 			<i class="fa fa-cloud"></i> Service</label>
@@ -162,6 +163,7 @@
 			return this.name ? "node_label_italic" : "";
 		},
 		oneditprepare: function () {
+			$("#node-input-currentNodeId").val(this.id);
 			$("#node-input-buttonName").val("");
 			var buttonList = "";
 			var accessToken = "";
@@ -172,7 +174,8 @@
 				async: false,
 				dataType: "json",
 				data: {
-					"authenticationNodeId": $("#node-input-authentication").val()
+					"authenticationNodeId": $("#node-input-authentication").val(),
+					"nodeId": $("#node-input-currentNodeId").val()
 				},
 				success: function (_data) {
 					if (_data.accessToken == "") {

@@ -82,7 +82,11 @@
         },
         align: 'right',
         oneditprepare: function () {
-
+            $("#node-input-currentNodeId").val(this.id);
+            var accessToken = getDashboardUserInfoAndCreateSelectionSelector();
+            $("#node-input-authentication").change(function () {
+                getDashboardUserInfoAndCreateSelectionSelector();
+            });
             $('#node-input-flowName').val($("li.red-ui-tab.ui-draggable.active a").attr("title"));
             $('#node-dashboard-edit').click(function () {
                 if ($('#node-input-dashboardId').val() != null && $('#node-input-dashboardId')
@@ -92,7 +96,7 @@
                         type: "GET",
                         async: true,
                         success: function (_data) {
-                            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
                             if (domain != "") {
                                 _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
                             }
@@ -116,7 +120,7 @@
                         type: "GET",
                         async: true,
                         success: function (_data) {
-                            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                            var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
                             if (domain != "") {
                                 _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
                             }
@@ -172,7 +176,7 @@
                             type: "GET",
                             async: true,
                             success: function (_data) {
-                                var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                                var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
                                 if (domain != "") {
                                     _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
                                 }
@@ -248,7 +252,8 @@
                     async: false,
                     dataType: "json",
                     data: {
-                        "authenticationNodeId": $("#node-input-authentication").val()
+                        "authenticationNodeId": $("#node-input-authentication").val(),
+                        "nodeId": $("#node-input-currentNodeId").val()
                     },
                     success: function (_data) {
                         if (_data.accessToken != "") {
@@ -261,7 +266,7 @@
                                     type: "GET",
                                     async: false,
                                     success: function (_data) {
-                                        var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                                        var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
                                         if (domain != "") {
                                             _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
                                         }
@@ -289,7 +294,6 @@
 
             });
 
-            var accessToken = getDashboardUserInfoAndCreateSelectionSelector();
         },
         oneditsave: function () {
             $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
@@ -308,17 +312,26 @@
             async: false,
             dataType: "json",
             data: {
-                "authenticationNodeId": $("#node-input-authentication").val()
+                "authenticationNodeId": $("#node-input-authentication").val(),
+                "nodeId": $("#node-input-currentNodeId").val()
             },
             success: function (_data) {
                 if (_data.accessToken == "") {
                     $("#selectDashboardContainer").hide();
+                    $("#selectWidgetContainer").hide();
                     $("#selectWidgetName").hide();
                     $('#node-dashboard-view').hide();
                     $('#node-dashboard-edit').hide();
                     $('#tipAuthenticationWrong').show();
                     $('#tipAuthentication').hide();
                 } else {
+                    $("#selectDashboardContainer").show();
+                    $("#selectWidgetContainer").show();
+                    $("#selectWidgetName").show();
+                    $('#node-dashboard-view').show();
+                    $('#node-dashboard-edit').show();
+                    $('#tipAuthenticationWrong').hide();
+                    $('#tipAuthentication').show();
                     username = _data.username;
                     accessToken = _data.accessToken;
                 };
@@ -340,7 +353,7 @@
                 type: "GET",
                 async: false,
                 success: function (_data) {
-                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain: "");
+                    var domain = (RED.nodes.node($("#node-input-authentication").val()) != null ? RED.nodes.node($("#node-input-authentication").val()).domain : "");
                     if (domain != "") {
                         _data.dashboardManagerBaseUrl = domain + "/dashboardSmartCity";
                     }
@@ -408,6 +421,7 @@
 <script type="text/x-red" data-template-name="selector-to-map">
     <input type="hidden" id="node-input-username">
     <input type="hidden" id="node-input-flowName">
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-selectedDashboardId">
     <input type="hidden" id="node-input-selectedWidgetId">
@@ -455,5 +469,5 @@
 	</div>
 </script>
 <script type="text/x-red" data-help-name="selector-to-map">
-
+    To know what to send as input to this node read the guide found <a href="https://www.snap4city.org/drupal/node/774">here</a>
 </script>

@@ -39,6 +39,7 @@
             return this.name || "save-my-kpidata-values";
         },
         oneditprepare: function () {
+            $("#node-input-currentNodeId").val(this.id);
             initChangeAuthenticationKPIData();
             $("#node-input-authentication").change(function () {
                 initChangeAuthenticationKPIData();
@@ -53,6 +54,7 @@
 
 <script type="text/x-red" data-template-name="save-my-kpidata-values">
     <input type="hidden" id="node-input-name">
+    <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedKPIDataId">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
