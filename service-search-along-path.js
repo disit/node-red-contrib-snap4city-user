@@ -27,6 +27,7 @@ module.exports = function (RED) {
             var path = (msg.payload.path ? msg.payload.path : config.path);
             var categories = (msg.payload.categories ? msg.payload.categories : config.categories);
             var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);
+            var model = (msg.payload.model ? msg.payload.model : config.model);
             var language = (msg.payload.lang ? msg.payload.lang : config.lang);
             const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
@@ -34,8 +35,8 @@ module.exports = function (RED) {
             accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
-            logger.info(encodeURI(uri + "/?selection=wkt:" + path + "&categories=" + categories + "&maxResults=" + maxResults + "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
-            xmlHttp.open("GET", encodeURI(uri + "/?selection=wkt:" + path + "&categories=" + categories + "&maxResults=" + maxResults + "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
+            logger.info(encodeURI(uri + "/?selection=wkt:" + path + "&categories=" + categories + "&maxResults=" + maxResults + "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + (typeof model != "undefined" && model != "" ? "&model=" + model : "") + "&appID=iotapp"));
+            xmlHttp.open("GET", encodeURI(uri + "/?selection=wkt:" + path + "&categories=" + categories + "&maxResults=" + maxResults + "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + (typeof model != "undefined" && model != "" ? "&model=" + model : "") + "&appID=iotapp"), true); // false for synchronous request
             if (typeof accessToken != "undefined" && accessToken != "") {
                 xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
             } else {

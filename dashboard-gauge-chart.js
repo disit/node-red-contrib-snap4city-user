@@ -23,8 +23,8 @@ module.exports = function (RED) {
         const logger = s4cUtility.getLogger(RED, node);
         const uid = s4cUtility.retrieveAppID(RED);
         node.s4cAuth = RED.nodes.getNode(config.authentication);
-        var wsServer = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
-        var wsServerHttpOrigin = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
+        var wsServer = s4cUtility.settingUrl(RED,node, "wsServerUrl", "wss://www.snap4city.org", "/wsserver", true);
+        var wsServerHttpOrigin = s4cUtility.settingUrl(RED,node, "wsServerHttpOrigin", "wss://www.snap4city.org", "", true);
         node.ws = null;
         node.notRestart = false;
         node.name = config.name;
@@ -237,11 +237,11 @@ module.exports = function (RED) {
         node.wsCloseCallback = function (e) {
             logger.warn("Closed WebSocket. Reason: " + e);
             if (!(node.dashboardId != null && node.dashboardId != "")) {
-                node.status({
+                /*node.status({
                     fill: "red",
                     shape: "dot",
-                    text: "No dashboard selected"
-                });
+                    text: "No Dashboard Selected"
+                });*/
                 logger.error("No dashboard selected, dashboard Id: " + node.dashboardId);
             } else {
                 node.status({

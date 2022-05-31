@@ -15,7 +15,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function ImpulseButton(config) {
+    function DashboardEvent(config) {
         RED.nodes.createNode(this, config);
         var node = this;
         var WebSocket = require('ws');
@@ -35,13 +35,69 @@ module.exports = function (RED) {
         node.selectedDashboardId = config.selectedDashboardId;
         node.dashboardId = config.dashboardId;
         node.valueType = config.valueType;
-        node.startValue = config.offValue;
-        node.minValue = null;
-        node.maxValue = null;
-        node.offValue = config.offValue;
-        node.onValue = config.onValue;
-        node.domain = "impulse";
+        node.lastValue = config.minValue;
+		node.domain = config.domainType;
         node.httpRoot = null;
+		node.selected = null;
+
+        node.on('input', function (msg) {
+            logger.debug("Flow input received: " + JSON.stringify(msg));
+
+            var timeout = 0;
+            if ((new Date().getTime() - node.wsStart) > parseInt(RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200) * 1000) {
+                if (node.ws != null) {
+                    node.ws.removeListener('error', node.wsErrorCallback);
+                    node.ws.removeListener('open', node.wsOpenCallback);
+                    node.ws.removeListener('message', node.wsMessageCallback);
+                    node.ws.removeListener('close', node.wsCloseCallback);
+                    node.ws.removeListener('pong', node.wsHeartbeatCallback);
+                    node.notRestart = true;
+                    node.ws.terminate();
+                    node.ws = null;
+                } else {
+                    logger.debug("Why ws is null? I am in node.on('input'");
+                }
+                node.ws = new WebSocket(wsServer, {
+                    origin: wsServerHttpOrigin
+                });
+                node.ws.on('error', node.wsErrorCallback);
+                node.ws.on('open', node.wsOpenCallback);
+                node.ws.on('message', node.wsMessageCallback);
+                node.ws.on('close', node.wsCloseCallback);
+                node.ws.on('pong', node.wsHeartbeatCallback);
+                logger.debug("is reconnetting to open WebSocket");
+                timeout = 1000;
+            }
+
+            node.wsStart = new Date().getTime();
+
+            if (typeof node.widgetUniqueName != "undefined" && node.widgetUniqueName != "") {
+
+                var newMetricData = {
+                    msgType: "SendToEmitter",
+                    widgetUniqueName: node.widgetUniqueName,
+                    dashboardId: node.dashboardId,
+                    value: JSON.stringify(msg.payload)
+                }; 
+
+                setTimeout(function () {
+                    try {
+                        logger.info("Send SendToEmitter to WebSocket: " + newMetricData.value);
+                        logger.debug("Send SendToEmitter to WebSocket: " + JSON.stringify(newMetricData));
+                        node.ws.send(JSON.stringify(newMetricData));
+                    } catch (e) {
+                        logger.error("Error sending data to WebSocket : " + e);
+                    }
+                }, timeout);
+
+                s4cUtility.eventLog(RED, msg, newMetricData, config, "Node-Red", "Dashboard", wsServer, "TX");
+
+
+            } else {
+                node.error("Maybe the dashboardEvent is not created on dashboard");
+                logger.error("Error, the dashboardEvent is not created on dashboard. node.widgetUniqueName: " + node.widgetUniqueName);
+            }
+        });
 
         node.on('close', function (removed, closedDoneCallback) {
             if (removed) {
@@ -79,12 +135,8 @@ module.exports = function (RED) {
                     name: node.name,
                     valueType: node.valueType,
                     user: node.username,
-                    startValue: node.startValue,
+                    startValue: JSON.stringify({"event":[]}),
                     domainType: node.domain,
-                    offValue: node.offValue,
-                    onValue: node.onValue,
-                    minValue: node.minValue,
-                    maxValue: node.maxValue,
                     endPointPort: (RED.settings.externalPort ? RED.settings.externalPort : 1895),
                     endPointHost: (RED.settings.dashInNodeBaseUrl ? RED.settings.dashInNodeBaseUrl : "'0.0.0.0'"),
                     httpRoot: node.httpRoot,
@@ -92,7 +144,7 @@ module.exports = function (RED) {
                     flowId: node.z,
                     flowName: node.flowName,
                     nodeId: node.id,
-                    widgetType: "widgetImpulseButton",
+                    widgetType: "widgetEvent",
                     widgetTitle: node.widgetTitle,
                     dashboardTitle: "",
                     dashboardId: node.dashboardId,
@@ -143,6 +195,11 @@ module.exports = function (RED) {
             switch (response.msgType) {
                 case "AddEmitter":
                     if (response.result === "Ok") {
+
+                        if (response.lastValue) {
+                            node.lastValue = response.lastValue;
+                        }
+
                         logger.info("WebSocket server correctly AddEmitter type: " + response.result);
                         node.status({
                             fill: "green",
@@ -167,6 +224,7 @@ module.exports = function (RED) {
                             node.wsInit();
                         }
                         node.widgetUniqueName = response.widgetUniqueName;
+						node.deliverInitialConfig();
                     } else {
                         logger.error("WebSocket server could not AddEmitter type: " + response.error);
                         node.status({
@@ -196,17 +254,19 @@ module.exports = function (RED) {
                             shape: "dot",
                             text: "connected to " + wsServer
                         });
-
-                        var msg = {
-                            payload: response.newValue
-                        };
-
-                        if (msg.payload == node.onValue) {
-                            node.send([msg, null]);
-                        } else {
-                            node.send([null, msg]);
+                        if (response.newValue) {
+                            try {
+                                node.dropdwonOrderedList = response.newValue.options;
+								node.selected = response.newValue.selected;
+								node.lastValue = response.newValue;
+                                var msg = {
+                                    payload: node.lastValue
+                                };
+                                node.send(msg);
+                            } catch (e) {
+                                logger.error("Problem Parsing data " + response.newValue);
+                            }
                         }
-                        
                         var ackMessage = JSON.stringify({
                             msgType: "DataToEmitterAck",
                             widgetUniqueName: node.widgetUniqueName,
@@ -248,7 +308,7 @@ module.exports = function (RED) {
                     shape: "ring",
                     text: "lost connection from " + wsServer
                 });
-                logger.warn ("Lost connection from "  + wsServer);
+                logger.warn("Lost connection from " + wsServer);
             }
 
             if (node.ws != null) {
@@ -338,6 +398,40 @@ module.exports = function (RED) {
                 node.wsCloseCallback();
             }
         };
+		
+		node.deliverInitialConfig = function() {
+			
+			logger.debug("Delivering initial configuration");
+
+            var timeout = 0;
+            if ((new Date().getTime() - node.wsStart) > parseInt(RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200) * 1000) {
+                if (node.ws != null) {
+                    node.ws.removeListener('error', node.wsErrorCallback);
+                    node.ws.removeListener('open', node.wsOpenCallback);
+                    node.ws.removeListener('message', node.wsMessageCallback);
+                    node.ws.removeListener('close', node.wsCloseCallback);
+                    node.ws.removeListener('pong', node.wsHeartbeatCallback);
+                    node.notRestart = true;
+                    node.ws.terminate();
+                    node.ws = null;
+                } else {
+                    logger.debug("Why ws is null? I am in node.on('input'");
+                }
+                node.ws = new WebSocket(wsServer, {
+                    origin: wsServerHttpOrigin
+                });
+                node.ws.on('error', node.wsErrorCallback);
+                node.ws.on('open', node.wsOpenCallback);
+                node.ws.on('message', node.wsMessageCallback);
+                node.ws.on('close', node.wsCloseCallback);
+                node.ws.on('pong', node.wsHeartbeatCallback);
+                logger.debug("is reconnetting to open WebSocket");
+                timeout = 1000;
+            }
+
+            node.wsStart = new Date().getTime();
+
+		};
 
         //Inizio del "main"
         try {
@@ -348,6 +442,6 @@ module.exports = function (RED) {
 
     }
 
-    RED.nodes.registerType("impulse-button", ImpulseButton);
+    RED.nodes.registerType("dashboardEvent", DashboardEvent);
 
 };

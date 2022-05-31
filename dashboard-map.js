@@ -15,16 +15,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function DashboardCalendarNode(config) {
-        var WebSocket = require('ws');
-        var util = require('util');
-        var s4cUtility = require("./snap4city-utility.js");
-        var uid = s4cUtility.retrieveAppID(RED);
+    function DashboardMap(config) {
         RED.nodes.createNode(this, config);
         var node = this;
+        var WebSocket = require('ws');
+        var s4cUtility = require("./snap4city-utility.js");
+        const logger = s4cUtility.getLogger(RED, node);
+        const uid = s4cUtility.retrieveAppID(RED);
         node.s4cAuth = RED.nodes.getNode(config.authentication);
-        var wsServer = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain.replace("https", "wss").replace("http", "ws") : ( RED.settings.wsServerUrl ? RED.settings.wsServerUrl : "https://www.snap4city.org" )) + "/wsserver";
-        var wsServerHttpOrigin = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.wsServerHttpOrigin ? RED.settings.wsServerHttpOrigin : "https://www.snap4city.org" ));
+        var wsServer = s4cUtility.settingUrl(RED,node, "wsServerUrl", "wss://www.snap4city.org", "/wsserver", true);
+        var wsServerHttpOrigin = s4cUtility.settingUrl(RED,node, "wsServerHttpOrigin", "wss://www.snap4city.org", "", true);
         node.ws = null;
         node.notRestart = false;
         node.name = config.name;
@@ -32,16 +32,20 @@ module.exports = function (RED) {
         node.flowName = config.flowName;
         node.selectedDashboardId = config.selectedDashboardId;
         node.dashboardId = config.dashboardId;
-        node.metricName = "NR_" + node.id.replace(".", "_");
+        node.selectedWidgetId = config.selectedWidgetId;
+        node.widgetId = config.widgetId;
+        node.metricName = "Map";
         node.metricType = config.metricType;
         node.startValue = config.startValue;
         node.metricShortDesc = config.metricName;
         node.metricFullDesc = config.metricName;
         node.httpRoot = null;
-        node.widgetUniqueName = null;
+
+        node.valueType = config.valueType;
+        node.domain = "map";
 
         node.on('input', function (msg) {
-            util.log("Flow input received for dashboard-calendar node " + node.name + ": " + JSON.stringify(msg));
+            logger.debug("Flow input received: " + JSON.stringify(msg));
 
             var timeout = 0;
             if ((new Date().getTime() - node.wsStart) > parseInt(RED.settings.wsReconnectTimeout ? RED.settings.wsReconnectTimeout : 1200) * 1000) {
@@ -55,7 +59,7 @@ module.exports = function (RED) {
                     node.ws.terminate();
                     node.ws = null;
                 } else {
-                    util.log("Why ws is null? I am in node.on('input'")
+                    logger.debug("Why ws is null? I am in node.on('input'");
                 }
                 node.ws = new WebSocket(wsServer, {
                     origin: wsServerHttpOrigin
@@ -65,16 +69,19 @@ module.exports = function (RED) {
                 node.ws.on('message', node.wsMessageCallback);
                 node.ws.on('close', node.wsCloseCallback);
                 node.ws.on('pong', node.wsHeartbeatCallback);
-                util.log("dashboard-calendar node " + node.name + " is reconnetting to open WebSocket");
+                logger.debug("is reconnetting to open WebSocket");
                 timeout = 1000;
             }
             node.wsStart = new Date().getTime();
+            
+            msg.payload.target = node.widgetId;
 
             var newMetricData = {
                 msgType: "AddMetricData",
                 nodeId: node.id,
                 metricName: encodeURIComponent(node.metricName),
                 metricType: node.metricType,
+                widgetUniqueName: node.widgetId,
                 newValue: msg.payload,
                 appId: uid,
                 user: node.username,
@@ -86,8 +93,10 @@ module.exports = function (RED) {
             setTimeout(function () {
                 try {
                     node.ws.send(JSON.stringify(newMetricData));
+                    logger.info("Send AddMetricData to WebSocket: " + newMetricData.newValue);
+                    logger.debug("Send AddMetricData to WebSocket: " + JSON.stringify(newMetricData));
                 } catch (e) {
-                    util.log("Error sending data to WebSocket for dashboard-calendar node " + node.name + ": " + e);
+                    logger.error("Error sending data to WebSocket : " + e);
                 }
             }, timeout);
 
@@ -98,12 +107,12 @@ module.exports = function (RED) {
         node.on('close', function (removed, closedDoneCallback) {
             if (removed) {
                 // Cancellazione nodo
-                util.log("dashboard-calendar node " + node.name + " is being removed from flow");
-
+                logger.debug("is being removed from flow");
                 node.deleteMetric();
+                node.deleteEmitter();
             } else {
                 // Riavvio nodo
-                util.log("dashboard-calendar node " + node.name + " is being rebooted");
+                logger.debug("is being rebooted");
                 node.notRestart = true;
                 node.ws.terminate();
             }
@@ -127,7 +136,7 @@ module.exports = function (RED) {
                     }
                 }
 
-                //Registrazione della nuova metrica presso il Dashboard Manager
+                /* //Registrazione della nuova metrica presso il Dashboard Manager
                 var payload = {
                     msgType: "AddEditMetric",
                     metricName: encodeURIComponent(node.metricName),
@@ -140,31 +149,52 @@ module.exports = function (RED) {
                     appId: uid,
                     flowId: node.z,
                     flowName: node.flowName,
-                    widgetType: "widgetCalendar",
+                    widgetType: "widgetMap",
                     widgetTitle: node.name,
                     dashboardTitle: "",
                     dashboardId: node.dashboardId,
                     httpRoot: node.httpRoot,
-                    accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid),
-                    widgetUniqueName: node.widgetUniqueName
+                    accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
+                }; */
+
+                var payload = {
+                    msgType: "AddEmitter",
+                    name: node.name,
+                    valueType: node.valueType,
+                    user: node.username,
+                    domainType: node.domain,
+                    endPointPort: (RED.settings.externalPort ? RED.settings.externalPort : 1895),
+                    endPointHost: (RED.settings.dashInNodeBaseUrl ? RED.settings.dashInNodeBaseUrl : "'0.0.0.0'"),
+                    httpRoot: node.httpRoot,
+                    appId: uid,
+                    flowId: node.z,
+                    flowName: node.flowName,
+                    nodeId: node.id,
+                    widgetType: "widgetMap",
+                    dashboardTitle: "",
+                    dashboardId: node.dashboardId,
+                    accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
                 };
 
-                //util.log(payload);
+
+                logger.info("AddEmitter sent to WebSocket");
+                //logger.debug("AddEditMetric sent to WebSocket: " + JSON.stringify(payload));
                 if (node.pingInterval == null) {
                     node.pingInterval = setInterval(function () {
-                        //util.log(node.name + "ping");
+                        logger.silly("ping");;
                         if (node.ws != null) {
                             try {
                                 node.ws.ping();
                             } catch (e) {
-                                util.log("Errore on Ping " + e);
+                                logger.debug("Errore on Ping " + e);
                             }
                         }
                     }, 30000);
                 }
 
-                util.log("dashboard-calendar node " + node.name + " IS GOING TO CONNECT WS");
-                if (payload.accessToken != "") {
+                logger.info("is going connect to WS");
+                accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
+                if (accessToken != "") {
                     setTimeout(function () {
                         node.ws.send(JSON.stringify(payload));
                     }, Math.random() * 2000)
@@ -174,32 +204,32 @@ module.exports = function (RED) {
                         shape: "dot",
                         text: "Authentication Problem"
                     });
+                    logger.error("Problem with accessToken: " + accessToken);
                 }
             } else {
                 node.status({
                     fill: "red",
                     shape: "dot",
-                    text: "No dashboard selected"
+                    text: "no dashboard selected"
                 });
+                logger.error("No dashboard selected. Dashboard Id: " + node.dashboardId);
             }
         };
 
         node.wsMessageCallback = function (data) {
             var response = JSON.parse(data);
-            util.log(response);
+            logger.debug("Message received from WebSocket: " + data);
             switch (response.msgType) {
                 case "AddEditMetric":
                     if (response.result === "Ok") {
                         node.widgetUniqueName = response.widgetUniqueName;
-
-                        util.log("WebSocket server correctly added/edited metric type for dashboard-calendar node " + node.name + ": " + response.result);
+                        logger.info("WebSocket server correctly AddEditMetric type: " + response.result);
                         if (node.intervalID != null) {
                             clearInterval(node.intervalID);
                             node.intervalID = null;
                         }
                     } else {
-                        //TBD - CASI NEGATIVI DA FARE
-                        util.log("WebSocket server could not add/edit metric type for dashboard-calendar node " + node.name + ": " + response.result);
+                        logger.error("WebSocket server could not AddEditMetric type: " + response.error);
                         node.status({
                             fill: "red",
                             shape: "dot",
@@ -208,40 +238,111 @@ module.exports = function (RED) {
                         node.error(response.error);
                     }
                     break;
-
+                case "AddEmitter":
+                    if (response.result === "Ok") {
+                        node.widgetUniqueName = response.widgetUniqueName;
+                        logger.info("WebSocket server correctly AddEmitter type: " + response.result);
+                        node.status({
+                            fill: "green",
+                            shape: "dot",
+                            text: "Widget found on dashboard"
+                        });
+                        if (node.intervalID != null) {
+                            clearInterval(node.intervalID);
+                            node.intervalID = null;
+                        }
+                    } else {
+                        logger.error("WebSocket server could not AddEmitter type: " + response.error);
+                        node.status({
+                            fill: "red",
+                            shape: "dot",
+                            text: response.error
+                        });
+                        node.error(response.error);
+                    }
+                    break;
                 case "DelMetric":
                     if (response.result === "Ok") {
-                        util.log("WebSocket server correctly deleted metric type for dashboard-calendar node " + node.name + ": " + response.result);
+                        logger.info("WebSocket server correctly DelMetric type: " + response.result);
                     } else {
-                        //TBD - CASI NEGATIVI DA FARE
-                        util.log("WebSocket server could not delete metric type for dashboard-calendar node " + node.name + ": " + response.result);
+                        logger.info("WebSocket server could not DelMetric type: " + response.result);
                     }
-                    util.log("Closing webSocket server for dashboard-calendar node " + node.name);
+                    logger.info("Closing webSocket server after DelMetric message");
                     node.notRestart = true;
                     node.ws.terminate();
                     break;
+                case "DelEmitter":
+                    if (response.result === "Ok") {
+                        logger.info("WebSocket server correctly DelEmitter type: " + response.result);
+                    } else {
+                        logger.error("WebSocket server could not DelEmitter type: " + response.error);
+                    }
+                    logger.info("Closing webSocket server after DelMetric message");
+                    node.notRestart = true;
+                    node.ws.terminate();
+                    break;
+                case "DataToEmitter":
+                    logger.info("WebSocket server correctly DataToEmitter type: " + response.newValue);
+                    if (response.newValue != "dashboardDeleted") {
+                        
+                        node.status({
+                            fill: "green",
+                            shape: "dot",
+                            text: "connected to " + wsServer
+                        });
 
+                        var msg = {"payload": ""};
+                        try {
+                            msg.payload = JSON.parse(response.newValue.replace(/'/g, "\""));
+                        } catch (e) {
+                            logger.error("Problem Parsing data " + response.newValue);
+                            msg.payload = response.newValue;
+                        }
+                        
+                        node.send(msg);
+
+                        var ackMessage = JSON.stringify({
+                            msgType: "DataToEmitterAck",
+                            widgetUniqueName: node.widgetUniqueName,
+                            result: "Ok",
+                            msgId: response.msgId,
+                            accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
+                        })
+
+                        node.ws.send(ackMessage);
+
+                        logger.debug("DataToEmitterAck sent to WebSocket: " + ackMessage);
+                    } else {
+                        node.status({
+                            fill: "red",
+                            shape: "dot",
+                            text: "Dashboard deleted"
+                        });
+                    }
+                    s4cUtility.eventLog(RED, msg, msg, config, "Node-Red", "Dashboard", RED.settings.httpRoot + node.name, "RX");
+                    break;
                 default:
-                    util.log(response.msgType);
+                    logger.debug(response.msgType);
                     break;
             }
         };
 
         node.wsCloseCallback = function (e) {
-            util.log("dashboard-calendar node " + node.name + " closed WebSocket");
-            util.log("dashboard-calendar closed reason " + e);
+            logger.warn("Closed WebSocket. Reason: " + e);
             if (!(node.dashboardId != null && node.dashboardId != "")) {
-                node.status({
+                /*node.status({
                     fill: "red",
                     shape: "dot",
-                    text: "No dashboard selected"
-                });
+                    text: "No Dashboard Selected"
+                });*/
+                logger.error("No dashboard selected, dashboard Id: " + node.dashboardId);
             } else {
                 node.status({
                     fill: "red",
                     shape: "ring",
                     text: "lost connection from " + wsServer
                 });
+                logger.warn ("Lost connection from "  + wsServer);
             }
 
             if (node.ws != null) {
@@ -252,15 +353,14 @@ module.exports = function (RED) {
                 node.ws.removeListener('pong', node.wsHeartbeatCallback);
                 node.ws = null;
             } else {
-                util.log("Why ws is null? I am in node.wsCloseCallback")
+                logger.debug("Why ws is null? I am in node.wsCloseCallback");                    
             }
 
             var wsServerRetryActive = (RED.settings.wsServerRetryActive ? RED.settings.wsServerRetryActive : "yes");
             var wsServerRetryTime = (RED.settings.wsServerRetryTime ? RED.settings.wsServerRetryTime : 30);
-            //util.log("dashboard-calendar wsServerRetryActive: " + wsServerRetryActive);
-            //util.log("dashboard-calendar node.notRestart: " + node.notRestart);
+            logger.debug("wsServerRetryActive: " + wsServerRetryActive + " node.notRestart: " + node.notRestart);
             if (wsServerRetryActive === 'yes' && !node.notRestart) {
-                util.log("dashboard-calendar node " + node.name + " will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
+                logger.info("will try to reconnect to WebSocket in " + parseInt(wsServerRetryTime) + "s");
                 if (!node.intervalID) {
                     node.intervalID = setInterval(node.wsInit, parseInt(wsServerRetryTime) * 1000);
                 }
@@ -269,12 +369,11 @@ module.exports = function (RED) {
         };
 
         node.wsErrorCallback = function (e) {
-            util.log("dashboard-calendar node " + node.name + " got WebSocket error: " + e);
+            logger.error("got WebSocket error: " + e);
         };
 
         node.deleteMetric = function () {
-            util.log("Deleting metric via webSocket for dashboard-calendar node " + node.name);
-            var newMsg = {
+            var newMsg = JSON.stringify({
                 msgType: "DelMetric",
                 nodeId: node.id,
                 metricName: encodeURIComponent(node.metricName),
@@ -284,28 +383,48 @@ module.exports = function (RED) {
                 flowId: node.z,
                 flowName: node.flowName,
                 accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
-            };
+            });
 
             try {
-                node.ws.send(JSON.stringify(newMsg));
+                node.ws.send(newMsg);
+                logger.info("Deleting metric via webSocket");
+                logger.debug("Deleting metric via webSocket: " + newMsg);
             } catch (e) {
-                util.log("Error deleting metric via webSocket for dashboard-calendar node " + node.name + ": " + e);
+                logger.error("Error deleting metric via webSocket: " + e);
+            } 
+        };
+
+        node.deleteEmitter = function () {
+            var newMsg = JSON.stringify({
+                msgType: "DelEmitter",
+                nodeId: node.id,
+                user: node.username,
+                appId: uid,
+                flowId: node.z,
+                flowName: node.flowName,
+                accessToken: s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid)
+            });
+
+            try {
+                node.ws.send(newMsg);
+                logger.info("DelEmitter via webSocket");
+                logger.debug("DelEmitter via webSocket: " + newMsg);
+            } catch (e) {
+                logger.error("Error DelEmitter via webSocket: " + e);
             }
         };
 
         node.wsHeartbeatCallback = function () {
-
+            logger.silly("heartbeat callback");
         };
-
-
 
         //Lasciare così, sennò va in timeout!!! https://nodered.org/docs/creating-nodes/node-js#closing-the-node
         node.closedDoneCallback = function () {
-            util.log("dashboard-calendar node " + node.name + " has been closed");
+            logger.info("has been closed");
         };
 
         node.wsInit = function (e) {
-            util.log("dashboard-calendar node " + node.name + " is trying to open WebSocket");
+            logger.info("is trying to open WebSocket");
             try {
                 node.status({
                     fill: "yellow",
@@ -323,10 +442,10 @@ module.exports = function (RED) {
                     node.ws.on('pong', node.wsHeartbeatCallback);
                     node.wsStart = new Date().getTime();
                 } else {
-                    util.log("dashboard-calendar node " + node.name + " already open WebSocket");
+                    logger.error("already open WebSocket");
                 }
             } catch (e) {
-                util.log("dashboard-calendar node " + node.name + " could not open WebSocket");
+                logger.error("could not open WebSocket");
                 node.status({
                     fill: "red",
                     shape: "ring",
@@ -340,11 +459,11 @@ module.exports = function (RED) {
         try {
             node.wsInit();
         } catch (e) {
-            util.log("dashboard-calendar node " + node.name + " got main exception connecting to WebSocket");
+            logger.error("got main exception connecting to WebSocket");
         }
 
     }
 
-    RED.nodes.registerType("dashboard-calendar", DashboardCalendarNode);
+    RED.nodes.registerType("dashboard-map",DashboardMap);
 
 };

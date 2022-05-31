@@ -29,6 +29,7 @@ module.exports = function (RED) {
             var categories = (msg.payload.categories ? msg.payload.categories : config.categories);
             var maxDists = (msg.payload.maxdistance ? msg.payload.maxdistance : config.maxdists);
             var maxResults = (msg.payload.maxresults ? msg.payload.maxresults : config.maxresults);
+            var model = (msg.payload.model ? msg.payload.model : config.model);
             var language = (msg.payload.lang ? msg.payload.lang : config.lang);
             const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
@@ -38,10 +39,10 @@ module.exports = function (RED) {
             var xmlHttp = new XMLHttpRequest();
             logger.info(encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=" + categories +
                 "&maxResults=" + maxResults + "&maxDists=" + maxDists +
-                "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"));
+                "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + (typeof model != "undefined" && model != "" ? "&model=" + model : "") + "&appID=iotapp"));
             xmlHttp.open("GET", encodeURI(uri + "/?selection=" + latitude + ";" + longitude + "&categories=" + categories +
                 "&maxResults=" + maxResults + "&maxDists=" + maxDists +
-                "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + "&appID=iotapp"), true); // false for synchronous request
+                "&format=json" + "&lang=" + language + "&geometry=true&fullCount=false" + (typeof uid != "undefined" && uid != "" ? "&uid=" + uid : "") + (typeof model != "undefined" && model != "" ? "&model=" + model : "") + "&appID=iotapp"), true); // false for synchronous request
             if (typeof accessToken != "undefined" && accessToken != "") {
                 xmlHttp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
             } else {

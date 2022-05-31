@@ -26,7 +26,7 @@
 </style>
 
 <script type="text/javascript">
-    RED.nodes.registerType('dashboard-calendar', {
+    RED.nodes.registerType('dashboardEvent', {
         category: 'S4CDashboard',
         color: '#00a2d3',
         defaults: {
@@ -51,29 +51,26 @@
                 value: "",
                 required: true
             },
-            metricType: {
-                value: "Series"
+            valueType: {
+                value: "Testuale",
+                required: true
             },
-            startValue: {
-                value: 0
-            },
-            metricShortDesc: {
-                value: ""
-            },
-            metricFullDesc: {
-                value: ""
+            domainType: {
+                value: "singleNumericValue",
+                required: true
             }
         },
         inputs: 1,
-        outputs: 0,
-        icon: "abc.png",
+        outputs: 1,
+        outputLabels: ["selection"],
+        icon: "event.png",
         label: function () {
-            return this.name || "calendar";
+            return this.name || "events";
         },
         paletteLabel: function () {
-            return this.name || "calendar";
+            return this.name || "events";
         },
-        align: 'right',
+        align: 'left',
         oneditprepare: function () {
             $("#node-input-currentNodeId").val(this.id);
             var accessToken = getDashboardUserInfoAndCreateSelection();
@@ -185,13 +182,13 @@
                                             console.log(e);
                                         }
                                         if (_data.result) {
-                                    if (_data.result.toLowerCase() == "ok") {
-                                        $("#node-input-selectedDashboardId").val(_data.dashboardId);
-                                        getDashboardUserInfoAndCreateSelection();
-                                    } else {
-                                        alert(_data.errormsg);
-                                    }
-                                }
+                                            if (_data.result.toLowerCase() == "ok") {
+                                                $("#node-input-selectedDashboardId").val(_data.dashboardId);
+                                                getDashboardUserInfoAndCreateSelection();
+                                            } else {
+                                                alert(_data.errormsg);
+                                            }
+                                        }
                                     },
                                     error: function (_error) {
                                         console.log(_error);
@@ -207,7 +204,8 @@
                             url: "createDashboard/",
                             type: "POST",
                             async: true,
-                            dataType: "json",data: {
+                            dataType: "json",
+                            data: {
                                 "dashboardTitle": $("#node-input-dashboardTitle").val(),
                                 "authenticationNodeId": $("#node-input-authentication").val(),
                                 "authenticationNodeDomain": RED.nodes.node($("#node-input-authentication").val()).domain
@@ -236,22 +234,17 @@
                     alert("To create a new dashboard you must insert the name of the dashboard");
                 }
             });
-        },
-        oneditsave: function () {
-            $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
+
+
         }
     });
 </script>
 
-
-
-<script type="text/x-red" data-template-name="dashboard-calendar">
-
+<script type="text/x-red" data-template-name="dashboardEvent">
     <input type="hidden" id="node-input-username">
     <input type="hidden" id="node-input-flowName">
     <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedDashboardId">
-    
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">
@@ -295,106 +288,40 @@
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="dashboard-calendar">
-    <p>With this node you can add a calendar to an existing dashboard or a new one created by the node to show a calendar.
+<script type="text/x-red" data-help-name="dashboardEvent">
+    <p>With this node you can add a dashboardEvent to an existing dashboard or a new one created by the node to select numbers in an
+        interval.
     </p>
 
-    <h3>Configurations</h3>
+    <h3>Configuration</h3>
 
     <dl class="message-properties">
         <dt>dashboard
             <span class="property-type">string</span>
         </dt>
-        <dd>Dashboard title to which the calendar will be added</dd>
+        <dd>Dashboard title to which the dashboardEvent will be added</dd>
         <dt>widget
             <span class="property-type">string</span>
         </dt>
-        <dd> Title that will have the widget containing the calendar.</dd>
+        <dd> Title that will have the widget containing the dashboardEvent.</dd>
+        
     </dl>
 
     <h3>Inputs</h3>
-    <dl class="message-properties">
-        A JSON array like the following:
-        <pre>
-[
-    {
-        "metricId": [Service Uri Of A Sensor],
-        "metricHighLevelType": "Sensor",
-        "metricName": [The name of the Sensor],
-        "smField": [A measure recorded by the sensor],
-        "serviceUri": [Service Uri Of A Sensor]
-    },
-    {
-        "metricId": [The ID of a KPI],
-        "metricHighLevelType": "MyKPI",
-        "metricName": [The name of the MyKPI],
-        "smField": [The type of the measure saved in the KPI],
-        "serviceUri": [The ID of a KPI]
-    },
-    {
-        "metricId": "",
-        "metricHighLevelType": "Dynamic",
-        "metricName": [The name of the dynamic data],
-        "smField": [The type of the dynamic data],
-        "metricValueUnit": [The unit of the dynamic data],
-        "value": [An array of array of timestamp and value]
-    }
-]
-        </pre>
 
-    <p>You can insert an arbitrary number of MyKPI and Sensor element inside the array.
-    An example of the JSON array filled with correct data:</p>
+The node accepts in input JSON objects shaped as follows:
 
-        <pre>
-[
-    {
-        "metricId": "serviceUri=http://www.disit.org/km4city/resource/IBIMET_SMART17",
-        "metricHighLevelType": "Sensor",
-        "metricName": "IBIMET_SMART12",
-        "smField": "PM10",
-        "serviceUri": "http://www.disit.org/km4city/resource/IBIMET_SMART17"
-    },
-    {
-        "metricId": "https://servicemap.disit.org/WebAppGrafo/api/v1/?serviceUri=http://www.disit.org/km4city/resource/IBIMET_SMART12&format=json",
-        "metricHighLevelType": "Sensor",
-        "metricName": "IBIMET_SMART12",
-        "smField": "PM10",
-        "serviceUri": "http://www.disit.org/km4city/resource/IBIMET_SMART12"
-    },
-    {
-        "metricId": "17056191",
-        "metricHighLevelType": "MyKPI",
-        "metricName": "S4CTuscanyTrackerLocation",
-        "smField": "GPS Information Saved From The App",
-        "serviceUri": "17056191"
-    },
-    {
-        "metricId": "",
-        "metricHighLevelType": "Dynamic",
-        "metricName": "BatteryTemperatureGalaxyNote",
-        "smField": "Gradi Centigradi",
-        "metricValueUnit": "°C",
-        "values": [
-                    [1580305500000, 19.5],
-                    [1580301900000, 20.0],
-                    [1580298300000, 20.5],
-                    [1580294700000, 18.5],
-                    [1580291100000, 19],
-                    [1580287500000, 18.5],
-                    [1580283900000, 21.5],
-                    [1580280300000, 22.0],
-                    [1580276700000, 19],
-                    [1580273100000, 17.5],
-                    [1580269500000, 16.5],
-                    [1580265900000, 17.0],
-                    [1580262300000, 18.5],
-                    [1580258700000, 20.0],
-                    [1580255100000, 19.5],
-                    [1580251500000, 21.5],
-                    [1580247900000, 21]
-        ]
-    }
-]
-        </pre>
-    </dl>
+<pre>
+     configuration:{
+            ordering: 0,
+            prefix: "http://www.disit.org/km4city/resource/iot/orionUNIFI/DISIT/",
+            devices: ["Alarm001", "Car001"],
+            actions: ["pin", "action1"],
+            columnsToShow:["startDate", "endDate"]
+        }
+</pre>
+
+    <h3>Outputs</h3>
+    The node produces in output the payload of the received message (the hidden value associated with the writing that the user has clicked on the widget).
+
 </script>

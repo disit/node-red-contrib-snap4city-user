@@ -20,18 +20,30 @@ module.exports = function (RED) {
         var node = this;
         node.selectedDeviceDataId = config.selectedDeviceDataId;
         node.deviceId = config.deviceId;
-        node.usernamedelegated = config.delegated;
+        
+        node.deviceDataList = config.deviceDataList ? JSON.parse(config.deviceDataList): [];
+        node.usernamedelegated = config.delegatedUser;
+        node.groupdelegated = config.delegatedGroup;
 
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var deviceId = (msg.payload.id ? msg.payload.id : node.deviceId);
-
             if (deviceId) {
+                var selectedDevice = null;
+                for (var i = 0; i < node.deviceDataList.length;i++){
+                    if (node.deviceDataList[i].elementId == deviceId){
+                        selectedDevice = node.deviceDataList[i];
+                    }
+                }
+            }
+
+            if (selectedDevice) {
                 node.s4cAuth = RED.nodes.getNode(config.authentication);
-                var uri = s4cUtility.settingUrl(RED,node, "myPersonalDataUrl", "https://www.snap4city.org", "/datamanager/api/v1/") + "username/" + (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase() + "/delegation";
+                var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/api/device.php");
                 var usernamedelegated = (msg.payload.usernamedelegated ? msg.payload.usernamedelegated : node.usernamedelegated);
+                var groupdelegated = (msg.payload.groupdelegated ? msg.payload.groupdelegated : node.groupdelegated);
                 var inPayload = msg.payload;
                 var accessToken = "";
 
@@ -40,8 +52,8 @@ module.exports = function (RED) {
                 if (accessToken != "" && typeof accessToken != "undefined") {
                     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                     var xmlHttp = new XMLHttpRequest();
-                    xmlHttp.open("POST", encodeURI(uri + "/?sourceRequest=iotapp"), true);
-                    logger.info(encodeURI(uri + "/?sourceRequest=iotapp"));
+                    logger.info(encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"));
+                    xmlHttp.open("GET", encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"), true);
                     xmlHttp.setRequestHeader("Content-Type", "application/json");
                     xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                     xmlHttp.onload = function (e) {
@@ -73,19 +85,7 @@ module.exports = function (RED) {
                         node.error(xmlHttp.responseText);
                     };
 
-                    logger.debug(JSON.stringify({
-                        "usernameDelegated": (usernamedelegated != "ANONYMOUS") ?  usernamedelegated.toLowerCase() : usernamedelegated,
-                        "usernameDelegator": (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase(),
-                        "elementId": deviceId,
-                        "elementType": "IOTID"
-                    }));
-
-                    xmlHttp.send(JSON.stringify({
-                        "usernameDelegated": (usernamedelegated != "ANONYMOUS") ?  usernamedelegated.toLowerCase() : usernamedelegated,
-                        "usernameDelegator": (s4cUtility.retrieveCurrentUser(RED, node, config.authentication)).toLowerCase(),
-                        "elementId": deviceId,
-                        "elementType": "IOTID"
-                    }));
+                    xmlHttp.send(null);
 
                 } else {
                     node.error("Open the configuration of the node and redeploy");

@@ -24,10 +24,16 @@
             deviceId: {
                 value: ""
             },
+            deviceDataList: {
+                value: "{}"
+            },
             selectedDeviceDataId: {
                 value: ""
             },
-            delegated: {
+            delegatedUser: {
+                value: ""
+            },
+            delegatedGroup: {
                 value: ""
             },
             authentication: {
@@ -111,6 +117,8 @@
 
     var createDeviceDataSelection = function (currentDeviceDataList) {
         console.log(currentDeviceDataList);
+        $("#node-input-deviceDataList").val(JSON.stringify(currentDeviceDataList));
+        
         currentDeviceDataList.sort(function (a, b) {
             if (a.elementName < b.elementName) { return -1; }
             if (a.elementName > b.elementName) { return 1; }
@@ -132,6 +140,7 @@
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedDeviceDataId">
+    <input type="hidden" id="node-input-deviceDataList">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">
@@ -143,8 +152,12 @@
         </select>
     </div>
     <div class="form-row">
-        <label for="node-input-delegated">Delegated</label>
-        <input type="text" id="node-input-delegated" placeholder="Username Delegated">
+        <label for="node-input-delegatedUser">User Delegated</label>
+        <input type="text" id="node-input-delegatedUser" placeholder="Username Delegated">
+    </div>
+    <div class="form-row">
+        <label for="node-input-delegatedGroup">Group Delegated</label>
+        <input type="text" id="node-input-delegatedGroup" placeholder="Group Delegated">
     </div>
     <div class="form-tips"  id="tipAuthentication" style="max-width: none">
 		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
@@ -175,6 +188,10 @@
             <span class="property-type">string</span>
         </dt>
         <dd> Username of the person to be delegated to view the device
+        <dt>groupdelegated
+            <span class="property-type">string</span>
+        </dt>
+        <dd> Group to be delegated to view the device
     </dl>
 
     <p>An example of the JSON array filled with correct data:</p>

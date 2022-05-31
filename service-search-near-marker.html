@@ -60,6 +60,10 @@
         </select>
     </div>
     <div class="form-row">
+        <label for="node-input-model">Model</label>
+        <input type="text" autocomplete="off" id="node-input-model" placeholder="Model">
+    </div>
+    <div class="form-row">
         <label for="node-input-latitude">Latitude</label>
         <input type="text" autocomplete="off" id="node-input-latitude" placeholder="Latitude" disabled>
     </div>
@@ -149,6 +153,10 @@
             },
             categories: {
                 value: "Service",
+                required: false
+            },
+            model: {
+                value: "",
                 required: false
             },
             maxdists: {
