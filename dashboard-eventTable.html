@@ -65,10 +65,10 @@
         outputLabels: ["selection"],
         icon: "event.png",
         label: function () {
-            return this.name || "events";
+            return this.name || "event table";
         },
         paletteLabel: function () {
-            return this.name || "events";
+            return this.name || "event table";
         },
         align: 'left',
         oneditprepare: function () {
@@ -234,8 +234,9 @@
                     alert("To create a new dashboard you must insert the name of the dashboard");
                 }
             });
-
-
+        },
+        oneditsave: function () {
+            $("#node-input-selectedDashboardId").val($("#node-input-dashboardId").val());
         }
     });
 </script>
@@ -312,16 +313,25 @@
 The node accepts in input JSON objects shaped as follows:
 
 <pre>
-     configuration:{
-            ordering: 0,
-            prefix: "http://www.disit.org/km4city/resource/iot/orionUNIFI/DISIT/",
-            devices: ["Alarm001", "Car001"],
-            actions: ["pin", "action1"],
-            columnsToShow:["startDate", "endDate"]
-        }
+    msg.payload = {
+            "ordering": "startDate",
+            "prefix": "http://www.disit.org/km4city/resource/iot/orionUNIFI/DISIT/",
+            "devices": ["Alarm001", "Car001", "Velox001"],
+            "actions": ["pin", "action1"],
+            "columnsToShow":["device", "startDate", "endDate"]
+    }
 </pre>
 
     <h3>Outputs</h3>
-    The node produces in output the payload of the received message (the hidden value associated with the writing that the user has clicked on the widget).
+    The node produces in output the payload of the received message as follows.
+
+    <pre>
+  msg.payload = {
+            device:"Alarm001",
+            prefix:"http://www.disit.org/km4city/resource/iot/orionUNIFI/DISIT/",
+            ordering:"startDate",
+            action:"pin"
+  }
+</pre>
 
 </script>

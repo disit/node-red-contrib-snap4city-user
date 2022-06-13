@@ -262,7 +262,9 @@ module.exports = function (RED) {
                                 var msg = {
                                     payload: node.lastValue
                                 };
-                                node.send(msg);
+                                if((JSON.parse(node.lastValue)).device){
+                                    node.send(msg);
+                                }
                             } catch (e) {
                                 logger.error("Problem Parsing data " + response.newValue);
                             }
