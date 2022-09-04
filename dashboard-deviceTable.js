@@ -15,7 +15,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function DasbhoardDropdown(config) {
+    function DashboardDevice(config) {
         RED.nodes.createNode(this, config);
         var node = this;
         var WebSocket = require('ws');
@@ -37,7 +37,6 @@ module.exports = function (RED) {
         node.valueType = config.valueType;
         node.lastValue = config.minValue;
 		node.domain = config.domainType;
-        node.dropdwonOrderedList = config.dropdownOrderedList;
         node.httpRoot = null;
 		node.selected = null;
 
@@ -74,34 +73,6 @@ module.exports = function (RED) {
 
             if (typeof node.widgetUniqueName != "undefined" && node.widgetUniqueName != "") {
 
-                /* var currentDropdownOrderedList = [];
-
-                if (typeof msg.payload.options != "undefined" && msg.payload.options != "") {
-                    for (var i = 0; i < msg.payload.options.length; i++) {                        
-						for (var j = 0; j < node.dropdwonOrderedList.length; j++) {
-                            if (node.dropdwonOrderedList[j].label == msg.payload.options[i].label) {
-                                node.dropdwonOrderedList[j].value = msg.payload.options[i].value;
-                            }
-                        }
-                    }
-                }
-
-                for (var i = 0; i < node.dropdwonOrderedList.length; i++) {
-                    if (node.dropdwonOrderedList[i].value != "") {
-                        currentDropdownOrderedList.push([node.dropdwonOrderedList[i].label, node.dropdwonOrderedList[i].value]);
-                    }
-                }
-				
-				var objectToBeSent = {};
-				if (typeof msg.payload.options != "undefined" && msg.payload.options != "") {
-					objectToBeSent.options = currentDropdownOrderedList;					
-				}
-				if (typeof msg.payload.valueSelected != "undefined" && msg.payload.valueSelected != "") {
-					objectToBeSent.valueSelected = msg.payload.valueSelected;
-				}
-				*/
-				node.dropdownOrderedList = msg.payload.options;
-				node.selected = msg.payload.selected;
                 var newMetricData = {
                     msgType: "SendToEmitter",
                     widgetUniqueName: node.widgetUniqueName,
@@ -123,8 +94,8 @@ module.exports = function (RED) {
 
 
             } else {
-                node.error("Maybe the dropdown is not created on dashboard");
-                logger.error("Error, the dropdown is not created on dashboard. node.widgetUniqueName: " + node.widgetUniqueName);
+                node.error("Maybe the dashboardDevice is not created on dashboard");
+                logger.error("Error, the dashboardDevice is not created on dashboard. node.widgetUniqueName: " + node.widgetUniqueName);
             }
         });
 
@@ -164,12 +135,8 @@ module.exports = function (RED) {
                     name: node.name,
                     valueType: node.valueType,
                     user: node.username,
-                    startValue: JSON.stringify({"options":node.selectedDashboardId, selected:""}),
+                    startValue: JSON.stringify({"device":[]}),
                     domainType: node.domain,
-                    offValue: node.offValue,
-                    onValue: node.onValue,
-                    minValue: node.minValue,
-                    maxValue: node.maxValue,
                     endPointPort: (RED.settings.externalPort ? RED.settings.externalPort : 1895),
                     endPointHost: (RED.settings.dashInNodeBaseUrl ? RED.settings.dashInNodeBaseUrl : "'0.0.0.0'"),
                     httpRoot: node.httpRoot,
@@ -177,7 +144,7 @@ module.exports = function (RED) {
                     flowId: node.z,
                     flowName: node.flowName,
                     nodeId: node.id,
-                    widgetType: "widgetMultiChoice",
+                    widgetType: "widgetDeviceTable",
                     widgetTitle: node.widgetTitle,
                     dashboardTitle: "",
                     dashboardId: node.dashboardId,
@@ -295,7 +262,9 @@ module.exports = function (RED) {
                                 var msg = {
                                     payload: node.lastValue
                                 };
-                                node.send(msg);
+                                if(!((JSON.parse(node.lastValue)).devices)){
+                                    node.send(msg);
+                                }
                             } catch (e) {
                                 logger.error("Problem Parsing data " + response.newValue);
                             }
@@ -464,35 +433,6 @@ module.exports = function (RED) {
 
             node.wsStart = new Date().getTime();
 
-            if (typeof node.widgetUniqueName != "undefined" && node.widgetUniqueName != "") {
-
-                if(node.dropdwonOrderedList.length > 0) {
-
-					var newMetricData = {
-						msgType: "SendToEmitter",
-						widgetUniqueName: node.widgetUniqueName,
-						dashboardId: node.dashboardId,
-						value: JSON.stringify({ "options": node.dropdwonOrderedList, "selected": "" })
-					};
-
-					setTimeout(function () {
-						try {
-							logger.info("Send SendToEmitter to WebSocket: " + newMetricData.value);
-							logger.debug("Send SendToEmitter to WebSocket: " + JSON.stringify(newMetricData));
-							node.ws.send(JSON.stringify(newMetricData));
-						} catch (e) {
-							logger.error("Error sending data to WebSocket : " + e);
-						}
-					}, timeout);
-
-					s4cUtility.eventLog(RED, node.dropdwonOrderedList, newMetricData, config, "Node-Red", "Dashboard", wsServer, "TX");
-				}
-
-			} else {
-				node.error("Maybe the dropdown is not created on dashboard");
-				logger.error("Error, the dropdown is not created on dashboard. node.widgetUniqueName: " + node.widgetUniqueName);
-			}
-						
 		};
 
         //Inizio del "main"
@@ -504,6 +444,6 @@ module.exports = function (RED) {
 
     }
 
-    RED.nodes.registerType("dropdown", DasbhoardDropdown);
+    RED.nodes.registerType("dashboardDevice", DashboardDevice);
 
 };

@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.9.22",
+    "version": "0.9.27",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
@@ -66,7 +66,11 @@
     ],
     "license": "AGPL-3.0-or-later",
     "homepage": "https://github.com/disit/node-red-contrib-snap4city-user",
+	"bugs": {
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSfDQtKqgLIIyycNXiazeYEh1SsRG1YL8Ze4ThD8nZoA5jsoXw/viewform"
+	},
     "node-red": {
+		"version": ">=0.17.0",
         "nodes": {
             "service-search-near-marker": "service-search-near-marker.js",
             "service-search-within-circle": "service-search-within-circle.js",
@@ -135,6 +139,7 @@
             "dashboard-switch-button": "dashboard-switch-button.js",
             "dashboard-dimmer": "dashboard-dimmer.js",
             "dashboard-eventTable": "dashboard-eventTable.js",
+			"dashboard-deviceTable": "dashboard-deviceTable.js",
             "dashboard-geolocator": "dashboard-geolocator.js",
             "dashboard-dropdown": "dashboard-dropdown.js",
             "dashboard-form": "dashboard-form.js",

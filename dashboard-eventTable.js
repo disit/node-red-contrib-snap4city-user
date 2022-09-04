@@ -262,7 +262,7 @@ module.exports = function (RED) {
                                 var msg = {
                                     payload: node.lastValue
                                 };
-                                if((JSON.parse(node.lastValue)).device){
+                                if(!((JSON.parse(node.lastValue)).devices)){
                                     node.send(msg);
                                 }
                             } catch (e) {
