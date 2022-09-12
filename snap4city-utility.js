@@ -148,23 +148,27 @@ module.exports = {
         if (fs.existsSync('/data/refresh_token') && response == "") {
             var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
             var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
-            var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
+            var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             //console.log("Retrieve token from:" + encodeURI(url));
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             xmlHttp.send(params);
-            if (xmlHttp.responseText != "") {
-                try {
-                    response = JSON.parse(xmlHttp.responseText);
-                } catch (e) {}
-            }
-            if (response != "") {
-                fs.writeFileSync('/data/refresh_token', response.refresh_token);
-                response =  response.access_token;
-            }
-        }
+			if(xmlHttp.status!=200) {
+				console.log("FAILED " +url+"\n"+params+"\n\n"+xmlHttp.responseText);
+			} else {
+				if (xmlHttp.responseText != "") {
+					try {
+						response = JSON.parse(xmlHttp.responseText);
+					} catch (e) {}
+				}
+				if (response != "") {
+					fs.writeFileSync('/data/refresh_token', response.refresh_token);
+					response =  response.access_token;
+				}
+			}
+		}
         return response;
     },
 

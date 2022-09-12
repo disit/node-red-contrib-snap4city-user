@@ -95,7 +95,7 @@ module.exports = function (RED) {
 
 
     RED.httpAdmin.get('/myPersonalDataUrl', function (req, res) {
-        var myPersonalDataUrl = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/") + "/datamanager/api/v1/";
+        var myPersonalDataUrl = (RED.settings.myPersonalDataUrl ? RED.settings.myPersonalDataUrl : "https://www.snap4city.org/datamanager/api/v1/");
         res.send({
             "myPersonalDataUrl": myPersonalDataUrl
         });

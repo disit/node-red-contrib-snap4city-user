@@ -169,13 +169,6 @@ module.exports = function (RED) {
     RED.nodes.registerType("iotdirectory-new-device-from-model", NewDeviceFromModel);
 
 
-    RED.httpAdmin.get('/iotDirectoryUrl', function (req, res) {
-        var iotDirectoryUrl = (RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/ ");
-        res.send({
-            "iotDirectoryUrl": iotDirectoryUrl
-        });
-    });
-
     RED.httpAdmin.get('/myModelDataList', RED.auth.needsPermission('iotdirectory-new-device-from-model.read'), function (req, res) {
         var s4cUtility = require("./snap4city-utility.js");
         var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
