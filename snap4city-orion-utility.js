@@ -219,7 +219,8 @@ module.exports = {
         var xmlHttp = new XMLHttpRequest();	
         var s4cUtility = require("./snap4city-utility.js");
         node.s4cAuth = RED.nodes.getNode(node.service.authentication);
-        var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/api/");
+
+		var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/") + "api/";
         if (accessToken != "" && typeof accessToken != "undefined") {
 			xmlHttp.open("GET", encodeURI(uri + "contextbroker.php?action=get_all_contextbroker&nodered=yes"), false);
 			xmlHttp.setRequestHeader("Content-Type", "application/json");

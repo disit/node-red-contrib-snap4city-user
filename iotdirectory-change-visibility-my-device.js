@@ -15,21 +15,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function DelegateMyDevice(config) {
+    function ChangeVisibilityMyDevice(config) {
         RED.nodes.createNode(this, config);
         var node = this;
         node.selectedDeviceDataId = config.selectedDeviceDataId;
         node.deviceId = config.deviceId;
         
         node.deviceDataList = config.deviceDataList ? JSON.parse(config.deviceDataList): [];
-        node.usernamedelegated = config.delegatedUser;
-        node.groupdelegated = config.delegatedGroup;
 
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var deviceId = (msg.payload.id ? msg.payload.id : node.deviceId);
+			var visibility = (msg.payload.visibility ? msg.payload.visibility : config.visibility);
             if (deviceId) {
                 var selectedDevice = null;
                 for (var i = 0; i < node.deviceDataList.length;i++){
@@ -42,8 +41,6 @@ module.exports = function (RED) {
             if (selectedDevice) {
                 node.s4cAuth = RED.nodes.getNode(config.authentication);
                 var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/") + "api/device.php";
-                var usernamedelegated = (msg.payload.usernamedelegated ? msg.payload.usernamedelegated : node.usernamedelegated);
-                var groupdelegated = (msg.payload.groupdelegated ? msg.payload.groupdelegated : node.groupdelegated);
                 var inPayload = msg.payload;
                 var accessToken = "";
 
@@ -52,9 +49,9 @@ module.exports = function (RED) {
                 if (accessToken != "" && typeof accessToken != "undefined") {
                     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                     var xmlHttp = new XMLHttpRequest();
-                    logger.info(encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"));
-                    xmlHttp.open("GET", encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"), true);
-                    xmlHttp.setRequestHeader("Content-Type", "application/json");
+                    logger.info(encodeURI(uri + "?action=change_visibility&visibility="+visibility+"&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"));
+					xmlHttp.open("POST", encodeURI(uri + "?action=change_visibility&visibility="+visibility+"&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"), true);
+					xmlHttp.setRequestHeader("Content-Type", "application/json");
                     xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                     xmlHttp.onload = function (e) {
                         if (xmlHttp.readyState === 4) {
@@ -92,10 +89,11 @@ module.exports = function (RED) {
                 }
             } else {
                 node.error("Device ID not configured or sent to input");
+
             }
         });
     }
 
-    RED.nodes.registerType("delegate-my-device", DelegateMyDevice);
+    RED.nodes.registerType("change-visibility-my-device", ChangeVisibilityMyDevice);
     
 }

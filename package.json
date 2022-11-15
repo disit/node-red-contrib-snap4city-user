@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.9.31",
+    "version": "0.9.39",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
@@ -132,6 +132,7 @@
             "iotdirectory-new-device-from-model": "iotdirectory-new-device-from-model.js",
             "iotdirectory-delegate-my-device": "iotdirectory-delegate-my-device.js",
             "iotdirectory-get-my-devices": "iotdirectory-get-my-devices.js",
+			"iotdirectory-change-visibility-my-device": "iotdirectory-change-visibility-my-device.js",
             "change-ownership-my-device": "change-ownership-my-device.js",
             "dashboard-coordinates-from-map": "dashboard-coordinates-from-map.js",
             "dashboard-impulse-button": "dashboard-impulse-button.js",

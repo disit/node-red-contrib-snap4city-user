@@ -935,7 +935,7 @@ module.exports = function (RED) {
 		}
 
 		if (typeof node.deviceLongId != "undefined") {
-			node.s4cAuth = RED.nodes.getNode(config.authentication);
+			node.s4cAuth = RED.nodes.getNode(node.service.authentication);
 			var uri = s4cUtility.settingUrl(RED,node, "myPersonalDataUrl", "https://www.snap4city.org", "/datamanager/api/v1/") + "";
 			if (accessToken != "" && typeof accessToken != "undefined") {
 				xmlHttp.open("POST", encodeURI(uri + "/lightactivities/?elementType=IOTID&sourceRequest=iotapp&sourceId=" + iotappid + "&elementId=" + node.deviceLongId), true);

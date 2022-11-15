@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/javascript">
-    RED.nodes.registerType('change-ownership-my-device', {
+    RED.nodes.registerType('change-visibility-my-device', {
         category: 'S4CIoT',
         color: '#a6bbcf',
         defaults: {
@@ -24,16 +24,13 @@
             deviceId: {
                 value: ""
             },
-            deviceName: {
-                value: ""
-            },
-			currentDeviceDataList: {
+            deviceDataList: {
                 value: "{}"
             },
-            selectedDeviceDataId: {
+            visibility: {
                 value: ""
             },
-            delegated: {
+            selectedDeviceDataId: {
                 value: ""
             },
             authentication: {
@@ -45,7 +42,7 @@
         inputs: 1,
         icon: "white-globe.png",
         label: function () {
-            return this.name || "change-ownership-my-device";
+            return this.name || "change-visibility-my-device";
         },
         oneditprepare: function () {
             $("#node-input-currentNodeId").val(this.id);
@@ -73,18 +70,18 @@
                 }
             });
 
-            refreshDeviceDataSelection1(accessToken, deviceDataList);
+            refreshDeviceDataSelection(accessToken, deviceDataList);
         },
         oneditsave: function () {
             $("#node-input-selectedDeviceDataId").val($("#node-input-deviceId").val());
-            $("#node-input-name").val("Change ownership my device " + $("#node-input-deviceId").val().split("-")[1]);
+            $("#node-input-name").val("Change visibility my device" + $("#node-input-deviceId").val());
         }
     });
 
-    var refreshDeviceDataSelection1 = function (accessToken, deviceDataList) {
+    var refreshDeviceDataSelection = function (accessToken, deviceDataList) {
         $("#node-input-deviceId").empty();
         if (deviceDataList != "") {
-            createDeviceDataSelection1(deviceDataList);
+            createDeviceDataSelection(deviceDataList);
         } else if (accessToken != "" && deviceDataList == "") {
             $.ajax({
                 url: "ownershipUrl",
@@ -97,13 +94,13 @@
                     }
                     $.ajax({
                         url: _data.ownershipUrl +
-                            "v1/list/?type=IOTID&onlyMine=true&accessToken=" +
+                            "v1/list/?type=IOTID&accessToken=" +
                             accessToken,
                         type: "GET",
                         async: true,
                         dataType: "json",
                         success: function (_data) {
-                            createDeviceDataSelection1(_data);
+                            createDeviceDataSelection(_data);
                         },
                         error: function (err) {
                             console.log(err);
@@ -115,8 +112,10 @@
 
     }
 
-    var createDeviceDataSelection1 = function (currentDeviceDataList) {
+    var createDeviceDataSelection = function (currentDeviceDataList) {
         console.log(currentDeviceDataList);
+        $("#node-input-deviceDataList").val(JSON.stringify(currentDeviceDataList));
+        
         currentDeviceDataList.sort(function (a, b) {
             if (a.elementName < b.elementName) { return -1; }
             if (a.elementName > b.elementName) { return 1; }
@@ -127,22 +126,18 @@
             var currentValue = $("#node-input-selectedDeviceDataId").val();
 
             for (var i = 0; i < currentDeviceDataList.length; i++) {
-                $("<option value='" + currentDeviceDataList[i].elementId + "-" + currentDeviceDataList[i].elementName + "'>" + currentDeviceDataList[i].elementName + "</option>").appendTo($("#node-input-deviceId"));
-
+                $("<option value='" + currentDeviceDataList[i].elementName + "'>" + currentDeviceDataList[i].elementName + "</option>").appendTo($("#node-input-deviceId"));
             }
             $("#node-input-deviceId").val(currentValue);
-	$("#node-input-currentDeviceDataList").val(JSON.stringify(currentDeviceDataList));
-        
-
         }
     }
 </script>
 
-<script type="text/x-red" data-template-name="change-ownership-my-device">
+<script type="text/x-red" data-template-name="change-visibility-my-device">
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-currentNodeId">
-	<input type="hidden" id="node-input-selectedDeviceDataId">
-	<input type="hidden" id="node-input-currentDeviceDataList">
+    <input type="hidden" id="node-input-selectedDeviceDataId">
+    <input type="hidden" id="node-input-deviceDataList">
     <div class="form-row" id="rowAuthentication">
         <label for="node-input-authentication">Authentication</label>
         <input type="text" id="node-input-authentication">
@@ -153,9 +148,12 @@
         <select id="node-input-deviceId" style="width: 55%;">
         </select>
     </div>
-    <div class="form-row">
-        <label for="node-input-delegated">New Ownership</label>
-        <input type="text" id="node-input-delegated" placeholder="New Ownership">
+	<div class="form-row">
+        <label for="node-input-visibility">Visibility</label>
+        <select id="node-input-visibility">
+            <option value="public">public</option>
+            <option value="private">private</option>
+        </select>
     </div>
     <div class="form-tips"  id="tipAuthentication" style="max-width: none">
 		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
@@ -171,34 +169,34 @@
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="change-ownership-my-device">
-    <p>It allows to change ownership a device.</p>
+<script type="text/x-red" data-help-name="change-visibility-my-device">
+    <p>It allows to change visibility for a device.</p>
 
     <h3>Inputs</h3>
     A JSON with these parameters:
 
     <dl class="message-properties">
-        <dt>deviceId
+        <dt>id
             <span class="property-type">string</span>
         </dt>
-        <dd> the id of the device (you MUST have the ownership of the device)</dd>
-		<dt>newownership
+        <dd> the nome of the kpi device (you MUST have the ownership of the device)</dd>
+        <dt>visibility
             <span class="property-type">string</span>
         </dt>
-        <dd> Username of the person to be the new owner of the device
+        <dd> public or private
     </dl>
 
     <p>An example of the JSON array filled with correct data:</p>
     <pre>
 {
-    "deviceId": "deviceId",
-    "newownership": "username",
+    "id": "nameDevice",
+    "visibility": "private"
 }
     </pre>
 
     <h3>Outputs</h3>
     <dl class="message-properties">
-        <dd> Returns an object containing the change ownership</dd>
+        <dd> Returns an object containing the visibility</dd>
     </dl>
 
     <h3>Details</h3>

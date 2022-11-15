@@ -154,6 +154,11 @@ module.exports = {
             //console.log("Retrieve token from:" + encodeURI(url));
             xmlHttp.open("POST", encodeURI(url), false);
             xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+			xmlHttp.onerror = function (e) {
+                    console.log("ERROR retrieveAccessToken: "+JSON.stringify(e));
+					console.log("ERROR retrieveAccessToken: "+JSON.stringify(xmlHttp.responseText))
+					console.log("ERROR retrieveAccessToken: "+JSON.stringify(xmlHttp.statusText))
+                    };
             xmlHttp.send(params);
 			if(xmlHttp.status!=200) {
 				console.log("FAILED " +url+"\n"+params+"\n\n"+xmlHttp.responseText);
@@ -161,13 +166,17 @@ module.exports = {
 				if (xmlHttp.responseText != "") {
 					try {
 						response = JSON.parse(xmlHttp.responseText);
-					} catch (e) {}
+					} catch (e) {
+						console.log("xmlHttp.responseText != ''"+JSON.stringify(e))
+						console.log("xmlHttp.responseText != ''"+JSON.stringify(xmlHttp.responseText))
+					}
 				}
 				if (response != "") {
 					fs.writeFileSync('/data/refresh_token', response.refresh_token);
 					response =  response.access_token;
 				}
 			}
+			
 		}
         return response;
     },

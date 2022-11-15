@@ -38,9 +38,9 @@ module.exports = function (RED) {
                 var xmlHttp = new XMLHttpRequest();
                 var xmlHttp2 = new XMLHttpRequest();
                 node.s4cAuth = RED.nodes.getNode(config.authentication);
-                var uri = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/";
-                logger.info(encodeURI(uri + "/api/model.php?action=get_model&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&name=" + model + "&nodered=yes"));
-                xmlHttp.open("POST", encodeURI(uri + "/api/model.php?action=get_model&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&name=" + model + "&nodered=yes"), true);
+                var uri = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain + "/iot-directory/" : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/" ));logger.info(encodeURI(uri + "/api/model.php?action=get_model&username=" + username + "&name=" + model + "&nodered=yes"));
+                var username = s4cUtility.retrieveCurrentUser(RED, node, config.authentication);
+				xmlHttp.open("POST", encodeURI(uri + "/api/model.php?action=get_model&username=" + username + "&name=" + model + "&nodered=yes"), true);
 
                 xmlHttp.setRequestHeader("Content-Type", "application/json");
                 xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
@@ -53,7 +53,7 @@ module.exports = function (RED) {
                                     var responseJs = JSON.parse(xmlHttp.responseText);
 
                                     if (typeof responseJs.error_msg != "undefined" && responseJs.error_msg != "") {
-                                        node.error(responseJs.error_msg);
+                                        node.error("failed insert device but status 200:"+responseJs.error_msg);
                                     } else {
 
                                         if (responseJs.content.subnature === null) {
@@ -91,8 +91,8 @@ module.exports = function (RED) {
                                         }
 
                                         node.s4cAuth = RED.nodes.getNode(config.authentication);
-                                        var uri2 = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org" )) + "/iot-directory/api/device.php?action=insert&username=" + s4cUtility.retrieveCurrentUser(RED, node, config.authentication) + "&id=" + encodeURIComponent(devicename) + "&type=" + encodeURIComponent(responseJs.content.devicetype) + "&kind=" + encodeURIComponent(responseJs.content.kind) + "&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) + "&organization=" + encodeURIComponent(responseJs.content.organization) + "&protocol=" + encodeURIComponent(responseJs.content.protocol) + "&format=" + encodeURIComponent(responseJs.content.format) + "&mac=&model=" + encodeURIComponent(model) + "&producer=" + encodeURIComponent(responseJs.content.producer) + "&latitude=" + latitude + "&longitude=" + longitude + "&visibility=" + encodeURIComponent(responseJs.content.visibility) + "&frequency=" + encodeURIComponent(responseJs.content.frequency) + "&k1=" + k1 + "&k2=" + k2 + "&edgegateway_type=&edgegateway_uri=&subnature=" + encodeURIComponent(responseJs.content.subnature) + "&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) + "&service=" + encodeURIComponent(responseJs.content.service) + "&servicePath=" + encodeURIComponent(responseJs.content.servicePath) + "&nodered=yes&attributes=" + encodeURIComponent(responseJs.content.attributes);
-                                        logger.info(uri2);
+                                        var uri2 = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain + "/iot-directory/" : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/" )) + "api/device.php?action=insert&username=" + username + "&id=" + encodeURIComponent(devicename) + "&type=" + encodeURIComponent(responseJs.content.devicetype) + "&kind=" + encodeURIComponent(responseJs.content.kind) + "&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) + "&organization=" + encodeURIComponent(responseJs.content.organization) + "&protocol=" + encodeURIComponent(responseJs.content.protocol) + "&format=" + encodeURIComponent(responseJs.content.format) + "&mac=&model=" + encodeURIComponent(model) + "&producer=" + encodeURIComponent(responseJs.content.producer) + "&latitude=" + latitude + "&longitude=" + longitude + "&visibility=" + encodeURIComponent(responseJs.content.visibility) + "&frequency=" + encodeURIComponent(responseJs.content.frequency) + "&k1=" + k1 + "&k2=" + k2 + "&edgegateway_type=&edgegateway_uri=&subnature=" + encodeURIComponent(responseJs.content.subnature) + "&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) + "&service=" + encodeURIComponent(responseJs.content.service) + "&servicePath=" + encodeURIComponent(responseJs.content.servicePath) + "&nodered=yes&attributes=" + encodeURIComponent(responseJs.content.attributes);
+										logger.info(uri2);
                                         xmlHttp2.open("POST", uri2, true);
                                         xmlHttp2.setRequestHeader("Content-Type", "application/json");
                                         xmlHttp2.setRequestHeader("Authorization", "Bearer " + accessToken);
@@ -122,14 +122,14 @@ module.exports = function (RED) {
                                                     s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "IOTDirectory", uri2, "TX");
                                                     node.send(msg);
                                                 } else {
-                                                    logger.error(xmlHttp2.statusText);
-                                                    node.error(xmlHttp2.responseText);
+                                                    logger.error("failed insert device:: "+xmlHttp2.statusText);
+                                                    node.error("failed insert device:: "+xmlHttp2.responseText);
                                                 }
                                             }
                                         };
                                         xmlHttp2.onerror = function (e) {
-                                            logger.error("xmlhttp2: " + xmlHttp2.statusText);
-                                            node.error(xmlHttp2.responseText);
+                                            logger.error("failed insert device:: " + xmlHttp2.statusText);
+                                            node.error("failed insert device:: "+xmlHttp2.responseText);
                                         };
                                         try {
                                             xmlHttp2.send();
@@ -145,15 +145,15 @@ module.exports = function (RED) {
                                 logger.error("Problem Parsing data " + xmlHttp.responseText);
                             }
                         } else {
-                            logger.error(xmlHttp2.statusText);
-                            node.error(xmlHttp2.responseText);
+                            logger.error("failed get model:"+ xmlHttp.statusText);
+                            node.error("failed get model: "+xmlHttp.responseText);
                         }
                     }
                 };
 
                 xmlHttp.onerror = function (e) {
-                    logger.error(xmlHttp2.statusText);
-                    node.error(xmlHttp2.responseText);
+                    logger.error("xmlhttp: "+xmlHttp.statusText);
+                    node.error("failed get model:"+xmlHttp.responseText);
                 };
 
 

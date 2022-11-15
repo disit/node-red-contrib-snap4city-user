@@ -15,28 +15,36 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 module.exports = function (RED) {
 
-    function ChangeOwnershipMyDevice(config) {
-        RED.nodes.createNode(this, config);
-        var node = this;
-        node.selectedDeviceDataId = config.selectedDeviceDataId;
+    function ChangeOwnershipMyDevice(config) { 
+			RED.nodes.createNode(this, config);
+			var node = this;
+			node.selectedDeviceDataId = config.selectedDeviceDataId;
+			node.deviceId = config.deviceId;
+			if (config.deviceId) {
+				node.deviceId = config.deviceId.split("-")[1];
+			}
+			node.currentDeviceDataList = config.currentDeviceDataList ? JSON.parse(config.currentDeviceDataList): [];
+			node.usernamedelegated = config.delegated;
 
-        if (config.deviceId) {
-            node.deviceId = config.deviceId.split("-")[0];
-            node.deviceName = config.deviceId.split("-")[1];
-        }
-        node.usernamedelegated = config.delegated;
+			node.on('input', function (msg) {
+				var s4cUtility = require("./snap4city-utility.js");
+				const logger = s4cUtility.getLogger(RED, node);
+				const uid = s4cUtility.retrieveAppID(RED);
+				var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : node.deviceId);
 
-        node.on('input', function (msg) {
-            var s4cUtility = require("./snap4city-utility.js");
-            const logger = s4cUtility.getLogger(RED, node);
-            const uid = s4cUtility.retrieveAppID(RED);
-            var deviceId = (msg.payload.id ? msg.payload.id : node.deviceId);
-            var deviceName = (msg.payload.deviceName ? msg.payload.deviceName : node.deviceName);
+				if (deviceId) {
+					var selectedDevice = null;
+					for (var i = 0; i < node.currentDeviceDataList.length;i++){
+						if (node.currentDeviceDataList[i].elementName== deviceId){
+							selectedDevice = node.currentDeviceDataList[i];
+						}
+					}
+				}
 
-            if (deviceId) {
+            if (selectedDevice) {
                 node.s4cAuth = RED.nodes.getNode(config.authentication);
                 var uri = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain  : ( RED.settings.ownershipUrl ? RED.settings.ownershipUrl : "https://www.snap4city.org/")) + "/ownership-api/v1/register/";
-                var usernamedelegated = (msg.payload.newusername ? msg.payload.newusername : node.usernamedelegated);
+                var usernamedelegated = (msg.payload.newownership ? msg.payload.newownership : node.usernamedelegated);
                 var inPayload = msg.payload;
                 var accessToken = "";
 
@@ -78,9 +86,9 @@ module.exports = function (RED) {
                         node.error(xmlHttp.responseText);
                     };
                     xmlHttp.send(JSON.stringify({
-                        "elementId": deviceId,
+                        "elementId": selectedDevice.elementId,
                         "elementType": "IOTID",
-                        "elementName": deviceName,
+                        "elementName": selectedDevice.elementName,
                         "username": usernamedelegated
                     }));
 
@@ -88,7 +96,7 @@ module.exports = function (RED) {
                     node.error("Open the configuration of the node and redeploy");
                 }
             } else {
-                node.error("Device ID not configured or sent to input");
+                node.error("Device ID not configured or sent to input or you are not the owner");
             }
         });
     }
