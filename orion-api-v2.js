@@ -783,12 +783,18 @@ module.exports = function (RED) {
                         node.serviceNode.updateContext(node, config, msgToSend, msg.auth)
                             .then(
                                 () => {
-                                    nodeStatus.send(node, "Success", 200)
-                                    nodeStatus.success(node)
+									nodeStatus.success(node)
+									msg.payload={"data":{"id":config.enid,"type":config.entype,msgToSend},"status":{"statusCode":200,"headers":{},"payload":"Success"}}
+									node.send(msg)
+									s4cUtility.eventLog(RED, {"id":config.enid,"type":config.entype,msgToSend}, msg.payload, config, "Node-Red", "Orion", node.currentContextBroker.accesslink, "TX");
                                 },
                                 (reason) => {
-                                    logger.error("Update entity error:" + JSON.stringify(reason));
-                                    nodeStatus.getError(node, reason, "failed to update, reason: " + JSON.stringify(reason));
+									logger.error("Update id:"+config.enid+",type:"+config.entype+JSON.stringify({"data":msgToSend,"status":reason}));
+									nodeStatus.getError(node, reason,"Update id:"+config.enid+",type:"+config.entype+JSON.stringify({"data":msgToSend,"status":reason}) );
+									msg.payload={"data":{"id":config.enid,"type":config.entype,msgToSend},"status":reason}
+									node.send(msg)
+									s4cUtility.eventLog(RED, {"id":config.enid,"type":config.entype,msgToSend}, msg.payload, config, "Node-Red", "Orion", node.currentContextBroker.accesslink, "TX");
+                                
                                 }
                             );
                     });

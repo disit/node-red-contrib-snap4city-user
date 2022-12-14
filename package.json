@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.9.39",
+    "version": "0.9.40",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
@@ -111,6 +111,7 @@
             "value-type-search-within-circle": "value-type-search-within-circle.js",
             "value-type-search-within-polygon": "value-type-search-within-polygon.js",
             "value-type-search-along-path": "value-type-search-along-path.js",
+			"get-access-token": "get-access-token.js",
             "get-my-data": "get-my-data.js",
             "get-my-kpidata": "get-my-kpidata.js",
             "get-delegated-kpidata": "get-delegated-kpidata.js",
