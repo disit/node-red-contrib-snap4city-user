@@ -704,7 +704,7 @@
 
 <!-- Subscribe -->
 <script type="text/x-red" data-help-name="orion-subscribe-api-v2">
-	<p>Provides a node for subscribing on Fiware Orion context broker Version 2 and listening changes.</p>
+	<p>Provides a node for subscribing on Fiware Orion context broker Version 2 and listening changes for one or multiple entities.</p>
 
 	<h3>Configuration</h3>
 	<dl class="message-properties">
@@ -804,6 +804,27 @@
 		<dd>Label assigned to the current node (optional)</dd>
 	</dl>
 
+	<h3>Add entity</h3>
+	<dl class="message-properties">
+	<p>If you need a subscription with multiple entities you can send a JSON for each entity with a following structure</p>
+	<pre>
+{
+	"action": "add",
+    "deviceType": "Device_Type",
+    "deviceId": "Device_Name",
+	"isPattern":false,/*NOT REQUIRED
+}
+    </pre>
+	<h3>Remove entity</h3>
+	<dl class="message-properties">
+	<p>If you need a subscription to remove entity you can send a JSON with a following structure</p>
+	<pre>
+{
+	"action": "remove",
+    "deviceType": "Device_Type",
+    "deviceId": "Device_Name",
+}
+    </pre>
 	<h3>Output</h3>
 	<dl class="message-properties">
 		The output message contains the following properties:
@@ -1034,7 +1055,7 @@
 					value: true
 				}
 			},
-			inputs: 0,
+			inputs: 1,
 			outputs: 1,
 			icon: "orioncb.png",
 			label: function () {

@@ -24,6 +24,7 @@ module.exports = function (RED) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
             var inPayload = msg.payload;
+			node.staticAttributeList =(msg.payload.staticAttributes ? msg.payload.staticAttributes : config.staticAttributeList); 
             var latitude = (msg.payload.latitude ? msg.payload.latitude : config.latitude);
             var longitude = (msg.payload.longitude ? msg.payload.longitude : config.longitude);
             var k1 = (msg.payload.k1 ? msg.payload.k1 : config.k1);
@@ -89,6 +90,28 @@ module.exports = function (RED) {
                                                 currentStaticAttributesList.push([node.staticAttributeList[i].uri, node.staticAttributeList[i].value]);
                                             }
                                         }
+										stat_attr=JSON.parse(responseJs.content.static_attributes)
+										console.log(stat_attr.length)
+										devM=false;
+										ind=false;
+										for(var i = 0; i < stat_attr.length; i++){
+											if(stat_attr[i][0] === "http://www.disit.org/km4city/schema#isMobile" && stat_attr[i][1] === "true"){
+												devM=true;
+												break;
+											}
+										}
+										if(devM){
+											for(var j = 0; j < currentStaticAttributesList.length; j++){
+												if(currentStaticAttributesList[j][0] === "http://www.disit.org/km4city/schema#isMobile" && currentStaticAttributesList[j][1] === "true"){
+													ind=true;
+													break;
+												}
+											}
+										}
+										if(devM && !ind){
+											currentStaticAttributesList.push([ 'http://www.disit.org/km4city/schema#isMobile', 'true' ])
+										}
+										
 
                                         node.s4cAuth = RED.nodes.getNode(config.authentication);
                                         var uri2 = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain + "/iot-directory/" : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/" )) + "api/device.php?action=insert&username=" + username + "&id=" + encodeURIComponent(devicename) + "&type=" + encodeURIComponent(responseJs.content.devicetype) + "&kind=" + encodeURIComponent(responseJs.content.kind) + "&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) + "&organization=" + encodeURIComponent(responseJs.content.organization) + "&protocol=" + encodeURIComponent(responseJs.content.protocol) + "&format=" + encodeURIComponent(responseJs.content.format) + "&mac=&model=" + encodeURIComponent(model) + "&producer=" + encodeURIComponent(responseJs.content.producer) + "&latitude=" + latitude + "&longitude=" + longitude + "&visibility=" + encodeURIComponent(responseJs.content.visibility) + "&frequency=" + encodeURIComponent(responseJs.content.frequency) + "&k1=" + k1 + "&k2=" + k2 + "&edgegateway_type=&edgegateway_uri=&subnature=" + encodeURIComponent(responseJs.content.subnature) + "&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) + "&service=" + encodeURIComponent(responseJs.content.service) + "&servicePath=" + encodeURIComponent(responseJs.content.servicePath) + "&nodered=yes&attributes=" + encodeURIComponent(responseJs.content.attributes);

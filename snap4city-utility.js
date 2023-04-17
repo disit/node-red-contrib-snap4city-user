@@ -1,4 +1,7 @@
+const snap4citytoken = require('./snap4citytoken.js');
+snap4citytoken.startExpirationCheck();
 module.exports = {
+	
 
     getLogger: function (RED, node) {
         const {
@@ -123,60 +126,88 @@ module.exports = {
     },
 
     retrieveAccessToken: function (RED, node, authentication, uid, fillStatus) {
+		var authArray = snap4citytoken.getAuthArray();
+		accessToken=snap4citytoken.accessTokenByAuthentication(authArray,authentication)
         var fs = require('fs');
         var response = "";
-        if (node != null && authentication != null) {
-            node.s4cAuth = RED.nodes.getNode(authentication);
-            if (node.s4cAuth != null) {
-                var accessToken = node.s4cAuth.refreshTokenGetAccessToken(uid);
-                if (accessToken != "") {
-                    if (fillStatus) node.status({
-                        fill: "green",
-                        shape: "dot",
-                        text: "Authenticaton Ok"
-                    });
-                    response = accessToken;
-                } else {
-                    if (fillStatus) node.status({
-                        fill: "red",
-                        shape: "dot",
-                        text: "Authentication Problem"
-                    });
-                }
-            }
-        }
-        if (fs.existsSync('/data/refresh_token') && response == "") {
-            var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
-            var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
-            var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
-            var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-            var xmlHttp = new XMLHttpRequest();
-            //console.log("Retrieve token from:" + encodeURI(url));
-            xmlHttp.open("POST", encodeURI(url), false);
-            xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-			xmlHttp.onerror = function (e) {
-                    console.log("ERROR retrieveAccessToken: "+JSON.stringify(e));
-					console.log("ERROR retrieveAccessToken: "+JSON.stringify(xmlHttp.responseText))
-					console.log("ERROR retrieveAccessToken: "+JSON.stringify(xmlHttp.statusText))
-                    };
-            xmlHttp.send(params);
-			if(xmlHttp.status!=200) {
-				console.log("FAILED " +url+"\n"+params+"\n\n"+xmlHttp.responseText);
-			} else {
-				if (xmlHttp.responseText != "") {
-					try {
-						response = JSON.parse(xmlHttp.responseText);
-					} catch (e) {
-						console.log("xmlHttp.responseText != ''"+JSON.stringify(e))
-						console.log("xmlHttp.responseText != ''"+JSON.stringify(xmlHttp.responseText))
+		if (accessToken === null) {
+			if (node != null && authentication != null) {
+
+				node.s4cAuth = RED.nodes.getNode(authentication);
+				if (node.s4cAuth != null) {
+					created=new Date();
+					var accessTokenArray = node.s4cAuth.refreshTokenGetAccessToken(uid);
+					accessToken=accessTokenArray[0];
+					expires_in=accessTokenArray[1];
+					
+					if (accessToken != "") {
+						if (fillStatus) node.status({
+							fill: "green",
+							shape: "dot",
+							text: "Authenticaton Ok"
+						});
+						if(!isNaN(expires_in)){
+							snap4citytoken.updateauthArray({"authentication":authentication,"accessToken":accessToken,"expires_in":((expires_in*0.70)-10),"created":created});
+						}
+						
+						response = accessToken;
+					} else {
+						if (fillStatus) node.status({
+							fill: "red",
+							shape: "dot",
+							text: "Authentication Problem"
+						});
 					}
 				}
-				if (response != "") {
-					fs.writeFileSync('/data/refresh_token', response.refresh_token);
-					response =  response.access_token;
-				}
 			}
-			
+		}else{
+			response = accessToken;
+		}
+        if (fs.existsSync('/data/refresh_token') && response == "") {
+			accessToken=snap4citytoken.accessTokenByAuthentication(authArray,"owner")
+
+			if (accessToken === null) {
+				var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
+				var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
+				var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
+				created=new Date();
+				var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+				var xmlHttp = new XMLHttpRequest();
+				//console.log("Retrieve token from:" + encodeURI(url));
+				xmlHttp.open("POST", encodeURI(url), false);
+				xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+				xmlHttp.onerror = function (e) {
+						console.log("ERROR retrieveAccessToken: "+JSON.stringify(e));
+						console.log("ERROR retrieveAccessToken: "+JSON.stringify(xmlHttp.responseText))
+						console.log("ERROR retrieveAccessToken: "+JSON.stringify(xmlHttp.statusText))
+						};
+				xmlHttp.send(params);
+				if(xmlHttp.status!=200) {
+					console.log("FAILED " +url+"\n"+params+"\n\n"+xmlHttp.responseText);
+				} else {
+					if (xmlHttp.responseText != "") {
+						try {
+
+							response = JSON.parse(xmlHttp.responseText);
+						} catch (e) {
+							console.log("xmlHttp.responseText != ''"+JSON.stringify(e))
+							console.log("xmlHttp.responseText != ''"+JSON.stringify(xmlHttp.responseText))
+						}
+					}
+					if (response != "") {
+
+						fs.writeFileSync('/data/refresh_token', response.refresh_token);
+						if(!isNaN(response.expires_in)){
+							snap4citytoken.updateauthArray({"authentication":"owner","accessToken":response.access_token,"expires_in":((response.expires_in*0.70)-10),"created":created});
+						}
+						
+						response =  response.access_token;
+						
+					}
+				}
+			}else{
+				response = accessToken;
+			}	
 		}
         return response;
     },

@@ -104,6 +104,7 @@ module.exports = function (RED) {
         }
 
         this.refreshTokenGetAccessToken = function (uid) {
+
             var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
             var url = s4cUtility.settingUrl(RED,node, "keycloakBaseUri", "https://www.snap4city.org", "/auth/realms/master/") + "protocol/openid-connect/token/";
@@ -111,7 +112,7 @@ module.exports = function (RED) {
             var params = "";
             var expiresTimestamp = node.credentials.expiresTimestamp;
             var refreshToken = node.credentials.refreshToken;
-            console.log("Refresh Token: " + refreshToken);
+			console.log("Refresh Token: " + refreshToken);
             if (typeof refreshToken == "undefined" || typeof expiresTimestamp == "undefined" || new Date().getTime() > expiresTimestamp) {
                 params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered-iotedge") + "&grant_type=password&username=" + node.credentials.user + "&password=" + encodeURIComponent(node.credentials.password);
             } else {
@@ -128,6 +129,7 @@ module.exports = function (RED) {
             if (xmlHttp.responseText != "") {
                 try {
                     response = JSON.parse(xmlHttp.responseText);
+					
                     if (response.access_token != null && uid != null) {
                         if (typeof expiresTimestamp == "undefined") {
                             if (node.isMainAccount) {
@@ -148,9 +150,9 @@ module.exports = function (RED) {
 
                 if (response != "") {
                     if (response.access_token != null) {
-                        return response.access_token;
+                        return [response.access_token,response.expires_in];
                     } else {
-                        return "";
+                        return "response.access_token in refreshTokenGetAccessToken null";
                     }
                 }
             }

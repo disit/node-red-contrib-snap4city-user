@@ -33,6 +33,9 @@
             delegatedUser: {
                 value: ""
             },
+			kind: {
+                value: "READ_ACCESS"
+            },
             delegatedGroup: {
                 value: ""
             },
@@ -151,6 +154,14 @@
         <select id="node-input-deviceId" style="width: 55%;">
         </select>
     </div>
+	<div class="form-row">
+        <label for="node-input-kind">Kind</label>
+        <select id="node-input-kind">
+            <option value="READ_ACCESS">READ_ACCESS</option>
+            <option value="READ_WRITE">READ_WRITE</option>
+			<option value="MODIFY">MODIFY</option>
+        </select>
+    </div>
     <div class="form-row">
         <label for="node-input-delegatedUser">User Delegated</label>
         <input type="text" id="node-input-delegatedUser" placeholder="Username Delegated">
@@ -184,6 +195,10 @@
             <span class="property-type">string</span>
         </dt>
         <dd> the nome of the kpi device (you MUST have the ownership of the device)</dd>
+		<dt>kind
+            <span class="property-type">string</span>
+        </dt>
+        <dd> Kind of delegation. You can choose between READ_ACCESS,READ_WRITE and MODIFY.
         <dt>usernamedelegated
             <span class="property-type">string</span>
         </dt>
@@ -199,6 +214,7 @@
 {
     "id": "nameDevice",
     "usernamedelegated": "username",
+	"kind": "READ_ACCESS"
 }
     </pre>
 

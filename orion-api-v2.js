@@ -26,8 +26,8 @@ var urllib = require("url");
 var https2 = require('https');
 var when = require('when');
 var fs = require('fs');
-
-
+var path = require('path')
+var os = require('os')
 
 module.exports = function (RED) {
     "use strict";
@@ -182,7 +182,17 @@ module.exports = function (RED) {
             nodeStatus.subscribing(node)
 
             logger.debug(`Subscribing entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
-
+			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+			}
+			var jsonFilePath=correctPath+node.id+".json";
+			if(!node.enid&&fs.existsSync(jsonFilePath)){
+			//if(!node.enid){	
+				var subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+				config.enid=subscriptionJson[subscriptionJson.length-1]['id'];
+				}
+			
             s4cOrionUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, retrieveDeviceName(node, config.enid, config.tenant, config.servicepath), uid, accessToken);
             var [hostname, prefixPath] = s4cOrionUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
             var options = orionHttpRequestOptions.generateForOrionAPIV2Subscribe(hostname, orionBrokerService.port, prefixPath, config, JSON.stringify(payload).length, accessToken)
@@ -207,7 +217,7 @@ module.exports = function (RED) {
                         if (res.statusCode === 201) {
                             if (msg.headers.location != null) {//TODO verify this
                                 var subscriptionID = msg.headers.location.replace('/v2/subscriptions/', '');
-
+								
                                 var nodeID = (node.id + "").replace('.', '');
                                 //listen subscription just if the return code is 200ok
                                 listenOnUrl(nodeID, function (req, res) {
@@ -223,7 +233,6 @@ module.exports = function (RED) {
                                     }
                                     res.sendStatus(200);
                                 });
-
                                 logger.info("subscribeContext elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs.getSubscriptionOfNode(nodeID) + " newSubId: " + subscriptionID);
                                 var idToUnsubscribe = subscriptionIDs.getSubscriptionOfNode(nodeID);//save previous sub for unsub
                                 subscriptionIDs.setSubscriptionOnNode(subscriptionID, nodeID);//update new subs
@@ -234,18 +243,44 @@ module.exports = function (RED) {
                                     }, 2000);
                                 }
                             } else if (parsedResponse.result == false) {
-                                logger.error("subscribeContext error:" + JSON.stringify(msg));
+								logger.error("subscribeContext error:" + JSON.stringify(msg));
                                 nodeStatus.getError(node, msg)
                             }
                         } else {
                             logger.error("subscribeContext error:" + JSON.stringify(msg));
+							var deviceType = (msg.payload.deviceType ? msg.payload.deviceType : config.entype);
+							var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : config.enid);
+							var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+							if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+								correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+								}
+							var nodeID = (node.id + "").replace('.', '');
+							var jsonFilePath=correctPath+nodeID+".json";	
+							if(fs.existsSync(jsonFilePath)){
+								var subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+								var ind=-1
+								for(var i = 0; i < subscriptionJson.length; i++){
+									if(subscriptionJson[i].id === deviceId && subscriptionJson[i].type === deviceType){
+										ind=i;
+										break;
+									}
+								}
+								if(ind!=-1){
+									subscriptionJson.splice(ind, 1);
+								}
+								fs.writeFileSync(jsonFilePath, JSON.stringify(subscriptionJson))
+							}
+							
                             nodeStatus.getError(node, msg)
                         }
                     });
                 });
+				
+				
+				
                 req.on('error', function (err) {
                     logger.error("subscribeContext error:" + err);
-                    nodeStatus.getError(node, err)
+					nodeStatus.getError(node, err)
                 });
 
                 nodeStatus.listening(node, reference)
@@ -254,14 +289,15 @@ module.exports = function (RED) {
                     logger.debug("subscribeContext payload:" + JSON.stringify(payload));
                     req.write(JSON.stringify(payload));
                 }
-
-                req.end();
+				req.end();
 
             } catch (err) {
+				
                 logger.error("subscribeContext error:" + err);
                 nodeStatus.getError(node, err)
+				
             }
-        };
+		};
     }
 
     function unsubscribeFromOrion(node, subscriptionId, url, config) {
@@ -445,9 +481,11 @@ module.exports = function (RED) {
         n.includeattr = n.includeattr;
         n.port = n.port * 1;
 
-        if (!n.enid || !n.entype) {
+
+
+        /*if (!n.enid || !n.entype) {
             err = "Missing subscription parameters";
-        }
+        }*/
 
         if (err) {
             throw err;
@@ -474,27 +512,44 @@ module.exports = function (RED) {
     function generateSubscribePayload(node, n) {
         // prepare payload for context subscription
         // contains node uid and url besides data supplied in node fields
-
+		
         var nodeID = node.id + "";
         nodeID = nodeID.replace('.', '');
-
+		
         return when.promise(
             function (resolve, reject) {
                 getMyUri(n).then(function (myUri) {
-					var sub={
-                            "description": `A subscription to get info about ${n.enid}`,
-                            "subject": {
-                                "entities": [
-                                    {
-                                        "id": n.enid,
-                                        "isPattern": n.ispattern,
-                                        "type": n.entype
-                                    }
-                                ],
-                                "condition": {
+					var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+					if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+						correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+					}
+					var jsonFilePath=correctPath+n.id+".json";
+					if (fs.existsSync(jsonFilePath)) {
+						var subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+						var entities=[]	
+						for (var i = 0; i < subscriptionJson.length; i++) {
+							entities.push({"id": subscriptionJson[i]['id'],"isPattern": n.ispattern,"type": subscriptionJson[i]['type']})	
+						}
+						if(!n.enid){
+							var devid=subscriptionJson[subscriptionJson.length-1]['id'];
+						}else{
+							var devid=n.enid;
+						}
+					}else{
+						var entities=[]
+						entities.push({"id": n.enid,"isPattern": n.ispattern,"type": n.entype})
+						fs.writeFileSync(jsonFilePath, JSON.stringify(entities));						
+					}
+					
+					
+					var subject= {"condition": {
                                     "attrs": n.condvals ? [n.condvals] : []
                                 }
-                            },
+                            };
+					subject["entities"]=entities;
+					var sub={
+                            "description": `A subscription to get info about ${devid}`,
+                            
                             "notification": {
                                 "http": {
                                     "url": `http://${myUri}/${nodeID}`
@@ -502,6 +557,9 @@ module.exports = function (RED) {
                                 "attrs": n.attributes
                             }
 					};
+					
+					sub["subject"]=subject;
+
 					var expires = new Date();
 					expires.setDate(expires.getDate()+Number(n.duration));
 					sub["expires"]= expires.toISOString();
@@ -552,12 +610,93 @@ module.exports = function (RED) {
 
         // validate mandatory fields
         validateInput(this, n);
+		this.on('input', function (msg) {
+			var action = msg.payload.action;
+			var deviceType = (msg.payload.deviceType ? msg.payload.deviceType : config.entype);
+			var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : config.enid);
+			var isPattern = (!(typeof msg.payload.isPattern === "undefined") ? msg.payload.isPattern :n.ispattern);
+			n.entype=deviceType;
+			n.enid=deviceId;
+			n.ispattern=isPattern;
+			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			
+			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+			}
+			var jsonFilePath=correctPath+n.id+".json";
+			if (!fs.existsSync(correctPath)) { 
+				fs.mkdirSync(correctPath);//not exist folder, create folder + empty file
+				fs.writeFileSync(jsonFilePath, JSON.stringify(msg.payload));
+			} else if (!fs.existsSync(jsonFilePath)){
+				//this.subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+				fs.writeFileSync(jsonFilePath, '[]',{ flag: 'w' });//not exist file, create empy file
+			} else //folder and file exist, read from it
+				this.subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+	
+			var subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
 
-        node.brokerConn.init(node, n).then(function () {
-            generateSubscribePayload(node, n).then(function (payload) {
+			if(action==="add"){
+				var ind=true;
+				for(var i = 0; i < subscriptionJson.length; i++){
+					if(subscriptionJson[i].id === deviceId && subscriptionJson[i].type === deviceType){
+						ind=false;
+						break;
+						}
+					}
+				if(ind){
+					subscriptionJson.push({"id": deviceId,"isPattern": n.ispattern,"type": deviceType});
+					fs.writeFileSync(jsonFilePath, JSON.stringify(subscriptionJson));
+				}
+				
+				}else if(action==="remove"){
+					var ind=-1
+					for(var i = 0; i < subscriptionJson.length; i++){
+						if(subscriptionJson[i].id === deviceId && subscriptionJson[i].type === deviceType){
+							ind=i;
+							break;
+						}
+					}
+					if(ind!=-1){
+						subscriptionJson.splice(ind, 1);
+					}
+					fs.writeFileSync(jsonFilePath, JSON.stringify(subscriptionJson))
+				}else{
+					msg.payload ="possible actions are add or remove"
+			}
+			generateSubscribePayload(node, n).then(function (payload) {
                 node.brokerConn.subscribe(node, n, payload);
             });
-        });
+			
+			msg.info=msg.payload;
+
+			node.send(msg);
+			
+		});
+			
+		
+		node.brokerConn.init(node, n).then(function () {
+			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			
+			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+				}
+			var jsonFilePath=correctPath+n.id+".json";	
+			if (fs.existsSync(jsonFilePath)){
+
+				generateSubscribePayload(node, n).then(function (payload) {
+					node.brokerConn.subscribe(node, n, payload);
+					});
+				}else{
+					generateSubscribePayload(node, n).then(function (payload) {
+					node.brokerConn.subscribe(node, n, payload);
+					});
+
+					
+				}
+			
+			});
+		
+		
     }
 
     function listenOnUrl(url, callback) {
@@ -786,8 +925,14 @@ module.exports = function (RED) {
 									nodeStatus.success(node)
 									msg.payload={"data":{"id":config.enid,"type":config.entype,msgToSend},"status":{"statusCode":200,"headers":{},"payload":"Success"}}
 									node.send(msg)
-									s4cUtility.eventLog(RED, {"id":config.enid,"type":config.entype,msgToSend}, msg.payload, config, "Node-Red", "Orion", node.currentContextBroker.accesslink, "TX");
-                                },
+									//console.log(node.currentContextBroker)
+									/*try {
+										//s4cUtility.eventLog(RED, {"id":config.enid,"type":config.entype,msgToSend}, msg.payload, config, "Node-Red", "Orion", node.currentContextBroker.accesslink, "TX");
+										console.log("FATTO")
+									}catch (e) {
+										console.log("ENTRATO NEL CATCH")
+									}*/
+								},
                                 (reason) => {
 									logger.error("Update id:"+config.enid+",type:"+config.entype+JSON.stringify({"data":msgToSend,"status":reason}));
 									nodeStatus.getError(node, reason,"Update id:"+config.enid+",type:"+config.entype+JSON.stringify({"data":msgToSend,"status":reason}) );

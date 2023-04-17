@@ -24,6 +24,7 @@ module.exports = function (RED) {
         node.deviceDataList = config.deviceDataList ? JSON.parse(config.deviceDataList): [];
         node.usernamedelegated = config.delegatedUser;
         node.groupdelegated = config.delegatedGroup;
+		node.kind = config.kind;
 
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
@@ -44,6 +45,7 @@ module.exports = function (RED) {
                 var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/") + "api/device.php";
                 var usernamedelegated = (msg.payload.usernamedelegated ? msg.payload.usernamedelegated : node.usernamedelegated);
                 var groupdelegated = (msg.payload.groupdelegated ? msg.payload.groupdelegated : node.groupdelegated);
+				var kind = (msg.payload.kind ? msg.payload.kind : node.kind);
                 var inPayload = msg.payload;
                 var accessToken = "";
 
@@ -52,8 +54,8 @@ module.exports = function (RED) {
                 if (accessToken != "" && typeof accessToken != "undefined") {
                     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                     var xmlHttp = new XMLHttpRequest();
-                    logger.info(encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"));
-                    xmlHttp.open("GET", encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&token=" + accessToken + "&nodered=yes"), true);
+                    logger.info(encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&kind=" + kind +"&token=" + accessToken + "&nodered=yes"));
+                    xmlHttp.open("GET", encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&kind=" + kind + "&token=" + accessToken + "&nodered=yes"), true);
                     xmlHttp.setRequestHeader("Content-Type", "application/json");
                     xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
                     xmlHttp.onload = function (e) {

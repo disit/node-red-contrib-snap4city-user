@@ -281,7 +281,7 @@
 </script>
 
 <script type="text/x-red" data-help-name="coordinates-from-map">
-    <p>With this node you can add a map to an existing dashboard or a new one created by the node. If a point in the map is clicked this node receives 
+    <p>DEPRECATED there is another node (dashboard-map) with the same functionality. With this node you can add a map to an existing dashboard or a new one created by the node. If a point in the map is clicked this node receives 
         the GPS coordinates of the point clicked on the map.
     </p>
 
@@ -296,14 +296,15 @@
 
     <h3>Outputs</h3>
     <ol class="node-ports">
-        <li>GPS Coordinates
+        <li>GPS Coordinates and service uri
             <dl class="message-properties">
-                <dd> Returns the GPS coordinates when the map is clicked</dd>
+                <dd> Returns the GPS coordinates when the map is clicked or GPS coordinates and service uri when the device in the map is clicked</dd>
             </dl>
             <pre>
 {
     "latitude": 43.75, 
-    "longitude": "11.35
+    "longitude": "11.35,
+	"serviceUri": "http://www.disit.org/km4city/resource/iot/orionUNIFI/DISIT/METRO15"
 }
             </pre>
         </li>

@@ -491,14 +491,15 @@
 
     <h3>Outputs</h3>
     <ol class="node-ports">
-        <li>GPS Coordinates
+        <li>GPS Coordinates and service uri
             <dl class="message-properties">
-                <dd> Returns the GPS coordinates when the map is clicked</dd>
+                <dd> Returns the GPS coordinates when the map is clicked or GPS coordinates and service uri when a device in the map is clicked</dd>
             </dl>
             <pre>
 {
-    "latitude": 43.75, 
-    "longitude": "11.35
+	"latitude": 43.75, 
+	"longitude": 11.35,
+	"serviceUri": "http://www.disit.org/km4city/resource/iot/orionUNIFI/DISIT/METRO15"
 }
             </pre>
         </li>
