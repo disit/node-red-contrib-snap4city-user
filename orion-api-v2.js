@@ -546,18 +546,29 @@ module.exports = function (RED) {
                                     "attrs": n.condvals ? [n.condvals] : []
                                 }
                             };
+							
+					///////////////////
+					///////////////////
+					///////////////////
+					var orionUrl = node.brokerConn.url;
+					var prot='http';
+					if (orionUrl.indexOf("https://") >= 0) {
+						prot='https';
+					}
+					///////////////////
+					///////////////////
+					//////////////////
 					subject["entities"]=entities;
 					var sub={
                             "description": `A subscription to get info about ${devid}`,
                             
                             "notification": {
                                 "http": {
-                                    "url": `http://${myUri}/${nodeID}`
+                                    "url": `${prot}://${myUri}/${nodeID}`
                                 },
                                 "attrs": n.attributes
                             }
 					};
-					
 					sub["subject"]=subject;
 
 					var expires = new Date();

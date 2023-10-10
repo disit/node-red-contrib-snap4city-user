@@ -14,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/javascript">
-    RED.nodes.registerType('delegate-my-device', {
+    RED.nodes.registerType('get-delegation-my-device', {
         category: 'S4CIoT',
         color: '#a6bbcf',
         defaults: {
@@ -30,15 +30,6 @@
             selectedDeviceDataId: {
                 value: ""
             },
-            delegatedUser: {
-                value: ""
-            },
-			kind: {
-                value: "READ_ACCESS"
-            },
-            delegatedGroup: {
-                value: ""
-            },
             authentication: {
                 type: "snap4city-authentication",
                 required: false
@@ -48,7 +39,7 @@
         inputs: 1,
         icon: "white-globe.png",
         label: function () {
-            return this.name || "delegate-my-device";
+            return this.name || "get-delegation-my-device";
         },
         oneditprepare: function () {
             $("#node-input-currentNodeId").val(this.id);
@@ -80,7 +71,7 @@
         },
         oneditsave: function () {
             $("#node-input-selectedDeviceDataId").val($("#node-input-deviceId").val());
-            $("#node-input-name").val("Delegate my device" + $("#node-input-deviceId").val());
+            $("#node-input-name").val("Get Delegations my device" + $("#node-input-deviceId").val());
         }
     });
 
@@ -139,7 +130,7 @@
     }
 </script>
 
-<script type="text/x-red" data-template-name="delegate-my-device">
+<script type="text/x-red" data-template-name="get-delegation-my-device">
     <input type="hidden" id="node-input-name">
     <input type="hidden" id="node-input-currentNodeId">
     <input type="hidden" id="node-input-selectedDeviceDataId">
@@ -153,22 +144,6 @@
             <i class="fa fa-dashboard"></i>Select Device</label>
         <select id="node-input-deviceId" style="width: 55%;">
         </select>
-    </div>
-	<div class="form-row">
-        <label for="node-input-kind">Kind</label>
-        <select id="node-input-kind">
-            <option value="READ_ACCESS">READ_ACCESS</option>
-            <option value="READ_WRITE">READ_WRITE</option>
-			<option value="MODIFY">MODIFY</option>
-        </select>
-    </div>
-    <div class="form-row">
-        <label for="node-input-delegatedUser">User Delegated</label>
-        <input type="text" id="node-input-delegatedUser" placeholder="Username Delegated">
-    </div>
-    <div class="form-row">
-        <label for="node-input-delegatedGroup">Group Delegated</label>
-        <input type="text" id="node-input-delegatedGroup" placeholder="Group Delegated">
     </div>
     <div class="form-tips"  id="tipAuthentication" style="max-width: none">
 		You must have an account with Snap4city to use this node. You can register for one <a href="https://www.snap4city.org" target="_blank">here</a>.
@@ -184,8 +159,8 @@
 	</div>
 </script>
 
-<script type="text/x-red" data-help-name="delegate-my-device">
-    <p>It allows to delegate a device.</p>
+<script type="text/x-red" data-help-name="get-delegation-my-device">
+    <p>It allows to retrieve the delegations of a device</p>
 
     <h3>Inputs</h3>
     A JSON with these parameters:
@@ -198,41 +173,17 @@
 		<dt>contextbroker
             <span class="property-type">string</span>
         </dt>
-        <dd> the contextbroker of the device</dd>
-		<dt>kind
-            <span class="property-type">string</span>
-        </dt>
-        <dd> Kind of delegation. You can choose between READ_ACCESS,READ_WRITE and MODIFY.
-        <dt>usernamedelegated
-            <span class="property-type">string</span>
-        </dt>
-        <dd> Username of the person to be delegated to view the device. It is recommended that you set one of the two delegations (user or group) 
-        <dt>groupdelegated
-            <span class="property-type">string</span>
-        </dt>
-        <dd> Group to be delegated to view the device. To delegate to a group, you must set cn=GROUP_NAME,ou=ORGANIZATION_NAME. It is recommended that you set one of the two delegations (user or group) 
+        <dd> the contextbroker of the device</dd> 
     </dl>
 
     <p>An example of the JSON array filled with correct data for user delegation:</p>
     <pre>
 {
 "id": "nameDevice",
-"usernamedelegated": "username",
-"contextbroker": "contextbroker",
-"kind": "READ_ACCESS"
+"contextbroker": "contextbroker"
 }
     </pre>
-	    <p>An example of the JSON array filled with correct data for group delegation:</p>
-    <pre>
-{
-"id": "nameDevice",
-"groupdelegated": "cn=GROUP_NAME,ou=ORGANIZATION_NAME",
-"contextbroker": "contextbroker",
-"kind": "READ_ACCESS"
-}
-    </pre>
-
-    <h3>Outputs</h3>
+	<h3>Outputs</h3>
     <dl class="message-properties">
         <dd> Returns an object containing the delegation</dd>
     </dl>

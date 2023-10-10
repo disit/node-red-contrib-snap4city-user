@@ -91,7 +91,7 @@ module.exports = {
         if (fs.existsSync('/data/refresh_token') && response == "") {
             var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
             var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
-            var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
+            var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
             var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
             var xmlHttp = new XMLHttpRequest();
             console.log("Retrieve user from:" + encodeURI(url));
@@ -169,7 +169,7 @@ module.exports = {
 			if (accessToken === null) {
 				var refreshToken = fs.readFileSync('/data/refresh_token', 'utf-8');
 				var url = (RED.settings.keycloakBaseUri ? RED.settings.keycloakBaseUri : "https://www.snap4city.org/auth/realms/master/") + "/protocol/openid-connect/token/";
-				var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "943106ae-c62c-4961-85a2-849f6955d404") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
+				var params = "client_id=" + (RED.settings.keycloakClientid ? RED.settings.keycloakClientid : "nodered") + "&client_secret=" + (RED.settings.keycloakClientsecret ? RED.settings.keycloakClientsecret : "") + "&grant_type=refresh_token&scope=openid profile&refresh_token=" + refreshToken;
 				created=new Date();
 				var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 				var xmlHttp = new XMLHttpRequest();

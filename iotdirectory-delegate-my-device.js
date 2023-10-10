@@ -25,7 +25,6 @@ module.exports = function (RED) {
         node.usernamedelegated = config.delegatedUser;
         node.groupdelegated = config.delegatedGroup;
 		node.kind = config.kind;
-
         node.on('input', function (msg) {
             var s4cUtility = require("./snap4city-utility.js");
             const logger = s4cUtility.getLogger(RED, node);
@@ -34,66 +33,77 @@ module.exports = function (RED) {
             if (deviceId) {
                 var selectedDevice = null;
                 for (var i = 0; i < node.deviceDataList.length;i++){
-                    if (node.deviceDataList[i].elementName == deviceId){
+                    if (node.deviceDataList[i].elementId == deviceId){
                         selectedDevice = node.deviceDataList[i];
+						
                     }
                 }
             }
 
-            if (selectedDevice) {
+			try {
+			  var contextbroker=(msg.payload.contextbroker? msg.payload.contextbroker : selectedDevice.elementDetails.contextbroker);
+			  
+			} catch (error) {
+			  node.error("Device ID or contextbroker not configured or not sent to input");
+			}
+			var elementName=(msg.payload.id? msg.payload.id : selectedDevice.elementName)
+            if (elementName || contextbroker!="") {
                 node.s4cAuth = RED.nodes.getNode(config.authentication);
                 var uri = s4cUtility.settingUrl(RED,node, "iotDirectoryUrl", "https://www.snap4city.org", "/iot-directory/") + "api/device.php";
                 var usernamedelegated = (msg.payload.usernamedelegated ? msg.payload.usernamedelegated : node.usernamedelegated);
                 var groupdelegated = (msg.payload.groupdelegated ? msg.payload.groupdelegated : node.groupdelegated);
 				var kind = (msg.payload.kind ? msg.payload.kind : node.kind);
                 var inPayload = msg.payload;
+				
                 var accessToken = "";
 
                 accessToken = s4cUtility.retrieveAccessToken(RED, node, config.authentication, uid);
 
                 if (accessToken != "" && typeof accessToken != "undefined") {
-                    var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-                    var xmlHttp = new XMLHttpRequest();
-                    logger.info(encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&kind=" + kind +"&token=" + accessToken + "&nodered=yes"));
-                    xmlHttp.open("GET", encodeURI(uri + "?action=add_delegation&id=" + selectedDevice.elementName + "&contextbroker=" + selectedDevice.elementDetails.contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=" + selectedDevice.elementDetails.k1 + "&k2=" + selectedDevice.elementDetails.k2 + "&kind=" + kind + "&token=" + accessToken + "&nodered=yes"), true);
-                    xmlHttp.setRequestHeader("Content-Type", "application/json");
-                    xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
-                    xmlHttp.onload = function (e) {
-                        if (xmlHttp.readyState === 4) {
-                            if (xmlHttp.status === 200) {
-                                if (xmlHttp.responseText != "") {
-                                    try {
-                                        msg.payload = JSON.parse(xmlHttp.responseText);
-                                    }catch (e) {
-                                        msg.payload = xmlHttp.responseText;
-                                        logger.error("Problem Parsing data " + xmlHttp.responseText);
-                                    }
-                                } else {
-                                    msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
-                                }
-                                s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "IOTDirectory", uri, "RX");
-                                node.send(msg);
-                            } else if (xmlHttp.status === 401) {
-                                node.error("Unauthorized");
-                                logger.error("Unauthorized, accessToken: " + accessToken);
-                            } else {
-                                logger.error(xmlHttp.statusText);
-                                node.error(xmlHttp.responseText);
-                            }
-                        }
-                    };
-                    xmlHttp.onerror = function (e) {
-                        logger.error(xmlHttp.statusText);
-                        node.error(xmlHttp.responseText);
-                    };
+					
+					if (contextbroker != "" && typeof contextbroker != "undefined") {
+							var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+							var xmlHttp = new XMLHttpRequest();
+							logger.info(encodeURI(uri + "?action=add_delegation&id=" + elementName + "&contextbroker=" + contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=&k2=&kind=" + kind +"&token=" + accessToken + "&nodered=yes"));
+							xmlHttp.open("GET", encodeURI(uri + "?action=add_delegation&id=" + elementName + "&contextbroker=" + contextbroker + (usernamedelegated != "" ? "&delegated_user=" + usernamedelegated : "") + (groupdelegated != "" ? "&delegated_group=" + groupdelegated : "") +"&k1=&k2=&kind=" + kind + "&token=" + accessToken + "&nodered=yes"), true);
+							xmlHttp.setRequestHeader("Content-Type", "application/json");
+							xmlHttp.setRequestHeader("Authorization", "Bearer " + accessToken);
+							xmlHttp.onload = function (e) {
+								if (xmlHttp.readyState === 4) {
+									if (xmlHttp.status === 200) {
+										if (xmlHttp.responseText != "") {
+											try {
+												msg.payload = JSON.parse(xmlHttp.responseText);
+											}catch (e) {
+												msg.payload = xmlHttp.responseText;
+												logger.error("Problem Parsing data " + xmlHttp.responseText);
+											}
+										} else {
+											msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
+										}
+										s4cUtility.eventLog(RED, inPayload, msg, config, "Node-Red", "IOTDirectory", uri, "RX");
+										node.send(msg);
+									} else if (xmlHttp.status === 401) {
+										node.error("Unauthorized");
+										logger.error("Unauthorized, accessToken: " + accessToken);
+									} else {
+										logger.error(xmlHttp.statusText);
+										node.error(xmlHttp.responseText);
+									}
+								}
+							};
+							xmlHttp.onerror = function (e) {
+								logger.error(xmlHttp.statusText);
+								node.error(xmlHttp.responseText);
+							};
 
-                    xmlHttp.send(null);
-
-                } else {
-                    node.error("Open the configuration of the node and redeploy");
+							xmlHttp.send(null);
+							}
+				} else {
+                    node.error("Set the contextbroker correctly");
                 }
             } else {
-                node.error("Device ID not configured or sent to input");
+                node.error("Device ID or contextbroker not configured or not sent to input");
             }
         });
     }
