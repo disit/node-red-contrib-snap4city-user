@@ -14,6 +14,12 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/javascript">
+    $.ajax({
+        url: "s4c/js/jquery.fancytree-all.min.js",
+        async: false,
+        dataType: "script"
+    });
+	
     RED.nodes.registerType('snap4city-authentication', {
         category: 'config',
         defaults: {
@@ -38,11 +44,16 @@
         oneditprepare: function () {
             $("#node-config-input-oldName").val($("#node-config-input-user").val());
             $(".editor-tray-toolbar button.leftButton").attr("disabled", true)
+			if (RED.settings.user != "" && RED.settings.user != undefined && RED.settings.user != "undefined") {
+				$("#node-config-input-ismainaccount").closest(".form-row").hide();
+			} else {
+				$("#node-config-input-ismainaccount").closest(".form-row").show();
+			}
         },
         label: function () {
             return this.name || 'snap4city-authentication';
         }
-    });
+    });  	
 </script>
 
 <script type="text/x-red" data-template-name="snap4city-authentication">

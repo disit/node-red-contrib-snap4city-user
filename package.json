@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.9.49",
+    "version": "0.9.50",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
