@@ -14,6 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */-->
 <script type="text/javascript">
+
     $.ajax({
         url: "s4c/js/jquery.fancytree-all.min.js",
         async: false,
@@ -47,6 +48,9 @@
                 value: ""
             },
             model: {
+                value: ""
+            },
+			wktGeometry: {
                 value: ""
             },
             selectedModel: {
@@ -391,7 +395,6 @@
                 });
             }
         }*/
-
         for (var i = 0; i < modelStaticAttributeList.length; i++) {
             var isInList = false;
             for (var j = 0; j < currentStaticAttributeList.length; j++) {
@@ -421,7 +424,7 @@
         var node = this;
         node.staticAttributeList = currentStaticAttributeList;
 
-    }	
+    }
 </script>
 
 
@@ -462,6 +465,10 @@
     <link rel="stylesheet" href="s4c/css/leaflet.draw.css" />
     <div id="node-input-map" style="width: 80%; height: 300px"></div>
     </div>
+	<div class="form-row">
+    <label for="node-input-wktGeometry">wktGeometry</label>
+    <input type="text" autocomplete="off" id="node-input-wktGeometry" placeholder="wktGeometry">
+    </div>
     <div class="form-row">
     <label for="node-input-k1">k1</label>
     <input type="text" autocomplete="off" id="node-input-k1" placeholder="k1">
@@ -470,6 +477,7 @@
     <label for="node-input-k2">k2</label>
     <input type="text" autocomplete="off" id="node-input-k2" placeholder="k2">
     </div>
+	
 	<div class="form-row">
         <label for="node-input-model">Model</label>
         <select id="node-input-model" style="width: 55%;">
@@ -500,6 +508,10 @@
     <span class="property-type">number</span>
     </dt>
     <dd>longitude of a GPS position</dd>
+    <dt>wktGeometry
+    <span class="property-type">string</span>
+	<dd>Vector geometry for the device. Supported Wkt objects: POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON, GEOMETRYCOLLECTION</dd>
+    </dt>
     <dt>k1
     <span class="property-type">UUID v4 format</span>
     </dt>

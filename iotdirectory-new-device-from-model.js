@@ -29,7 +29,8 @@ module.exports = function (RED) {
             var longitude = (msg.payload.longitude ? msg.payload.longitude : config.longitude);
             var k1 = (msg.payload.k1 ? msg.payload.k1 : config.k1);
             var k2 = (msg.payload.k2 ? msg.payload.k2 : config.k2);
-            var devicename = (msg.payload.devicename ? msg.payload.devicename : config.devicename);
+			var wktGeometry = (msg.payload.wktGeometry ? msg.payload.wktGeometry : config.wktGeometry);
+			var devicename = (msg.payload.devicename ? msg.payload.devicename : config.devicename);
             var model = (msg.payload.model ? msg.payload.model : config.model);
             node.selectedModel = config.selectedModel;
             var accessToken = "";
@@ -114,10 +115,11 @@ module.exports = function (RED) {
 										
 
                                         node.s4cAuth = RED.nodes.getNode(config.authentication);
-                                        var uri2 = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain + "/iot-directory/" : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/" )) + "api/device.php?action=insert&username=" + username + "&id=" + encodeURIComponent(devicename) + "&type=" + encodeURIComponent(responseJs.content.devicetype) + "&kind=" + encodeURIComponent(responseJs.content.kind) + "&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) + "&organization=" + encodeURIComponent(responseJs.content.organization) + "&protocol=" + encodeURIComponent(responseJs.content.protocol) + "&format=" + encodeURIComponent(responseJs.content.format) + "&mac=&model=" + encodeURIComponent(model) + "&producer=" + encodeURIComponent(responseJs.content.producer) + "&latitude=" + latitude + "&longitude=" + longitude + "&visibility=" + encodeURIComponent(responseJs.content.visibility) + "&frequency=" + encodeURIComponent(responseJs.content.frequency) + "&k1=" + k1 + "&k2=" + k2 + "&edgegateway_type=&edgegateway_uri=&subnature=" + encodeURIComponent(responseJs.content.subnature) + "&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) + "&service=" + encodeURIComponent(responseJs.content.service) + "&servicePath=" + encodeURIComponent(responseJs.content.servicePath) + "&nodered=yes&attributes=" + encodeURIComponent(responseJs.content.attributes);
+                                        var uri2 = ( (node.s4cAuth != null && node.s4cAuth.domain) ? node.s4cAuth.domain + "/iot-directory/" : ( RED.settings.iotDirectoryUrl ? RED.settings.iotDirectoryUrl : "https://www.snap4city.org/iot-directory/" )) + "api/device.php";
 										logger.info(uri2);
+										
                                         xmlHttp2.open("POST", uri2, true);
-                                        xmlHttp2.setRequestHeader("Content-Type", "application/json");
+                                        xmlHttp2.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
                                         xmlHttp2.setRequestHeader("Authorization", "Bearer " + accessToken);
                                         xmlHttp2.onload = function (e) {
 
@@ -126,7 +128,7 @@ module.exports = function (RED) {
                                                     if (xmlHttp2.responseText != "") {
                                                         try {
                                                             msg.payload = JSON.parse(xmlHttp2.responseText);
-                                                            if (msg.payload.status == "ok") {
+														    if (msg.payload.status == "ok") {
                                                                 msg.payload.k1 = k1;
                                                                 msg.payload.k2 = k2;
                                                             } else {
@@ -155,13 +157,47 @@ module.exports = function (RED) {
                                             node.error("failed insert device:: "+xmlHttp2.responseText);
                                         };
                                         try {
-                                            xmlHttp2.send();
+											hlt=responseJs.content.hlt
+											if(!(responseJs.content.hlt)){
+												hlt="iot_device_entity"
+											}
+											var queryString = "action=insert" +
+												"&username=" + encodeURIComponent(username) +
+												"&id=" + encodeURIComponent(devicename) +
+												"&type=" + encodeURIComponent(responseJs.content.devicetype) +
+												"&kind=" + encodeURIComponent(responseJs.content.kind) +
+												"&contextbroker=" + encodeURIComponent(responseJs.content.contextbroker) +
+												"&organization=" + encodeURIComponent(responseJs.content.organization) +
+												"&protocol=" + encodeURIComponent(responseJs.content.protocol) +
+												"&format=" + encodeURIComponent(responseJs.content.format) +
+												"&mac=" +
+												"&model=" + encodeURIComponent(model) +
+												"&producer=" + encodeURIComponent(responseJs.content.producer) +
+												"&latitude=" + latitude +
+												"&longitude=" + longitude +
+												"&visibility=" + encodeURIComponent(responseJs.content.visibility) +
+												"&frequency=" + encodeURIComponent(responseJs.content.frequency) +
+												"&k1=" + k1 +
+												"&k2=" + k2 +
+												"&edgegateway_type=" +
+												"&edgegateway_uri=" +
+												"&subnature=" + encodeURIComponent(responseJs.content.subnature) +
+												"&static_attributes=" + encodeURIComponent(JSON.stringify(currentStaticAttributesList)) +
+												"&service=" + encodeURIComponent(responseJs.content.service) +
+												"&servicePath=" + encodeURIComponent(responseJs.content.servicePath) +
+												"&hlt=" + encodeURIComponent(hlt) +
+												(wktGeometry !== 'undefined' && wktGeometry !== null ? "&wktGeometry=" + wktGeometry.replace(/ /g, '+').replace(/,/g, '%2C') : "") +
+												"&nodered=yes" +
+												"&accessToken="+accessToken+
+												"&attributes=" + encodeURIComponent(responseJs.content.attributes);
+                                            xmlHttp2.send(queryString);
                                         } catch (e) {
                                             logger.log(e);
                                         }
                                     }
                                 } catch (e) {
                                     msg.payload = xmlHttp2.responseText;
+									console.log(xmlHttp2.responseText)
                                 }
                             } else {
                                 msg.payload = JSON.parse("{\"status\": \"There was some problem\"}");
@@ -200,7 +236,6 @@ module.exports = function (RED) {
         var accessToken = s4cUtility.retrieveAccessToken(RED, null, null, null);
 
         if (accessToken != "" && iotDirectoryUrl != "") {
-            console.log(iotDirectoryUrl + "api/model.php?action=get_all_models_simple&nodered=yes&token=");
             xmlHttp.open("GET", encodeURI(iotDirectoryUrl + "api/model.php?action=get_all_models_simple&nodered=yes&token=" + accessToken), true); // false for synchronous request
             xmlHttp.onload = function (e) {
                 if (xmlHttp.readyState === 4) {

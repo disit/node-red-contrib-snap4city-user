@@ -67,6 +67,53 @@
 	</div>
 </script>
 
+
+//////////////////////////////////////////////////// ORION CONTEXT BROKER UNSUBSCRIBE NODE
+////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-unsubscribe-api-v2">
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+
+	<div class="form-row">
+		<label for="node-input-subscriptionId">
+			<i class="fa fa-globe"></i>
+			<span>subscription Id</span>
+		</label>
+		<input type="text" id="node-input-subscriptionId">
+	</div>
+	<div class="form-row">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Device Identifier</span>
+		</label>
+		<input type="text" id="node-input-enid">
+	</div>
+	
+	<div class="form-row">
+		<label for="node-input-basicAuth">
+			<i class="fa fa-globe"></i>
+			<span>auth</span>
+		</label>
+		<input type="text" id="node-input-basicAuth">
+	</div>
+	<div class="form-row">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+
+
+
 //////////////////////////////////////////////////// ORION CONTEXT BROKER SUBSCRIBE NODE
 ////////////////////////////////////////////////////
 <script type="text/x-red" data-template-name="orion-subscribe-api-v2">
@@ -93,6 +140,154 @@
 			<span>Device Identifier</span>
 		</label>
 		<input type="text" id="node-input-enid">
+	</div>
+	<div class="form-row">
+		<label for="node-input-userk1">
+			<i class="fa fa-globe"></i>
+			<span>key 1</span>
+		</label>
+		<input type="text" id="node-input-userk1">
+	</div>
+	<div class="form-row">
+		<label for="node-input-passk2">
+			<i class="fa fa-globe"></i>
+			<span>key 2</span>
+		</label>
+		<input type="text" id="node-input-passk2">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tenant">
+			<i class="fa fa-globe"></i>
+			<span>Service/Tenant</span>
+		</label>
+		<input type="text" id="node-input-tenant">
+	</div>
+	<div class="form-row">
+		<label for="node-input-servicepath">
+			<i class="fa fa-globe"></i>
+			<span>Service Path</span>
+		</label>
+		<input type="text" id="node-input-servicepath">
+	</div>	
+	<div class="form-row">
+		<label for="node-input-apikey">
+			<i class="fa fa-globe"></i>
+			<span>apikey</span>
+		</label>
+		<input type="text" id="node-input-apikey">
+	</div>
+	<div class="form-row">
+		<label for="node-input-basicAuth">
+			<i class="fa fa-globe"></i>
+			<span>auth</span>
+		</label>
+		<input type="text" id="node-input-basicAuth">
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-ispattern" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>is pattern</span>
+		</label>
+	</div>
+	<div class="form-row">
+		<label for="node-input-attributes">
+			<i class="fa fa-globe"></i>
+			<span>attributes</span>
+		</label>
+		<input type="text" id="node-input-attributes" placeholder="comma-separated values, leave empty for all atributes">
+	</div>
+	<div class="form-row">
+		<label for="node-input-condvalues">
+			<i class="fa fa-globe"></i>
+			<span>cond. values</span>
+		</label>
+		<input type="text" id="node-input-condvalues" placeholder="comma-separated condition values, leave empty for all">
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-includeattr" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>include attributes metadata in output</span>
+		</label>
+	</div>
+	<div class="form-row">
+		<label for="node-input-throttle">
+			<i class="fa fa-tasks"></i>
+			<span>throttle</span>
+		</label>
+		<select type="text" id="node-input-throttle" style="width:52%;">
+			<option value="0">OFF</option>
+			<option value="1">PT1S</option>
+			<option value="5">PT5S</option>
+			<option value="10">PT10S</option>
+			<option value="30">PT30S</option>
+			<option value="60">PT1M</option>
+			<option value="300">PT5M</option>
+		</select>
+	</div>
+	<div class="form-row">
+		<label for="node-input-duration">
+			<i class="fa fa-tasks"></i>
+			<span>duration</span>
+		</label>
+		<select type="text" id="node-input-duration" style="width:52%;">
+			<option value="1">P1D</option>
+			<option value="7">P1W</option>
+			<option value="30">P1M</option>
+			<option value="90">P3M</option>
+			<option value="120">P6M</option>
+			<option value="365">P1Y</option>
+			<option value="730">P2Y</option>
+			<option value="1095">P3Y</option>
+		</select>
+	</div>
+	<div class="form-row">
+		<label>&nbsp;</label>
+		<input type="checkbox" id="node-input-noderedhostauto" style="display: inline-block; width: auto; vertical-align: top;">
+		<label style="width: 70%;">
+			<span>Find node-red routable hostname automatically</span>
+		</label>
+	</div>
+	<div class="form-row node-input-noderedhost-row">
+		<label for="node-input-noderedhost">
+			<i class="fa fa-lock"></i>
+			<span>node-red hostname</span>
+		</label>
+		<input type="text" id="node-input-noderedhost">
+	</div>
+	<div class="form-row">
+		<label for="node-input-name">
+			<i class="fa fa-tag"></i>
+			<span>name</span>
+		</label>
+		<input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+	</div>
+	<div class="form-tips"  id="tip-json" hidden>
+		<span data-i18n="httpin.tip.req"></span>
+	</div>
+</script>
+
+//////////////////////////////////////////////////// ORION CONTEXT BROKER SUBSCRIBE LIST NODE
+////////////////////////////////////////////////////
+<script type="text/x-red" data-template-name="orion-broker-subscribe-list-entity-api-v2">
+	<div class="form-row">
+		<label for="node-input-service">
+			<i class="fa fa-cloud"></i> Service</label>
+		<input type="text" id="node-input-service">
+	</div>
+	<div class="form-row">
+		<label for="node-input-tls">
+			<i class="fa fa-cloud"></i> Certificates</label>
+		<input type="text" id="node-input-tls">
+	</div>
+	
+	<div class="form-row">
+		<label for="node-input-enid">
+			<i class="fa fa-globe"></i>
+			<span>Devices on Listener</span>
+		</label>
+		<textarea id="node-input-enid" readonly style="width: 70%; min-height: 100px;"></textarea>
 	</div>
 	<div class="form-row">
 		<label for="node-input-userk1">
@@ -837,6 +1032,42 @@
 	</dl>
 </script>
 
+<!-- UnSubscribe -->
+<script type="text/x-red" data-help-name="orion-unsubscribe-api-v2">
+	<p>Provides a node for canceling a subscription to the Orion Context Broker Version 2</p>
+
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+	
+		<dt>Subscription Id
+			<span class="property-type">string</span>
+		</dt>
+		<dd>id of subscription (<b>mandatory</b>)</dd>
+		
+		<dt>Device Identifier
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (<b>mandatory</b>)</dd>				
+		
+	</dl>
+	<dl class="message-properties">
+	<p>Input message</p>
+	<pre>
+		{ 
+			"subscriptionId": "id subscription",
+			"id": "entity id"
+		}
+    </pre>
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the result of the request:
+	</dl>
+</script>
+
 <!-- Query -->
 <script type="text/x-red" data-help-name="orion-query-api-v2">
 	<p>Provides a node for making requests to Fiware Orion context broker Version 2.</p>
@@ -933,6 +1164,225 @@
 	</dl>
 </script>
 
+<!-- Subscribe List-->
+<script type="text/x-red" data-help-name="orion-broker-subscribe-list-entity-api-v2">
+	<p>Provides a node for subscribing to the Orion Context Broker Version 2 and listening to changes for one or multiple entities. Once the subscription is created, it is not possible to modify the list of devices.</p>
+
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>.
+		</dd>
+		
+		<dt>Devices on Listener
+			<span class="property-type">string</span>
+		</dt>
+		<dd>It contains the list of devices subscribed to the listener.</dd>				
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional)</dd>
+
+		<dt>Service/Tenant
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Tenant of the Device to be specified if the context broker support Multi-Tenancy (optional)</dd>
+		
+		<dt>Service Path
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Service Path of the Device to be specified if the context broker support Multi-Tenancy/Service Path hierarchy (optional)</dd>		
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional)</dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). 
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>is pattern
+			<span class="property-type">boolean</span>
+		</dt>
+		<dd>Specify whether entity ID is pattern, default is false (optional)</dd>
+
+		<dt>attributes
+			<span class="property-type">string</span>
+		</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all (optional)</dd>
+			
+		<dt>condvalues
+			<span class="property-type">string</span>
+		</dt>
+		<dd>the "triggering attributes" (attributes that upon change due to Update context elements trigger the notification) (optional)</dd>
+
+		<dt>includeattr
+			<span class="property-type">string</span>
+		</dt>
+		<dd>include all element attributes in the output, default is true (optional)</code>
+
+		<dt>throttle
+			<span class="property-type">multiple choice</span>
+		</dt>
+		<dd>used to specify a minimum inter-notification arrival time, default value 5 seconds (<b>mandatory</b>)</dd>
+
+		<dt>duration
+			<span class="property-type">multiple choice</span>
+		</dt>
+		<dd>time until subscription will expire (<b>mandatory</b>)</dd>
+		
+		<dt>Find node-red routable hostname automatically
+			<span class="property-type">boolean</span>
+		</dt>
+		<dd>Automatic route the hostname (optional)</dd>
+		
+		<dt>node-red hostname
+			<span class="property-type">string</span>
+		</dt>
+		<dd>name of the host this nodered is reacheable (optional)</dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Add entity</h3>
+	<dl class="message-properties">
+	<p>If you need a subscription with multiple entities you can send a JSON for each entity with a following structure</p>
+	<pre>
+[{
+    "id": "Device_Id",
+    "type": "Device_Type"
+},...,
+{
+    "id": "Device_Id1",
+    "type": "Device_Type1"
+}]
+    </pre>
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload1</code> is the body of the response containing list of requested elements</li>
+			<li>
+				<code>payload2</code> contains the information about the creation of the subscription to the listener. message, subscriptionid and devices_entities</li>
+		</ul>
+	</dl>
+</script>
+
+<!-- Query -->
+<script type="text/x-red" data-help-name="orion-query-api-v2">
+	<p>Provides a node for making requests to Fiware Orion context broker Version 2.</p>
+	
+	<h3>Configuration</h3>
+	<dl class="message-properties">
+	
+		<dt>Service</dt>	
+		<dd>The URL and port of the Fiware Orion context broker (<b>mandatory</b>). 
+		</dd>
+		
+		<dt>Certificates</dt>	
+		<dd>Configuration for TLS connections (optional). If "verify server certificate" is selected, the CA certificate is <b>mandatory</b>
+		</dd>
+	
+		<dt>Device Type
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity type (<b>mandatory</b>). It can be passed in <code>msg.enid</code></dd>
+		
+		<dt>Device Identifier
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Context element entity id (optional). It can be passed in <code>msg.entype</code></dd>
+		
+		<dt>key 1
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K1 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.userk1</code></dd>
+
+		<dt>key 2
+			<span class="property-type">string</span>
+		</dt>
+		<dd>K2 credential to be specified for context broker secured via Snap4City-OrionFilter (optional). It can be passed in <code>msg.passk2</code></dd>
+
+		<dt>Service/Tenant
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Tenant of the Device to be specified if the context broker support Multi-Tenancy (optional). It can be passed in <code>msg.tenant</code></dd>
+		
+		<dt>Service Path
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Service Path of the Device to be specified if the context broker support Multi-Tenancy/Service Path hierarchy (optional). It can be passed in <code>msg.tenant</code></dd>		
+
+		<dt>apikey
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "apikey:&lt;credential&gt;" (optional). It can be passed in <code>msg.apikey</code></dd>
+
+		<dt>auth
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Credential to be specified for context broker secured via HTTP Header "Authorization: &lt;credential&gt;" (optional). It can be passed in <code>msg.basicAuth</code>
+		If this parameter is not specified, the Snap4City SSo AccessToken will be used (based on (cloud scenario) the logged user credentials or (edge scenario) the specified username/password) in the form of "Authorization: Bearer &lt;credential&gt;"</dd>
+
+		<dt>attributes</dt>
+		<dd>a comma separated list of context element attributes to be filtered and returned. If not specified,	will return all elements (optional)</dd>
+
+		<dt>limit
+			<span class="property-type">integer</span>
+		</dt>
+		<dd>limit number of returned elements (optional). It can be passed in <code>msg.limit</code></dd>
+
+		<dt>name
+			<span class="property-type">string</span>
+		</dt>
+		<dd>Label assigned to the current node (optional)</dd>
+	</dl>
+
+	<h3>Inputs</h3>
+	<dl class="message-properties">
+		A JSON representing the Configuration. Can be:
+				<code>
+					msg = {"enid" : "angelo-mydevice001","entype": "test-device"};
+				</code>
+    </dl>
+	
+    <h3>Details</h3>
+	<dl class="message-properties">	
+		<p>The node (optionally) can receive a JSON as described in the Inputs section and send a query message to the Fiware Broker context broker based on the specified Configuration.
+			The Configuration specified in the Input JSON are considered just if <i>not</i> insert the UI</p>
+	</dl>
+
+	<h3>Output</h3>
+	<dl class="message-properties">
+		The output message contains the following properties:
+		<ul>
+			<li>
+				<code>payload</code> is the body of the response containing list of requested elements</li>
+			<li>
+				<code>statusCode</code> is the status code of the response, or the error code if the request could not be completed</li>
+		</ul>
+	</dl>
+</script>
+
+<!--MODIFICHE -->
 <script type="text/javascript">
 	(function () {
 		RED.nodes.registerType('orion-service-api-v2', {
@@ -1085,6 +1535,241 @@
 					}
 				});
 			}
+		});
+
+
+
+
+
+		RED.nodes.registerType('orion-unsubscribe-api-v2', {
+			category: 'S4CIoT',
+			color: "rgb(221, 181, 164)",
+			defaults: {
+				name: {
+					value: ""
+				},
+				service: {
+					type: "orion-service-api-v2",
+					required: true
+				},
+				tls: {
+					type: "tls-config",
+					required: false
+				},
+				throttle: {
+					value: "0"
+				},
+				entype: {
+					value: ""
+				},
+				enid: {
+					value: ""
+				},
+				userk1: {
+					value: ""
+				},
+				passk2: {
+					value: ""
+				},
+				tenant: {
+					value: ""
+				},
+				servicepath: {
+					value: ""
+				},
+				apikey: {
+					value: ""
+				},
+				basicAuth: {
+					value: ""
+				},
+				ispattern: {
+					value: false
+				},
+				duration: {
+					value: "365"
+				},
+				attributes: {
+					value: ""
+				},
+				condvalues: {
+					value: ""
+				},
+				includeattr: {
+					value: true
+				},
+				noderedhost: {
+					value: ""
+				},
+				noderedhostauto: {
+					value: true
+				}
+			},
+			inputs: 1,
+			outputs: 1,
+			icon: "orioncb.png",
+			label: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "orion-unsubscribe-api-v2";
+				}
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "orion-unsubscribe-api-v2";
+				}
+			},
+			labelStyle: function () {
+				return this.name ? "node_label_italic" : "";
+			},
+			oneditprepare: function () {
+				$("#node-input-noderedhostauto").change(function () {
+					if ($(this).is(":checked")) {
+						$(".node-input-noderedhost-row").hide();
+						$('#node-input-noderedhost').val('');
+					} else {
+						$(".node-input-noderedhost-row").show();
+					}
+				});
+			}
+		});
+
+
+
+
+
+
+
+		RED.nodes.registerType('orion-broker-subscribe-list-entity-api-v2', {
+			category: 'S4CIoT',
+			color: "rgb(221, 181, 164)",
+			defaults: {
+				name: {
+					value: ""
+				},
+				service: {
+					type: "orion-service-api-v2",
+					required: true
+				},
+				tls: {
+					type: "tls-config",
+					required: false
+				},
+				throttle: {
+					value: "0"
+				},
+				entype: {
+					value: ""
+				},
+				enid: {
+					value: ""
+				},
+				userk1: {
+					value: ""
+				},
+				passk2: {
+					value: ""
+				},
+				tenant: {
+					value: ""
+				},
+				servicepath: {
+					value: ""
+				},
+				apikey: {
+					value: ""
+				},
+				basicAuth: {
+					value: ""
+				},
+				ispattern: {
+					value: false
+				},
+				duration: {
+					value: "365"
+				},
+				attributes: {
+					value: ""
+				},
+				condvalues: {
+					value: ""
+				},
+				includeattr: {
+					value: true
+				},
+				noderedhost: {
+					value: ""
+				},
+				noderedhostauto: {
+					value: true
+				}
+			},
+			inputs: 1,
+			outputs: 2,
+			icon: "orioncb.png",
+			label: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "orion broker subscribe list entity api v2";
+				}
+			},
+			paletteLabel: function () {
+				if (this.name) {
+					return this.name;
+				} else {
+					return "orion broker subscribe list entity api v2";
+				}
+			},
+			labelStyle: function () {
+				return this.name ? "node_label_italic" : "";
+			},
+			oneditprepare: function () {
+				// Gestione dell'evento change per #node-input-noderedhostauto
+				$("#node-input-noderedhostauto").change(function () {
+					if ($(this).is(":checked")) {
+						$(".node-input-noderedhost-row").hide();
+						$('#node-input-noderedhost').val('');
+					} else {
+						$(".node-input-noderedhost-row").show();
+					}
+				});
+
+				// Funzione per ottenere la lista di sottoscrizioni del dispositivo
+				function getDeviceSubscription(nodeId) {
+
+					urlPar='getDeviceSubscription?nodeId='+nodeId
+
+						$.ajax({
+						url: urlPar,
+						type: 'GET',
+						contentType: 'application/json',
+						success: function(response) {
+							console.log(response.deviceSubscription)
+							if (response.deviceSubscription) {
+								// Se c'è una lista, la inseriamo nel campo come stringa
+								$("#node-input-enid").val(JSON.stringify(response.deviceSubscription));
+							} else {
+								// Se la lista è nulla, possiamo lasciare il campo vuoto
+								$("#node-input-enid").val('');
+							}
+						},
+						error: function(xhr, status, error) {
+							// Gestione degli errori
+							console.error("Error fetching device subscription:", error);
+							$("#node-input-enid").val('');
+						}
+					});
+				}
+
+				// Chiamata alla funzione quando l'editor è preparato
+				console.log(getDeviceSubscription(this.id));
+			}
+
+		    
 		});
 
 		RED.nodes.registerType('orion-query-api-v2', {

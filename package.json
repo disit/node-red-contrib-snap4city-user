@@ -1,6 +1,6 @@
 {
     "name": "node-red-contrib-snap4city-user",
-    "version": "0.9.50",
+    "version": "0.9.56",
     "description": "Nodes for Snap4city project, targeted to standard user (no developer)",
     "dependencies": {
         "@mysql/xdevapi": "^8.0.21",
@@ -57,7 +57,8 @@
         "wordwrap": "^1.0.0",
         "ws": "^7.3.1",
         "xmlhttprequest": "^1.8.0",
-        "yaeti": "^1.0.2"
+        "yaeti": "^1.0.2",
+		"terraformer-wkt-parser": "^1.0.0"
     },
     "keywords": [
         "node-red",
@@ -178,6 +179,8 @@
             "show-general-iframe": "show-general-iframe/show-general-iframe.js",
             "twitter-last-channel": "twitter-last-channel.js",
             "twitter-last-tweet": "twitter-last-tweet.js",
+			"ut-wkt-to-geojson":"ut-wkt-to-geojson.js",
+			"ut-geojson-to-wkt":"ut-geojson-to-wkt.js",
             "snap4city-authentication": "snap4city-authentication.js",
             "snap4all-button": "snap4all-button.js"
         }

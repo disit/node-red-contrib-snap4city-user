@@ -35,7 +35,6 @@ module.exports = function (RED) {
 	var subscriptionIDs = new s4cOrionUtility.SubscriptionStore(RED);
 	var nodeStatus = new s4cOrionUtility.NodeStatus();
 	var orionHttpRequestOptions = new s4cOrionUtility.OrionHttpRequestOptions();
-
     var jsonParser = bodyParser.json();
     var urlencParser = bodyParser.urlencoded({ extended: true });
     var token = "";
@@ -176,23 +175,27 @@ module.exports = function (RED) {
             const uid = s4cUtility.retrieveAppID(RED);
             var orionBrokerService = RED.nodes.getNode(config.service);
             var accessToken = s4cUtility.retrieveAccessToken(RED, node, orionBrokerService.authentication, uid, false);
-
+            
             var reference = payload.notification.http.url;
-
+            
             nodeStatus.subscribing(node)
 
             logger.debug(`Subscribing entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
 			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
-			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+            if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
 			}
+
+
 			var jsonFilePath=correctPath+node.id+".json";
 			if(!node.enid&&fs.existsSync(jsonFilePath)){
+            //if(fs.existsSync(jsonFilePath)){
 			//if(!node.enid){	
 				var subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+
 				config.enid=subscriptionJson[subscriptionJson.length-1]['id'];
 				}
-			
+
             s4cOrionUtility.getContextBrokerListForRegisterActivity(RED, node, orionBrokerService.url, orionBrokerService.port, retrieveDeviceName(node, config.enid, config.tenant, config.servicepath), uid, accessToken);
             var [hostname, prefixPath] = s4cOrionUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
             var options = orionHttpRequestOptions.generateForOrionAPIV2Subscribe(hostname, orionBrokerService.port, prefixPath, config, JSON.stringify(payload).length, accessToken)
@@ -204,6 +207,7 @@ module.exports = function (RED) {
                 var msg = {};
 
                 var req = https2.request(options, function (res) {
+
                     if (node.ret === "bin") res.setEncoding('binary');
                     else res.setEncoding('utf8');
                     msg.statusCode = res.statusCode;
@@ -306,13 +310,12 @@ module.exports = function (RED) {
         var orionBrokerService = RED.nodes.getNode(config.service);
         var accessToken = s4cUtility.retrieveAccessToken(RED, node, orionBrokerService.authentication, uid);
 
-        logger.debug("Unsubscring ID: " + JSON.stringify(subscriptionId));
-
         return when.promise(function (resolve, reject) {
 
             var [hostname, prefixPath] = s4cOrionUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
             var options = orionHttpRequestOptions.generateForOrionAPIV2Unsubscribe(hostname, orionBrokerService.port, prefixPath, config, subscriptionId, accessToken)
             options = orionHttpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED)
+
 
             var req = https2.request(options, function (res) {
 
@@ -323,6 +326,7 @@ module.exports = function (RED) {
             });
             req.on('error', function (err) {
                 logger.error("Error in unsubscribe: "+err);
+                console.log(err)
                 reject(err);
             });
             req.write(JSON.stringify(
@@ -588,7 +592,6 @@ module.exports = function (RED) {
         if (!/^((http|https):\/\/)/.test(orionUrl)) {
             orionUrl = "https://" + orionUrl + ":" + n.port;
         }
-
         return orionUrl;
     }
 
@@ -598,6 +601,7 @@ module.exports = function (RED) {
     function OrionSubscribeV2(n) {
         RED.nodes.createNode(this, n);
         var node = this;
+        
         this.service = n.service;
         this.brokerConn = RED.nodes.getNode(this.service);
         this.noderedhost = n.noderedhost;
@@ -623,8 +627,8 @@ module.exports = function (RED) {
         validateInput(this, n);
 		this.on('input', function (msg) {
 			var action = msg.payload.action;
-			var deviceType = (msg.payload.deviceType ? msg.payload.deviceType : config.entype);
-			var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : config.enid);
+			var deviceType = (msg.payload.deviceType ? msg.payload.deviceType : n.entype);
+			var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : n.enid);
 			var isPattern = (!(typeof msg.payload.isPattern === "undefined") ? msg.payload.isPattern :n.ispattern);
 			n.entype=deviceType;
 			n.enid=deviceId;
@@ -709,6 +713,199 @@ module.exports = function (RED) {
 		
 		
     }
+
+    
+    
+    
+    
+    
+    /*Cancellazione sottoscrizione*/
+    RED.nodes.registerType("orion-unsubscribe-api-v2", OrionUnsubscribeV2);
+
+    function OrionUnsubscribeV2(n) {
+        RED.nodes.createNode(this, n);
+    
+        this.on('input', function (msg) {
+            var node = this;  // Riferimento al nodo
+
+            
+            // URL di Orion Broker (può essere parametrizzato)
+
+            // Recupera l'ID di iscrizione dal payload del messaggio o dal parametro del nodo
+            var subscriptionId = (msg.payload.subscriptionId ? msg.payload.subscriptionId : n.subscriptionId);
+            var deviceId=(msg.payload.id ? msg.payload.id : n.enid);
+            n.enid=deviceId;
+
+            // Chiamata alla funzione di disiscrizione (unsubscribeFromOrion)
+            if (subscriptionId !== undefined && subscriptionId !== "" && subscriptionId !== null && deviceId !== null && deviceId !== "" && deviceId !== undefined) {
+                unsubscribeFromOrion(node, subscriptionId, null, n);
+                msg.payload = "The subscription has been canceled.";
+                node.send(msg);
+            } else {
+                let errorMessage = "Missing required parameters";
+                node.error(errorMessage);
+            }                     
+        });
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //OrionSubscribeV2 node constructor	
+    RED.nodes.registerType("orion-broker-subscribe-list-entity-api-v2", OrionBrokerSubscribeListEntityV2);
+
+    function OrionBrokerSubscribeListEntityV2(n) {
+        RED.nodes.createNode(this, n);
+        var node = this;
+        this.service = n.service;
+        this.brokerConn = RED.nodes.getNode(this.service);
+        this.noderedhost = n.noderedhost;
+        this.userk1 = n.userk1;
+        this.passk2 = n.passk2;
+        this.apikey = n.apikey;
+        this.basicAuth = n.basicAuth;
+        
+        this.on("close", function () {
+            var nodeID = node.id + "";
+            nodeID = nodeID.replace('.', '');
+
+            RED.httpNode._router.stack.forEach(function (route, i, routes) {
+                if (route.route && route.route.path == "/" + nodeID) {
+                    routes.splice(i, 1);
+                }
+            });
+            //cannot invoke unsubscribe from here since the config is empty (and the contextbroker uri is unknown)
+            //	unsubscribeFromOrion(node, subscriptionIDs[nodeID], null, n);
+        });
+        var nodeID = (node.id + "").replace('.', '');
+        listenOnUrl(nodeID, function (req, res) {
+            if (req.body.subscriptionId != subscriptionIDs.getSubscriptionOfNode(nodeID)) {
+                logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs.getSubscriptionOfNode(nodeID));
+                unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
+            } else {
+                //var payload = formatOutput(node, config, req.body.data);//TODO *1 verify formatOutput
+                node.send({
+                    payload: req.body.data,//TODO *1
+                    statusCode: 201
+                });
+            }
+            res.sendStatus(200);
+            var orionUrl = node.brokerConn.url;
+
+            var prot='http';
+            if (orionUrl.indexOf("https://") >= 0) {
+                prot='https';
+            }
+
+            
+            getMyUri(n).then(function(myUri) {
+
+                var url=`${prot}://${myUri}/${nodeID}`
+                node.status({
+                    fill: "blue",
+                    shape: "dot",
+                    text: "Listening on: "+url
+                })
+            }).catch(function(error) {
+                console.error("Errore:", error);
+            });
+            
+        });
+       
+
+        // validate mandatory fields
+        validateInput(this, n);
+		this.on('input', function (msg) {
+            n.ispattern="isPattern";
+            n.enid=msg.payload
+
+			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			var created=false
+			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+			}
+			var jsonFilePath=correctPath+n.id+".json";
+            var jsonFileSubscription=correctPath+"subscriptions.json";
+			if (!fs.existsSync(correctPath)) { 
+				fs.mkdirSync(correctPath);//not exist folder, create folder + empty file
+				fs.writeFileSync(jsonFilePath, JSON.stringify(msg.payload));
+			} else if (!fs.existsSync(jsonFilePath)){
+				//this.subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+				fs.writeFileSync(jsonFilePath, '[]',{ flag: 'w' });//not exist file, create empy file
+			} else{ //folder and file exist, read from it
+				var subscriptionJsonRead = JSON.parse(fs.readFileSync(jsonFilePath));
+				if(subscriptionJsonRead.length!=0){
+                    var subscriptionFlow = JSON.parse(fs.readFileSync(jsonFileSubscription));
+                    var msg2={}
+
+					msg2.payload={
+                        message:"The subscription has already been created.",
+                        subscription_id:subscriptionFlow[n.id],
+                        devices_entities:n["enid"]
+                    }
+                
+					created=true
+                    node.send([,msg2]);
+				}
+			}
+			if(!created){			
+				var subscriptionJson = msg.payload;
+				fs.writeFileSync(jsonFilePath, JSON.stringify(subscriptionJson));
+				
+				generateSubscribePayload(node, n).then(function (payload) {
+					node.brokerConn.subscribe(node, n, payload);
+				});
+				
+                
+
+                node.brokerConn.init(node, n).then(function () {
+                    var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+                    
+                    if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+                        correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+                        }
+                    var jsonFilePath=correctPath+n.id+".json";	
+                    if (fs.existsSync(jsonFilePath)){
+        
+                        generateSubscribePayload(node, n).then(function (payload) {
+                            node.brokerConn.subscribe(node, n, payload);
+                            });
+                        }else{
+                            generateSubscribePayload(node, n).then(function (payload) {
+                            node.brokerConn.subscribe(node, n, payload);
+                            });
+        
+                            
+                        }
+                    
+                    });
+                
+
+                
+                setTimeout(() => {
+                    var subscriptionFlow = JSON.parse(fs.readFileSync(jsonFileSubscription));
+                    var msg2={}
+
+                    msg2.payload={
+                        message:"Subscription created successfully.",
+                        subscription_id:subscriptionFlow[n.id],
+                        devices_entities:n["enid"]
+                        }
+                    node.send([,msg2]);
+                }, 2000);
+      
+                
+
+			}	
+		});   
+		
+    }
+
 
     function listenOnUrl(url, callback) {
         var errorHandler = function (err, req, res, next) {
@@ -990,6 +1187,7 @@ module.exports = function (RED) {
 			else
 				deviceName="."+deviceName;
 		}
+
 		logger.info("Device name is:"+deviceName);
 		return deviceName;
 	}
@@ -1005,4 +1203,44 @@ module.exports = function (RED) {
 			"contextbrokerDataList": lista
 		});
     });
+
+    RED.httpAdmin.get('/getDeviceSubscription', function (req, res) {
+        const os = require('os');
+        const fs = require('fs');
+        const path = require('path');
+        // Determina il percorso corretto del file basato sullo scenario
+        let correctPath = path.join(os.homedir(), "/.snap4cityConfig/");
+        if (RED.settings.APPID != null) {
+            correctPath = "/data/.snap4cityConfig/"; // Cloud scenario
+        }
+        const nodeId = req.query.nodeId || req.body.nodeId; 
+
+        // Percorso del file JSON, si assume che ci sia un file predefinito
+        var jsonFilePath=correctPath+nodeId+".json";
+
+        // Verifica l'esistenza del file
+        if (fs.existsSync(jsonFilePath)) {
+            // Legge e restituisce il contenuto del file JSON
+            try {
+
+                var fileContent = JSON.parse(fs.readFileSync(jsonFilePath));
+
+                res.send({
+                    deviceSubscription: fileContent
+                });
+            } catch (error) {
+                res.status(500).send({
+                    error: "Error reading or parsing the JSON file.",
+                    details: error.message
+                });
+            }
+        } else {
+            // File non trovato, restituisce niente
+            res.send({
+                deviceSubscription: null
+            });
+        }
+    });
+    
+    
 }
