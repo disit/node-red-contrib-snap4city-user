@@ -65,13 +65,13 @@ module.exports = function (RED) {
                                 logger.error("Unauthorized, accessToken: " + accessToken);
                             } else {
                                 logger.error(xmlHttp.statusText);
-                                node.error(xmlHttp.responseText);
+                                node.error(xmlHttp.responseText, msg);
                             }
                         }
                     };
                     xmlHttp.onerror = function (e) {
                         logger.error(xmlHttp.statusText);
-                        node.error(xmlHttp.responseText);
+                        node.error(xmlHttp.responseText, msg);
                     };
                     xmlHttp.send(JSON.stringify({
                         "elementId": node.kpiId,

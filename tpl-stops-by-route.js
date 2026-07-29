@@ -66,13 +66,13 @@ module.exports = function (RED) {
                         node.send(msgs);
                     } else {
                         logger.error(xmlHttp.statusText);
-                        node.error(xmlHttp.responseText);
+                        node.error(xmlHttp.responseText, msg);
                     }
                 }
             };
             xmlHttp.onerror = function (e) {
                 logger.error(xmlHttp.statusText);
-                node.error(xmlHttp.responseText);
+                node.error(xmlHttp.responseText, msg);
             };
             xmlHttp.send(null);
         });

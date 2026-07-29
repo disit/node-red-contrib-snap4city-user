@@ -4,19 +4,25 @@ var os = require('os')
 
 class SubscriptionStore {
     constructor(RED, jsonFilePath = 'subscriptions.json') {
-        this.subscriptionJson={};
-		var correctPath =  os.homedir() + "/.snap4cityConfig/";//consider edge scenario
-        if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
-            correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
-		}
-		this.jsonFilePath=correctPath+jsonFilePath;
-		if (!fs.existsSync(correctPath)) { 
-			fs.mkdirSync(correctPath);//not exist folder, create folder + empty file
-			fs.writeFileSync(this.jsonFilePath, JSON.stringify(this.subscriptionJson));
-		} else if (!fs.existsSync(this.jsonFilePath)){
-			fs.writeFileSync(this.jsonFilePath, JSON.stringify(this.subscriptionJson));//not exist file, create empy file
-		} else //folder and file exist, read from it
-			this.subscriptionJson = JSON.parse(fs.readFileSync(this.jsonFilePath));
+        this.subscriptionJson = {};
+
+        let correctPath;
+        if (RED.settings.APPID != null) { // cloud / IoTApp scenario
+            correctPath = "/data/.snap4cityConfig";
+        } else { // local / edge scenario
+            correctPath = path.join(os.homedir(), ".snap4cityConfig");
+        }
+
+        this.jsonFilePath = path.join(correctPath, jsonFilePath);
+
+        if (!fs.existsSync(correctPath)) {
+            fs.mkdirSync(correctPath, { recursive: true });
+            fs.writeFileSync(this.jsonFilePath, JSON.stringify(this.subscriptionJson));
+        } else if (!fs.existsSync(this.jsonFilePath)) {
+            fs.writeFileSync(this.jsonFilePath, JSON.stringify(this.subscriptionJson));
+        } else {
+            this.subscriptionJson = JSON.parse(fs.readFileSync(this.jsonFilePath));
+        }
     }
     getSubscriptionOfNode(nodeId) {
         return this.subscriptionJson[nodeId]
@@ -184,6 +190,36 @@ class OrionHttpRequestOptions {
         };
         return options
     }
+	
+	generateForOrionAPIV2SubscribeExact(hostname, port, prefixPath, config, payloadLength, accessToken) {
+		var k1 = (config.userk1) ? config.userk1 : undefined;
+		var k2 = (config.passk2) ? config.passk2 : undefined;
+
+		var query = [];
+		if (k1) query.push("k1=" + encodeURIComponent(k1));
+		if (k2) query.push("k2=" + encodeURIComponent(k2));
+
+		var path = prefixPath + "/v2/subscriptions";
+		if (query.length > 0) {
+			path += "?" + query.join("&");
+		}
+		var options = {
+			hostname: hostname,
+			port: port,
+			path: path,
+			method: 'POST',
+			rejectUnauthorized: false,
+			headers: {
+				'Authorization': 'Bearer ' + accessToken,
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'Content-Length': payloadLength
+			}
+		};
+		return options
+	}
+
+
     generateForOrionAPIV2Unsubscribe(hostname, port, prefixPath, config, subscriptionId, accessToken) {
         var options = {
             hostname: hostname,

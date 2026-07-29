@@ -60,7 +60,7 @@ module.exports = function (RED) {
 							msgs[1].payload = xmlHttp.responseText;
 						} else {
 							logger.error(xmlHttp.statusText);
-							node.error(xmlHttp.responseText);
+							node.error(xmlHttp.responseText, msg);
 						}
 					}
 					msgs[0].payload = msg.payload;
@@ -68,7 +68,7 @@ module.exports = function (RED) {
 				};
 				xmlHttp.onerror = function (e) {
 					logger.error(xmlHttp.statusText);
-					node.error(xmlHttp.responseText);
+					node.error(xmlHttp.responseText, msg);
 
 				};
 				xmlHttp.send(null);

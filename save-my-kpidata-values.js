@@ -67,13 +67,13 @@ module.exports = function (RED) {
                                     node.error("Unauthorized");
                                 } else {
                                     logger.error(xmlHttp.statusText);
-                                    node.error(xmlHttp.responseText);
+                                    node.error(xmlHttp.responseText, msg);
                                 }
                             }
                         };
                         xmlHttp.onerror = function (e) {
                             logger.error(xmlHttp.statusText);
-                            node.error(xmlHttp.responseText);
+                            node.error(xmlHttp.responseText, msg);
                         };
                         try {
                             xmlHttp.send(JSON.stringify({

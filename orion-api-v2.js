@@ -128,7 +128,225 @@ module.exports = function (RED) {
                 req.end();
             });
         };
+this.subscribeExact = function (node, config, payload) {
+    const logger = s4cUtility.getLogger(RED, node);
 
+    function safeStringify(obj) {
+        try {
+            return JSON.stringify(obj, null, 2);
+        } catch (e) {
+            return "[UNSERIALIZABLE: " + e + "]";
+        }
+    }
+
+    function formatError(err) {
+        if (err instanceof Error) {
+            return err.stack || err.message || String(err);
+        }
+        try {
+            return JSON.stringify(err, null, 2);
+        } catch (e) {
+            return String(err);
+        }
+    }
+
+
+
+    try {
+        const uid = s4cUtility.retrieveAppID(RED);
+
+
+        var orionBrokerService = RED.nodes.getNode(config.service);
+
+
+        if (!orionBrokerService) {
+
+            throw new Error("orionBrokerService not found for config.service=" + config.service);
+        }
+
+        var accessToken = s4cUtility.retrieveAccessToken(
+            RED,
+            node,
+            orionBrokerService.authentication,
+            uid,
+            false
+        );
+
+
+        var reference = payload && payload.notification && payload.notification.http
+            ? payload.notification.http.url
+            : "";
+
+
+        nodeStatus.subscribing(node);
+
+
+        var registerDeviceName = retrieveDeviceName(
+            node,
+            "pattern_exact_subscription",
+            config.tenant,
+            config.servicepath
+        );
+
+
+        s4cOrionUtility.getContextBrokerListForRegisterActivity(
+            RED,
+            node,
+            orionBrokerService.url,
+            orionBrokerService.port,
+            registerDeviceName,
+            uid,
+            accessToken
+        );
+
+        var split = s4cOrionUtility.splitUrlInHostnameAndPrefixPath(orionBrokerService.url);
+        var hostname = split[0];
+        var prefixPath = split[1];
+
+
+        var serializedPayload = JSON.stringify(payload);
+        var options = orionHttpRequestOptions.generateForOrionAPIV2SubscribeExact(
+			hostname,
+			orionBrokerService.port,
+			prefixPath,
+			config,
+			Buffer.byteLength(JSON.stringify(payload)),
+			accessToken
+		);
+
+
+        options = orionHttpRequestOptions.setHeaderAuthTenantAndTls(options, config, RED);
+
+        var msg = {};
+
+        var req = https2.request(options, function (res) {
+
+            if (node.ret === "bin") {
+                res.setEncoding("binary");
+            } else {
+                res.setEncoding("utf8");
+            }
+
+            msg.statusCode = res.statusCode;
+            msg.headers = res.headers;
+            msg.payload = "";
+
+            res.on("data", function (chunk) {
+                msg.payload += chunk;
+            });
+
+            res.on("end", function () {
+
+
+                logger.info("subscribeExact result:" + msg.statusCode + " " + msg.payload);
+
+                if (res.statusCode === 201) {
+
+
+                    if (msg.headers.location != null) {
+
+                        var subscriptionID = msg.headers.location.replace("/v2/subscriptions/", "");
+
+                        var nodeID = (node.id + "").replace(".", "");
+
+                        listenOnUrl(nodeID, function (req, res) {
+
+                            var currentSubscriptionId = subscriptionIDs.getSubscriptionOfNode(nodeID);
+                            if (req.body.subscriptionId != currentSubscriptionId) {
+                                logger.warn(
+                                    "Ignoring notification for subscription " +
+                                    req.body.subscriptionId +
+                                    " (current valid: " +
+                                    currentSubscriptionId +
+                                    ")"
+                                );
+                           } else {
+
+                                node.send({
+                                    payload: req.body.data,
+                                    statusCode: 201
+                                });
+                            }
+
+                            res.sendStatus(200);
+                       });
+
+                        var idToUnsubscribe = subscriptionIDs.getSubscriptionOfNode(nodeID);
+
+                        subscriptionIDs.setSubscriptionOnNode(subscriptionID, nodeID);
+
+                        if (idToUnsubscribe != undefined) {
+                            logger.info("unsubscribe old exact subscription:" + idToUnsubscribe);
+
+                            setTimeout(function () {
+                                unsubscribeFromOrion(node, idToUnsubscribe, null, config);
+                            }, 2000);
+                        } 
+                    } else {
+                        logger.error("subscribeExact error: missing Location header " + JSON.stringify(msg));
+                        nodeStatus.getError(node, msg);
+                    }
+                } else {
+
+                    logger.error("88888subscribeExact error:" + JSON.stringify(msg));
+                    nodeStatus.getError(node, msg);
+                }
+
+
+            });
+        });
+
+        req.on("socket", function (socket) {
+
+            socket.on("connect", function () {
+
+            });
+            socket.on("secureConnect", function () {
+
+            });
+            socket.on("timeout", function () {
+
+            });
+            socket.on("error", function (err) {
+
+            });
+            socket.on("close", function (hadError) {
+
+            });
+        });
+
+        req.on("finish", function () {
+
+        });
+
+        req.on("close", function () {
+
+        });
+
+        req.on("error", function (err) {
+
+            logger.error("subscribeExact error:" + formatError(err));
+            nodeStatus.getError(node, err);
+        });
+
+        nodeStatus.listening(node, reference);
+
+
+        if (payload) {
+
+            req.write(serializedPayload);
+           
+        } 
+
+        
+        req.end();
+
+
+    } catch (err) {
+        logger.error("subscribeExact error:" + formatError(err));
+        nodeStatus.getError(node, err);
+    }
+};
         this.updateContext = function (node, config, payload, auth) {
             const logger = s4cUtility.getLogger(RED, node);
             const uid = s4cUtility.retrieveAppID(RED);
@@ -181,7 +399,7 @@ module.exports = function (RED) {
             nodeStatus.subscribing(node)
 
             logger.debug(`Subscribing entity: ${config.enid} with payload: ${JSON.stringify(payload)}`);
-			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
             if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
 			}
@@ -226,8 +444,10 @@ module.exports = function (RED) {
                                 //listen subscription just if the return code is 200ok
                                 listenOnUrl(nodeID, function (req, res) {
                                     if (req.body.subscriptionId != subscriptionIDs.getSubscriptionOfNode(nodeID)) {
-                                        logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs.getSubscriptionOfNode(nodeID));
-                                        unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
+                                        logger.warn(
+            "Ignoring notification for subscription " + req.body.subscriptionId +
+            " (current valid: " + currentId + ")"
+        );//unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
                                     } else {
                                         //var payload = formatOutput(node, config, req.body.data);//TODO *1 verify formatOutput
                                         node.send({
@@ -239,7 +459,10 @@ module.exports = function (RED) {
                                 });
                                 logger.info("subscribeContext elementId: " + config.enid + " nodeId: " + nodeID + " oldSubId: " + subscriptionIDs.getSubscriptionOfNode(nodeID) + " newSubId: " + subscriptionID);
                                 var idToUnsubscribe = subscriptionIDs.getSubscriptionOfNode(nodeID);//save previous sub for unsub
+
+		
                                 subscriptionIDs.setSubscriptionOnNode(subscriptionID, nodeID);//update new subs
+
                                 if (idToUnsubscribe != undefined) {//if there was a previous sub
                                     logger.info("unsubscription:" + idToUnsubscribe);
                                     setTimeout(function () {
@@ -254,7 +477,7 @@ module.exports = function (RED) {
                             logger.error("subscribeContext error:" + JSON.stringify(msg));
 							var deviceType = (msg.payload.deviceType ? msg.payload.deviceType : config.entype);
 							var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : config.enid);
-							var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+							var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
 							if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 								correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
 								}
@@ -523,7 +746,7 @@ module.exports = function (RED) {
         return when.promise(
             function (resolve, reject) {
                 getMyUri(n).then(function (myUri) {
-					var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+					var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
 					if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 						correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
 					}
@@ -533,16 +756,19 @@ module.exports = function (RED) {
 						var entities=[]	
 						for (var i = 0; i < subscriptionJson.length; i++) {
 							entities.push({"id": subscriptionJson[i]['id'],"isPattern": n.ispattern,"type": subscriptionJson[i]['type']})	
+							
 						}
-						if(!n.enid){
-							var devid=subscriptionJson[subscriptionJson.length-1]['id'];
-						}else{
-							var devid=n.enid;
-						}
+						var devid = subscriptionJson[0]['id'];
+						//if(!n.enid){
+						//	var devid=subscriptionJson[subscriptionJson.length-1]['id'];
+						//}else{
+						//	var devid=n.enid;
+						//}
 					}else{
 						var entities=[]
 						entities.push({"id": n.enid,"isPattern": n.ispattern,"type": n.entype})
-						fs.writeFileSync(jsonFilePath, JSON.stringify(entities));						
+						fs.writeFileSync(jsonFilePath, JSON.stringify(entities));	
+						var devid=n.enid			
 					}
 					
 					
@@ -573,6 +799,7 @@ module.exports = function (RED) {
                                 "attrs": n.attributes
                             }
 					};
+
 					sub["subject"]=subject;
 
 					var expires = new Date();
@@ -580,7 +807,8 @@ module.exports = function (RED) {
 					sub["expires"]= expires.toISOString();
 					if (n.throttle!=0)
 						sub["throttling"]=Number(n.throttle);
-                    resolve(sub);
+					resolve(sub);
+					
                 });
             }
         );
@@ -599,7 +827,44 @@ module.exports = function (RED) {
     RED.nodes.registerType("orion-subscribe-api-v2", OrionSubscribeV2);
 
     function OrionSubscribeV2(n) {
-        RED.nodes.createNode(this, n);
+		RED.nodes.createNode(this, n);
+		if (!global.nodeInitLock) global.nodeInitLock = {};
+
+		if (global.nodeInitLock[n.id]) {
+			return;
+		}
+		global.nodeInitLock[n.id] = true;
+
+        var node = this;
+	// =============================
+	// REGISTRAZIONE LISTENER HTTP
+	// (necessario per rendere il deploy uguale al riavvio)
+	// =============================
+	function registerListener() {
+		const path = "/" + node.id;
+
+		RED.httpNode.post(path, function(req, res) {
+			const body = req.body || {};
+
+			let msg = {};
+			msg.subscriptionId = body.subscriptionId || null;
+
+			// Se c’è data[], prendiamo il primo elemento
+			if (body.data && Array.isArray(body.data) && body.data.length > 0) {
+				msg.payload = body.data;
+			} else {
+				msg.payload = body; // fallback
+			}
+
+			node.send(msg);
+			res.sendStatus(200);
+		});
+
+    node.httpListener = true;  
+}
+	// CREA IL LISTENER SUBITO (deploy + riavvio)
+	registerListener();
+
         var node = this;
         
         this.service = n.service;
@@ -610,18 +875,31 @@ module.exports = function (RED) {
         this.apikey = n.apikey;
         this.basicAuth = n.basicAuth;
 
-        this.on("close", function () {
-            var nodeID = node.id + "";
-            nodeID = nodeID.replace('.', '');
+        
+	this.on('close', function(removed, done) {
+		global.nodeInitLock[n.id] = false;
 
-            RED.httpNode._router.stack.forEach(function (route, i, routes) {
-                if (route.route && route.route.path == "/" + nodeID) {
-                    routes.splice(i, 1);
-                }
-            });
-            //cannot invoke unsubscribe from here since the config is empty (and the contextbroker uri is unknown)
-            //	unsubscribeFromOrion(node, subscriptionIDs[nodeID], null, n);
-        });
+		try {
+			// 1. Rimuovi l’HTTP endpoint listener
+			if (node.httpListener) {
+				RED.httpNode._router.stack = RED.httpNode._router.stack.filter(function(r){
+					return !(r.route && r.route.path === "/" + node.id);
+				});
+				node.httpListener = null;
+			}
+
+			// 2. Rimuovi eventuali timeout, interval, pending requests
+			if (node.pendingTimer) clearTimeout(node.pendingTimer);
+
+			// 3. Pulisci cache e contesto
+			node.context().set('currentSubscriptionId', null);
+
+		} catch(e) {
+			node.error("Error closing node: " + e)
+		}
+		delete global.nodeInitLock[n.id];
+		done();
+	});
 
         // validate mandatory fields
         validateInput(this, n);
@@ -630,10 +908,8 @@ module.exports = function (RED) {
 			var deviceType = (msg.payload.deviceType ? msg.payload.deviceType : n.entype);
 			var deviceId = (msg.payload.deviceId ? msg.payload.deviceId : n.enid);
 			var isPattern = (!(typeof msg.payload.isPattern === "undefined") ? msg.payload.isPattern :n.ispattern);
-			n.entype=deviceType;
-			n.enid=deviceId;
-			n.ispattern=isPattern;
-			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			
+			var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
 			
 			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
@@ -690,7 +966,185 @@ module.exports = function (RED) {
 			
 		
 		node.brokerConn.init(node, n).then(function () {
-			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+                    var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
+                    
+                    if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
+                        correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
+                        }
+                    var jsonFilePath=correctPath+n.id+".json";	
+                    if (fs.existsSync(jsonFilePath)){
+        
+                        generateSubscribePayload(node, n).then(function (payload) {
+                            node.brokerConn.subscribe(node, n, payload);
+                            });
+                        }else{
+                            generateSubscribePayload(node, n).then(function (payload) {
+                            node.brokerConn.subscribe(node, n, payload);
+                            });
+        
+                            
+                        }
+                    
+                    });
+
+		
+		
+    }
+
+    
+    
+    //OrionSubscribeV2 node constructor	
+    RED.nodes.registerType("orion-subscribe-list-update-api-v2", OrionSubscribeListV2);
+
+    function OrionSubscribeListV2(n) {
+        RED.nodes.createNode(this, n);
+		if (!global.nodeInitLock) global.nodeInitLock = {};
+
+		if (global.nodeInitLock[n.id]) {
+			return;
+		}
+		global.nodeInitLock[n.id] = true;
+
+        var node = this;
+	// =============================
+	// REGISTRAZIONE LISTENER HTTP
+	// (necessario per rendere il deploy uguale al riavvio)
+	// =============================
+	function registerListener() {
+		const path = "/" + node.id;
+
+		RED.httpNode.post(path, function(req, res){
+			const body = req.body || {};
+			node.send({ payload: body });
+			res.sendStatus(200);
+		});
+
+		node.httpListener = true;
+	}
+
+	// CREA IL LISTENER SUBITO (deploy + riavvio)
+	registerListener();
+	// =============================        
+			this.service = n.service;
+			this.brokerConn = RED.nodes.getNode(this.service);
+			this.noderedhost = n.noderedhost;
+			this.userk1 = n.userk1;
+			this.passk2 = n.passk2;
+			this.apikey = n.apikey;
+			this.basicAuth = n.basicAuth;
+
+	this.on('close', function(removed, done) {
+		global.nodeInitLock[n.id] = false;
+
+		try {
+			// 1. Rimuovi l’HTTP endpoint listener
+			if (node.httpListener) {
+				RED.httpNode._router.stack = RED.httpNode._router.stack.filter(function(r){
+					return !(r.route && r.route.path === "/" + node.id);
+				});
+				node.httpListener = null;
+			}
+
+			// 2. Rimuovi eventuali timeout, interval, pending requests
+			if (node.pendingTimer) clearTimeout(node.pendingTimer);
+
+			// 3. Pulisci cache e contesto
+			node.context().set('currentSubscriptionId', null);
+
+		} catch(e) {
+			node.error("Error closing node: " + e)
+		}
+		delete global.nodeInitLock[n.id];
+		done();
+
+	});
+
+        // validate mandatory fields
+        validateInput(this, n);
+		this.on('input', function (msg) {
+
+    var action = msg.payload.action;
+
+    // Se abbiamo una lista devices la usiamo, altrimenti creiamo una lista con un singolo elemento
+    var devicesList = Array.isArray(msg.payload.devices)
+        ? msg.payload.devices
+        : [{
+            deviceType: msg.payload.deviceType || n.entype,
+            deviceId: msg.payload.deviceId || n.enid,
+            isPattern: (typeof msg.payload.isPattern !== "undefined" ? msg.payload.isPattern : n.ispattern)
+        }];
+
+    // Aggiorna comunque gli ultimi valori memorizzati
+ //   n.entype = devicesList[0].deviceType;
+   // n.enid = devicesList[0].deviceId;
+    //n.ispattern = devicesList[0].isPattern;
+
+    var correctPath = os.homedir() + "\\.snap4cityConfig\\";
+
+    if (RED.settings.APPID != null) {
+        correctPath = "/data/.snap4cityConfig/";
+    }
+
+    var jsonFilePath = correctPath + n.id + ".json";
+
+    if (!fs.existsSync(correctPath)) {
+        fs.mkdirSync(correctPath);
+        fs.writeFileSync(jsonFilePath, '[]');
+    } else if (!fs.existsSync(jsonFilePath)) {
+        fs.writeFileSync(jsonFilePath, '[]');
+    }
+
+    // Carica JSON corrente
+    var subscriptionJson = JSON.parse(fs.readFileSync(jsonFilePath));
+
+    // --- LOGICA SOTTOSCRIZIONI MULTIPLE ---
+    devicesList.forEach(dev => {
+
+        var deviceType = dev.deviceType;
+        var deviceId = dev.deviceId;
+        var isPattern = (typeof dev.isPattern !== "undefined" ? dev.isPattern : n.ispattern);
+
+        if (action === "add") {
+
+            var found = subscriptionJson.some(e =>
+                e.id === deviceId && e.type === deviceType);
+
+            if (!found) {
+                subscriptionJson.push({
+                    id: deviceId,
+                    type: deviceType,
+                    isPattern: isPattern
+                });
+            }
+
+        } else if (action === "remove") {
+
+            subscriptionJson = subscriptionJson.filter(e =>
+                !(e.id === deviceId && e.type === deviceType));
+
+        }
+
+    });
+
+    // Salva modifiche
+    fs.writeFileSync(jsonFilePath, JSON.stringify(subscriptionJson));
+
+    if (action !== "add" && action !== "remove") {
+        msg.payload = "possible actions are add or remove";
+    }
+
+	
+    generateSubscribePayload(node, n).then(function (payload) {
+        node.brokerConn.subscribe(node, n, payload);
+    });
+
+    msg.info = msg.payload;
+    node.send(msg);
+});
+	
+		
+		node.brokerConn.init(node, n).then(function () {
+			var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
 			
 			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
@@ -714,9 +1168,7 @@ module.exports = function (RED) {
 		
     }
 
-    
-    
-    
+        
     
     
     /*Cancellazione sottoscrizione*/
@@ -750,7 +1202,122 @@ module.exports = function (RED) {
     
     
     
-    
+// OrionPatternSubscribeV2 node constructor
+RED.nodes.registerType("orion-pattern-subscribe-api-v2", OrionPatternSubscribeV2);
+
+function OrionPatternSubscribeV2(n) {
+    RED.nodes.createNode(this, n);
+
+    if (!global.nodeInitLock) global.nodeInitLock = {};
+    if (global.nodeInitLock[n.id]) {
+        return;
+    }
+    global.nodeInitLock[n.id] = true;
+
+    var node = this;
+
+    this.service = n.service;
+    this.brokerConn = RED.nodes.getNode(this.service);
+    this.noderedhost = n.noderedhost;
+    this.apikey = n.apikey;
+    this.basicAuth = n.basicAuth;
+
+    function getNodeID() {
+        return (node.id + "").replace(".", "");
+    }
+
+    function buildExactPayload(cfg) {
+        return getMyUri(cfg).then(function (myUri) {
+            var idPattern = (cfg.idpattern || "").trim();
+            var typePattern = (cfg.typepattern || "").trim();
+            var entitytype = (cfg.entitytype || "").trim();
+            var description = (cfg.description || "").trim() || ("Pattern subscription for " + idPattern);
+
+            if (!idPattern) {
+                throw new Error("Missing idPattern");
+            }
+
+            if ((typePattern && entitytype) || (!typePattern && !entitytype)) {
+                throw new Error("Specify exactly one between typePattern and type");
+            }
+
+            var prot = "http";
+            var orionUrl = (node.brokerConn && node.brokerConn.url) ? node.brokerConn.url : "";
+            if (orionUrl.indexOf("https://") >= 0) {
+                prot = "https";
+            }
+
+            var entity = {
+                idPattern: idPattern
+            };
+
+            if (typePattern) {
+                entity.typePattern = typePattern;
+            } else {
+                entity.type = entitytype;
+            }
+
+            return {
+                description: description,
+                subject: {
+                    entities: [entity]
+                },
+                notification: {
+                    http: {
+                        url: prot + "://" + myUri + "/" + getNodeID()
+                    }
+                }
+            };
+        });
+    }
+
+    function subscribePatternExact() {
+        if (!node.brokerConn) {
+            node.error("Missing service configuration node");
+            return;
+        }
+
+        buildExactPayload(n)
+            .then(function (exactPayload) {
+                var serviceConfig = Object.assign({}, n, {
+                    enid: "pattern_subscribe",
+                    entype: "pattern_type",
+                    ispattern: true
+                });
+
+                node.log("EXACT OUTGOING BODY: " + JSON.stringify(exactPayload));
+                node.brokerConn.subscribeExact(node, serviceConfig, exactPayload);
+            })
+            .catch(function (err) {
+                node.error("Pattern exact subscribe error: " + err);
+            });
+    }
+
+    node.brokerConn.init(node, n).then(function () {
+        subscribePatternExact();
+    }).catch(function (err) {
+        node.error("Init error: " + err);
+    });
+
+    this.on("close", function (removed, done) {
+        try {
+            var nodeID = getNodeID();
+
+            if (RED.httpNode && RED.httpNode._router && RED.httpNode._router.stack) {
+                RED.httpNode._router.stack = RED.httpNode._router.stack.filter(function (r) {
+                    return !(r.route && r.route.path === "/" + nodeID);
+                });
+            }
+
+            node.context().set("currentSubscriptionId", null);
+        } catch (e) {
+            node.error("Error closing node: " + e);
+        }
+
+        delete global.nodeInitLock[n.id];
+        done();
+    });
+}  
     
     
     
@@ -761,6 +1328,7 @@ module.exports = function (RED) {
 
     function OrionBrokerSubscribeListEntityV2(n) {
         RED.nodes.createNode(this, n);
+		
         var node = this;
         this.service = n.service;
         this.brokerConn = RED.nodes.getNode(this.service);
@@ -785,8 +1353,10 @@ module.exports = function (RED) {
         var nodeID = (node.id + "").replace('.', '');
         listenOnUrl(nodeID, function (req, res) {
             if (req.body.subscriptionId != subscriptionIDs.getSubscriptionOfNode(nodeID)) {
-                logger.error("Recognized invalid subscription: " + req.body.subscriptionId + " currentId: " + subscriptionIDs.getSubscriptionOfNode(nodeID));
-                unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
+                logger.warn(
+            "Ignoring notification for subscription " + req.body.subscriptionId +
+            " (current valid: " + currentId + ")"
+        );//unsubscribeFromOrion(node, req.body.subscriptionId, orionUrl, config);
             } else {
                 //var payload = formatOutput(node, config, req.body.data);//TODO *1 verify formatOutput
                 node.send({
@@ -824,7 +1394,7 @@ module.exports = function (RED) {
             n.ispattern="isPattern";
             n.enid=msg.payload
 
-			var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+			var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
 			var created=false
 			if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
 				correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
@@ -864,7 +1434,7 @@ module.exports = function (RED) {
                 
 
                 node.brokerConn.init(node, n).then(function () {
-                    var correctPath =os.homedir() + "/.snap4cityConfig/";//consider edge scenario
+                    var correctPath =os.homedir() + "\\.snap4cityConfig\\";//consider edge scenario
                     
                     if (RED.settings.APPID != null) {//check edge scenario or cloud scenario
                         correctPath = "/data/.snap4cityConfig/";//consider cloud scenario
@@ -919,53 +1489,61 @@ module.exports = function (RED) {
         RED.httpNode.post("/" + url, next, next, next, jsonParser, urlencParser, rawBodyParser, callback, errorHandler);
     }
 
-    function getMyUri(node) {
-        return when.promise(
-            function (resolve, reject) {
+   function getMyUri(node) {
+    return when.promise(function (resolve) {
 
-                const logger = s4cUtility.getLogger(RED, node);
+        const logger = s4cUtility.getLogger(RED, node);
 
-                // first try to get user specified uri, TODO: many input validations...
-                var myUri = node.noderedhost;
-                if (myUri) {
-                    resolve(myUri + RED.settings.httpRoot /*+ ":" + RED.settings.uiPort*/); //PB removed port
-                } else {
-                    myUri = RED.settings.externalHost; //PB fix added
-                    if (myUri)
-                        //TODO check if this one is needed 
-                        //resolve(myUri + RED.settings.httpRoot.substring(0, RED.settings.httpRoot.lenght - 1) /*+ ":" + RED.settings.uiPort*/ ); //PB remove port
-                        resolve(myUri + RED.settings.httpRoot /*+ ":" + RED.settings.uiPort*/); //PB remove port
-                    else {
-                        // attempt to get from bluemix
-                        try {
-                            var app = JSON.parse(process.env.VCAP_APPLICATION);
-                            myUri = app['application_uris'][0];
-                        } catch (e) {
-                            logger.error("Probably not running in bluemix...");
-                        }
-                    }
-                }
+        // 1) Se l’utente ha specificato host → usalo
+        if (node.noderedhost && node.noderedhost !== "") {
+            return resolve(node.noderedhost + RED.settings.httpRoot);
+        }
 
-                if (myUri) {
-                    resolve(myUri);
-                } else {
-                    var net = require('net');
-                    var client = net.connect({
-                        port: 80,
-                        host: "google.com"
-                    },
-                        function () {
-                            if (!client.localAddress) {
-                                reject("Failed to get local address");
-                            } else {
-                                resolve(client.localAddress + ":" + RED.settings.uiPort);
-                            }
-                        }
-                    );
-                }
+        // 2) Usa externalHost se definito
+        if (RED.settings.externalHost && RED.settings.externalHost !== "") {
+            return resolve(RED.settings.externalHost + RED.settings.httpRoot);
+        }
+
+        // 3) Tentativo: ambiente Bluemix (VCAP)
+        try {
+            const vcap = process.env.VCAP_APPLICATION;
+
+            if (vcap) {
+                const app = JSON.parse(vcap);
+                const uri = app['application_uris'][0];
+                if (uri) return resolve(uri + RED.settings.httpRoot);
+            } else {
+                logger.warn("Probably not running in bluemix (VCAP_APPLICATION undefined).");
             }
-        );
-    }
+        } catch (e) {
+            logger.warn("VCAP_APPLICATION parse failed.");
+        }
+
+        // 4) Fallback automatico: ricava l'IP locale in modo sicuro
+
+        const net = require("net");
+        const client = net.connect({ port: 80, host: "google.com" });
+
+        // timeout rapido per evitare ETIMEDOUT
+        client.setTimeout(800, () => {
+            client.destroy();
+            return resolve("localhost:" + RED.settings.uiPort);
+        });
+
+        client.on("connect", () => {
+            const local = client.localAddress || "localhost";
+            client.destroy();
+            resolve(local + ":" + RED.settings.uiPort);
+        });
+
+        // Se google.com non risponde → fallback localhost
+        client.on("error", () => {
+            client.destroy();
+            resolve("localhost:" + RED.settings.uiPort);
+        });
+    });
+}
+
 
     //OrionQueryV2 node constructor	
     RED.nodes.registerType("orion-query-api-v2", OrionQueryV2);
@@ -1133,7 +1711,6 @@ module.exports = function (RED) {
 									nodeStatus.success(node)
 									msg.payload={"data":{"id":config.enid,"type":config.entype,msgToSend},"status":{"statusCode":200,"headers":{},"payload":"Success"}}
 									node.send(msg)
-									//console.log(node.currentContextBroker)
 									/*try {
 										//s4cUtility.eventLog(RED, {"id":config.enid,"type":config.entype,msgToSend}, msg.payload, config, "Node-Red", "Orion", node.currentContextBroker.accesslink, "TX");
 										console.log("FATTO")
@@ -1209,7 +1786,7 @@ module.exports = function (RED) {
         const fs = require('fs');
         const path = require('path');
         // Determina il percorso corretto del file basato sullo scenario
-        let correctPath = path.join(os.homedir(), "/.snap4cityConfig/");
+        let correctPath = path.join(os.homedir(), "\\.snap4cityConfig\\");
         if (RED.settings.APPID != null) {
             correctPath = "/data/.snap4cityConfig/"; // Cloud scenario
         }

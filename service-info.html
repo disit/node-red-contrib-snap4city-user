@@ -25,12 +25,31 @@
             target="_blank">here</a>.
     </div>
     <div class="form-row">
+        <label for="node-input-typeQuery">Type Query:</label>
+        <select id="node-input-typeQuery">
+            <option value="point-of-interest" selected>point-of-interest</option>
+            <option value="entity">entity</option>
+        </select>
+    </div>
+    <div class="form-row">
         <label for="node-input-name">Name</label>
         <input type="text" autocomplete="off" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
         <label for="node-input-serviceuri">ServiceUri</label>
         <input type="text" autocomplete="off" id="node-input-serviceuri" placeholder="http://">
+    </div>
+    <div class="form-row">
+        <label for="node-input-filter">Filter</label>
+        <input type="text" autocomplete="off" id="node-input-filter" placeholder="Filter">
+    </div>
+    <div class="form-row">
+        <label for="node-input-values">Values</label>
+        <input type="text" autocomplete="off" id="node-input-values" placeholder="Values">
+    </div>
+    <div class="form-row">
+        <label for="node-input-sortOnValue">SortOnValue</label>
+        <input type="text" autocomplete="off" id="node-input-sortOnValue" placeholder="SortOnValue">
     </div>
     <div class="form-row">
         <label for="node-input-lang">Language</label>
@@ -51,10 +70,35 @@
     A JSON with these parameters:
 
     <dl class="message-properties">
+        <dt>typeQuery
+            <span class="property-type">string</span>
+        </dt>
+        <dd>If "point-of-interest" is selected, the node performs the standard serviceUri search. If "entity" is selected, the node adds value filters to the serviceUri search.</dd>
         <dt>serviceuri
             <span class="property-type">string</span>
         </dt>
         <dd> serviceUri (http://...) of the service</dd>
+        <dt>filter
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Only for the type "entity", a list of conditions (separated with ;) on value names matching a constant value. The matching operator can be:
+            <ul>
+                <li><em>value name</em>:<em>string value</em> (e.g status:Active), search for devices having the dynamic string attribute "value name" with a specific value, the match is case sensitive</li>
+                <li><em>value name</em>=<em>numeric value</em> (e.g. temperature=18), search for devices having the dynamic numeric attribute "value name" with a specific numeric value.</li>
+                <li><em>value name</em>&gt;<em>numeric value</em> (e.g. temperature&gt;20), search for devices having a dynamic numeric attribute greater than a specific value.</li>
+                <li><em>value name</em>&gt;=<em>numeric value</em> (e.g. temperature&gt;20), search for devices having a dynamic numeric attribute greater or equal than a specific value.</li>
+                <li><em>value name</em>&lt;<em>numeric value</em> (e.g. temperature&lt;20), search for devices having a dynamic numeric attribute less than a specific value.</li>
+                <li><em>value name</em>&lt;=<em>numeric value</em> (e.g. temperature&lt;=20), search for devices having a dynamic numeric attribute less or equal than a specific value.</li>
+            </ul>
+            If multiple conditions are present they are considered in AND.</dd>
+        <dt>values
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Only for the type "entity", if filter is not empty, list of value names (separated by ;) to be returned for each result. If omitted all values are returned.</dd>
+        <dt>sortOnValue
+            <span class="property-type">string</span>
+        </dt>
+        <dd>Only for the type "entity", if filter is not empty, the value name to sort the result. It can be like "value name:asc|desc:type" (e.g. temperature:desc:short), order direction is "asc" if omitted, type can be string, date, long or short.</dd>
         <dt>lang
             <span class="property-type">string</span>
         </dt>
@@ -92,12 +136,28 @@
                 value: "",
                 required: false
             },
+            filter: {
+                value: "",
+                required: false
+            },
+            values: {
+                value: "",
+                required: false
+            },
+            sortOnValue: {
+                value: "",
+                required: false
+            },
             lang: {
                 value: "",
                 required: false
             },
             fromtime: {
                 value: "1-day",
+                required: false
+            },
+            typeQuery: {
+                value: "point-of-interest",
                 required: false
             }
         },
@@ -106,6 +166,24 @@
         icon: "white-globe.png",
         label: function () {
             return this.name || "service-info";
+        },
+        oneditprepare: function () {
+            changeSelection();
         }
     });
+
+    var changeSelection = function () {
+        $("#node-input-typeQuery").change(function () {
+            var newValue = $(this).val();
+            if (newValue === "entity") {
+                $("#node-input-filter").prop("disabled", false);
+                $("#node-input-values").prop("disabled", false);
+                $("#node-input-sortOnValue").prop("disabled", false);
+            } else if (newValue === "point-of-interest") {
+                $("#node-input-filter").prop("disabled", true);
+                $("#node-input-values").prop("disabled", true);
+                $("#node-input-sortOnValue").prop("disabled", true);
+            }
+        }).change();
+    };
 </script>
